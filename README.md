@@ -1,4 +1,4 @@
-# DỰ ÁN: BETTERME NEXT-GEN — HỆ SINH THÁI HUẤN LUYỆN SỨC KHỎE TOÀN DIỆN VỚI REAL-TIME AI WORKOUT COMPANION
+# DỰ ÁN: G-AI— HỆ SINH THÁI HUẤN LUYỆN SỨC KHỎE TOÀN DIỆN VỚI REAL-TIME AI WORKOUT COMPANION
 > **Tài liệu Đặc tả Ý tưởng Dự án, Kiến trúc Kỹ thuật & Danh mục Use Case Chi tiết**  
 > *Định dạng: Hồ sơ Trình chiếu Ý tưởng Dự án (Project Pitch & Technical Specification Deck)*
 
