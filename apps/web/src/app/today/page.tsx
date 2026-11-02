@@ -1,0 +1,325 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import {
+  Flame,
+  Droplets,
+  Video,
+  Play,
+  Plus,
+  CheckCircle2,
+  Calendar,
+  Sparkles,
+  Heart,
+  RotateCcw,
+  Clock,
+  ArrowRight,
+  TrendingUp,
+} from "lucide-react";
+import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
+
+export default function TodayDashboardPage() {
+  const [plan, setPlan] = useState<PersonalizedPlanResult>({
+    bmi: 22.1,
+    bmiCategory: "Cân đối lý tưởng",
+    bmr: 1350,
+    tdee: 1850,
+    dailyCalorieTarget: 1450,
+    calorieDeficitDaily: 400,
+    estimatedWeeks: 6,
+    estimatedTargetDate: "15 Tháng 12, 2026",
+    recommendedWaterMl: 2100,
+    weeklyWorkoutsCount: 4,
+    focusHighlights: ["Đốt mỡ phẳng bụng", "Nâng và săn chắc vòng 3"],
+  });
+
+  const [waterDrunkMl, setWaterDrunkMl] = useState<number>(750);
+  const [caloriesBurned, setCaloriesBurned] = useState<number>(180);
+  const [caloriesEaten, setCaloriesEaten] = useState<number>(620);
+  const [checklist, setChecklist] = useState<Record<string, boolean>>({
+    water: false,
+    workout: false,
+    mindfulness: true,
+    fasting: false,
+  });
+
+  useEffect(() => {
+    try {
+      const savedPlan = localStorage.getItem("g_ai_user_plan");
+      if (savedPlan) {
+        setPlan(JSON.parse(savedPlan));
+      }
+    } catch (e) {
+      // fallback
+    }
+  }, []);
+
+  const remainingCalories = plan.dailyCalorieTarget - caloriesEaten + caloriesBurned;
+  const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
+
+  const addWater = () => {
+    setWaterDrunkMl((prev) => {
+      const next = prev + 250;
+      if (next >= plan.recommendedWaterMl) {
+        setChecklist((c) => ({ ...c, water: true }));
+      }
+      return next;
+    });
+  };
+
+  const toggleChecklist = (key: string) => {
+    setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <div className="min-h-screen bg-cream-50 text-stone-800 pb-16">
+      {/* Top Navbar */}
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-stone-200/70">
+        <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <a href="/" className="w-9 h-9 rounded-xl bg-gradient-to-tr from-peach-500 to-peach-400 text-white flex items-center justify-center font-bold text-lg shadow-soft">
+              G
+            </a>
+            <div>
+              <h1 className="font-bold text-stone-800 text-sm sm:text-base leading-tight">
+                Hôm nay, 2 Tháng 11
+              </h1>
+              <p className="text-[11px] text-stone-400 font-medium">Lộ trình 28 ngày • Tuần 1, Ngày 3</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Streak Badge */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold shadow-sm">
+              <span className="text-sm">🔥</span>
+              <span>3 Ngày Chuỗi</span>
+            </div>
+
+            <a
+              href="/quiz"
+              className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+              title="Khảo sát lại kế hoạch"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Dashboard Body */}
+      <main className="w-full max-w-4xl mx-auto px-4 py-6 space-y-5">
+        {/* Calorie Balance Hero Widget */}
+        <section className="p-5 sm:p-6 rounded-3xl bg-white border border-stone-200 shadow-card">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-bold text-stone-800 text-lg">Ngân Sách Năng Lượng Hôm Nay</h2>
+              <p className="text-xs text-stone-400">Duy trì thâm hụt an toàn để đạt mốc cân mục tiêu</p>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-stone-400 font-medium block">Mục tiêu ngày</span>
+              <span className="text-sm font-bold text-stone-700">{plan.dailyCalorieTarget} kcal</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+            {/* Remaining Highlight Box */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-peach-50 via-cream-100 to-peach-100 border border-peach-200/80 text-center sm:text-left">
+              <div className="text-xs text-peach-700 font-semibold uppercase tracking-wider">Calo Còn Lại</div>
+              <div className="text-3xl sm:text-4xl font-black text-peach-600 mt-1">{remainingCalories}</div>
+              <div className="text-[11px] text-stone-500 mt-0.5">kcal có thể nạp thêm</div>
+            </div>
+
+            {/* In / Out Details */}
+            <div className="col-span-2 grid grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/70">
+                <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
+                  <Flame className="w-3.5 h-3.5 text-amber-500" />
+                  Đã Nạp Vào
+                </div>
+                <div className="text-xl font-bold text-stone-800 mt-1">{caloriesEaten} <span className="text-xs font-normal text-stone-400">kcal</span></div>
+                <div className="text-[10px] text-stone-400 mt-0.5">Bữa sáng + Cà phê</div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/70">
+                <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                  Đã Đốt Cháy
+                </div>
+                <div className="text-xl font-bold text-stone-800 mt-1">{caloriesBurned} <span className="text-xs font-normal text-stone-400">kcal</span></div>
+                <div className="text-[10px] text-emerald-600 font-medium mt-0.5">+ Đi bộ 3,200 bước</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Today's Workout Card with AI Live PT Spotlight */}
+        <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-soft relative overflow-hidden">
+          <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 w-48 h-48 rounded-full bg-peach-500/10 blur-2xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-peach-500/20 border border-peach-500/30 text-peach-300 text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5 text-peach-400 animate-pulse" />
+                Bài Tập Hôm Nay • Sẵn Sàng Với AI Live PT
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold">
+                Pilates Siết Cơ Bụng & Thẳng Vai
+              </h3>
+              <p className="text-xs sm:text-sm text-stone-400 max-w-md">
+                18 phút • 4 bài tập • Bật webcam để AI Companion quan sát cột sống và sửa tư thế gù lưng thời gian thực.
+              </p>
+            </div>
+
+            <button
+              onClick={() => alert("Tính năng AI Live PT qua Webcam đang khởi tạo! Bạn sẽ được kết nối ở Sprint 4.")}
+              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-600 hover:from-peach-600 hover:to-peach-700 text-white font-bold text-sm shadow-glow transition-all duration-200 active:scale-[0.98] flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-center"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>Bắt Đầu Tập Ngay</span>
+            </button>
+          </div>
+        </section>
+
+        {/* 2-Column Grid: Hydration & Fasting */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Hydration Tracker */}
+          <section className="p-5 rounded-3xl bg-white border border-stone-200 shadow-card flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center">
+                  <Droplets className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-stone-800 text-sm">Nước Uống Trong Ngày</h3>
+                  <p className="text-[11px] text-stone-400">Mục tiêu: {(plan.recommendedWaterMl / 1000).toFixed(1)}L</p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
+                {waterPercent}%
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 my-2">
+              <div
+                className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full transition-all duration-300"
+                style={{ width: `${waterPercent}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-100">
+              <span className="text-xs font-semibold text-stone-700">{waterDrunkMl} / {plan.recommendedWaterMl} ml</span>
+              <button
+                onClick={addWater}
+                className="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold flex items-center gap-1 transition-colors active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+250ml</span>
+              </button>
+            </div>
+          </section>
+
+          {/* Intermittent Fasting Widget */}
+          <section className="p-5 rounded-3xl bg-white border border-stone-200 shadow-card flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-stone-800 text-sm">Nhịn Ăn Gián Đoạn 16:8</h3>
+                  <p className="text-[11px] text-stone-400">Khung giờ ăn: 12:00 - 20:00</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                Đang Nhịn
+              </span>
+            </div>
+
+            <div className="flex items-baseline gap-2 my-2">
+              <span className="text-2xl font-black text-stone-800">14h 25m</span>
+              <span className="text-xs text-stone-400">/ 16 giờ mục tiêu</span>
+            </div>
+
+            <div className="text-[11px] text-stone-500 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/60 flex items-center gap-2">
+              <span className="text-sm">🔥</span>
+              <span>Cơ thể đang ở giai đoạn <strong>đốt mỡ tự nhiên</strong> và thanh lọc tế bào.</span>
+            </div>
+          </section>
+        </div>
+
+        {/* Daily Habits Checklist */}
+        <section className="p-5 rounded-3xl bg-white border border-stone-200 shadow-card">
+          <h3 className="font-bold text-stone-800 text-base mb-3 flex items-center justify-between">
+            <span>Nhiệm Vụ Giữ Phong Độ Hôm Nay</span>
+            <span className="text-xs font-normal text-stone-400">
+              {Object.values(checklist).filter(Boolean).length} / {Object.keys(checklist).length} hoàn thành
+            </span>
+          </h3>
+
+          <div className="space-y-2.5">
+            <div
+              onClick={() => toggleChecklist("workout")}
+              className="p-3 rounded-2xl border border-stone-200 hover:border-peach-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2
+                  className={`w-5 h-5 ${checklist.workout ? "text-emerald-500" : "text-stone-300"}`}
+                />
+                <span className={`text-sm ${checklist.workout ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
+                  Hoàn thành 18 phút bài tập Pilates bụng
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-peach-600 bg-peach-50 px-2.5 py-0.5 rounded-full">+180 kcal</span>
+            </div>
+
+            <div
+              onClick={() => toggleChecklist("water")}
+              className="p-3 rounded-2xl border border-stone-200 hover:border-sky-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2
+                  className={`w-5 h-5 ${checklist.water ? "text-emerald-500" : "text-stone-300"}`}
+                />
+                <span className={`text-sm ${checklist.water ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
+                  Uống đủ {(plan.recommendedWaterMl / 1000).toFixed(1)}L nước lọc trong ngày
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-sky-600 bg-sky-50 px-2.5 py-0.5 rounded-full">{waterDrunkMl}ml</span>
+            </div>
+
+            <div
+              onClick={() => toggleChecklist("mindfulness")}
+              className="p-3 rounded-2xl border border-stone-200 hover:border-lavender-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2
+                  className={`w-5 h-5 ${checklist.mindfulness ? "text-emerald-500" : "text-stone-300"}`}
+                />
+                <span className={`text-sm ${checklist.mindfulness ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
+                  5 phút thở thư giãn Box Breathing giảm căng thẳng
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-lavender-600 bg-lavender-50 px-2.5 py-0.5 rounded-full">Đã xong</span>
+            </div>
+
+            <div
+              onClick={() => toggleChecklist("fasting")}
+              className="p-3 rounded-2xl border border-stone-200 hover:border-amber-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
+            >
+              <div className="flex items-center gap-3">
+                <CheckCircle2
+                  className={`w-5 h-5 ${checklist.fasting ? "text-emerald-500" : "text-stone-300"}`}
+                />
+                <span className={`text-sm ${checklist.fasting ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
+                  Không ăn vặt sau 20:00 tối
+                </span>
+              </div>
+              <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">Tối nay</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
