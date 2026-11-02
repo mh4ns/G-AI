@@ -4,6 +4,33 @@
 
 ---
 
+## CẤU TRÚC THƯ MỤC DỰ ÁN (MONOREPO REPOSITORY LAYOUT)
+
+Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho nền tảng **Thuần Web & Mobile App (100% Software-Only)**:
+
+```text
+G-ai/
+├── apps/
+│   ├── web/                     # Ứng dụng Web (Next.js 15, React 19, Tailwind CSS, MediaPipe Pose)
+│   ├── mobile/                  # Ứng dụng Di động (React Native / Flutter)
+│   └── backend/                 # API Server & AI Core (Python FastAPI, Uvicorn, SQLAlchemy)
+│
+├── packages/
+│   └── shared-types/            # Kiểu dữ liệu & Schemas dùng chung giữa Web, Mobile và Backend
+│
+├── docs/                        # Toàn bộ tài liệu kỹ thuật, slide, sơ đồ và use case
+│   ├── USECASE_BREAKDOWN.md     # Kế hoạch bẻ nhỏ từng use case & sprint build chi tiết
+│   ├── DETAILED_SYSTEM_DESIGN.md# Thiết kế kiến trúc, State Machine, ERD, Ma trận truy xuất
+│   ├── SEQUENCE_DIAGRAM.md      # Sơ đồ tuần tự tổng thể
+│   └── SLIDES.md                # 13 Slide trình chiếu đề án (Marp-ready)
+│
+├── docker-compose.yml           # Khởi chạy toàn bộ môi trường (PostgreSQL + Backend + Web)
+├── README.md                    # Bản đặc tả tổng quan dự án
+└── .gitignore                   # Cấu hình bỏ qua file tạm, cache, .venv
+```
+
+---
+
 ## MỤC LỤC
 1. [Tầm nhìn Dự án & Tuyên ngôn Giá trị (Project Vision & Value Proposition)](#1-tầm-nhìn-dự-án--tuyên-ngôn-giá-trị)
 2. [Kiến trúc Hệ sinh thái Hợp nhất (Unified Ecosystem Architecture)](#2-kiến-trúc-hệ-sinh-thái-hợp-nhất)
