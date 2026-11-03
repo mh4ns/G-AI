@@ -20,20 +20,16 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
 
   // Auto-play animation loop
   useEffect(() => {
-    let interval: any = null;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        onDayChange((prev) => {
-          if (prev >= 28) {
-            setIsPlaying(false);
-            return 28;
-          }
-          return prev + 1;
-        });
-      }, 250); // Advance 1 day every 250ms
+    if (!isPlaying) return;
+    if (currentDay >= 28) {
+      setIsPlaying(false);
+      return;
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, onDayChange]);
+    const timer = setTimeout(() => {
+      onDayChange(currentDay + 1);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [isPlaying, currentDay, onDayChange]);
 
   const milestones = [
     { day: 0, label: "Day 0", title: "Khởi đầu" },
