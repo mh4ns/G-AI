@@ -1,4 +1,4 @@
-# BetterMe Next-Gen (G-AI) — Mobile Application
+# G-AI — Mobile Application
 
 ## 1. Overview
 Cross-platform mobile client for iOS and Android:

@@ -1,4 +1,4 @@
-# BetterMe Next-Gen (G-AI) — Backend API & AI Engine
+# G-AI — Backend API & AI Engine
 
 ## 1. Overview
 FastAPI-based asynchronous backend providing core services for:

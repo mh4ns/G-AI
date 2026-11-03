@@ -61,8 +61,8 @@ G-ai/
 * **Nguy cơ chấn thương do sai tư thế**: Các video tập luyện có sẵn (pre-recorded) là phương thức truyền tải một chiều; người dùng không biết mình đang bị võng lưng, sai khớp gối hay hụt hơi quá mức.
 * **Sự phân mảnh của dữ liệu sức khỏe**: Người dùng phải dùng một app để đếm calo, một app khác kết nối cân điện tử, một app theo dõi nhịn ăn và tự xoay xở giải tỏa áp lực tâm lý.
 
-### 1.2. Giải pháp: BetterMe Next-Gen
-**BetterMe Next-Gen** là một hệ sinh thái chăm sóc sức khỏe hợp nhất, nơi người dùng không còn phải tập luyện đơn độc. Bằng cách đưa **Real-time AI Workout Companion** vào trung tâm của buổi tập, ứng dụng biến chiếc điện thoại thành một **Huấn Luyện Viên Cá Nhân (PT) Ảo**:
+### 1.2. Giải pháp: G-AI
+**G-AI** là một hệ sinh thái chăm sóc sức khỏe hợp nhất, nơi người dùng không còn phải tập luyện đơn độc. Bằng cách đưa **Real-time AI Workout Companion** vào trung tâm của buổi tập, ứng dụng biến chiếc điện thoại thành một **Huấn Luyện Viên Cá Nhân (PT) Ảo**:
 * Quan sát tư thế người dùng bằng Edge Vision (CameraX & On-Device ML).
 * Theo dõi nhịp tim sinh trắc học thời gian thực qua đồng hồ/vòng đeo tay BLE.
 * Trực tiếp khích lệ, hướng dẫn hít thở và sửa lỗi động tác bằng giọng nói hai chiều không có độ trễ.
@@ -233,7 +233,7 @@ flowchart TD
 ### UC-4.3: Đồng bộ Thông báo & Rung Haptic với Smart Band (`BandNotificationsService`)
 * **Chủ đề**: Wearable Integration.
 * **Nguyên nhân**: Trong lúc tập luyện hoặc sinh hoạt, người dùng không thể lúc nào cũng nhìn vào màn hình điện thoại.
-* **Tác nhân**: Vòng đeo tay thông minh BetterMe Band.
+* **Tác nhân**: Vòng đeo tay thông minh Smart Band.
 * **Luồng chính**:
   1. `BandNotificationsService` chạy nền lắng nghe cảnh báo nhịp tim cao từ AI Companion, lời nhắc uống nước hoặc tin nhắn đến.
   2. Đẩy tín hiệu rung haptic và nội dung vắn tắt lên cổ tay người dùng.
@@ -373,7 +373,7 @@ flowchart TD
 ### Pipeline 1: Khởi động & Vòng đời Ứng dụng (Boot & Lifecycle Pipeline)
 * **Mục đích**: Tải môi trường nhanh chóng dưới 1.5 giây, khôi phục phiên làm việc và định tuyến chuẩn xác.
 * **Luồng chạy**:
-  1. `BetterMeApp.onCreate()`: Nạp Dependency Injection và thiết lập Crashlytics/OneSignal.
+  1. `GAIApp.onCreate()`: Nạp Dependency Injection và thiết lập Crashlytics/OneSignal.
   2. `ComposeInitializer`: Khởi tạo hệ thống Design System UI và theme giao diện.
   3. `ReduxCore`: Nạp trạng thái đã lưu từ `Room DB` vào bộ nhớ RAM.
   4. Bộ định tuyến (Routing):
@@ -451,7 +451,7 @@ flowchart TD
 
 ```mermaid
 gantt
-    title Kế Hoạch Triển Khai BetterMe Next-Gen
+    title Kế Hoạch Triển Khai G-AI
     dateFormat  YYYY-MM-DD
     section Giai đoạn 1: Nền tảng
     Hợp nhất Redux Core & Compose UI       :done, 2026-11-01, 30d
@@ -476,4 +476,4 @@ gantt
 ---
 
 > **Kết luận Đề án**:  
-> Dự án **BetterMe Next-Gen** kết hợp hoàn hảo giữa năng lực phần cứng sẵn có của điện thoại thông minh, thiết bị đo lường sinh trắc học IoT và mô hình AI Companion tương tác hai chiều. Đây là bước nhảy vọt từ một ứng dụng theo dõi thông thường trở thành một **Trợ Lý Sức Khỏe Toàn Năng Đồng Hành 24/7**, tạo ra lợi thế cạnh tranh vượt trội trên thị trường Health-Tech toàn cầu.
+> Dự án **G-AI** kết hợp hoàn hảo giữa năng lực phần cứng sẵn có của điện thoại thông minh, thiết bị đo lường sinh trắc học IoT và mô hình AI Companion tương tác hai chiều. Đây là bước nhảy vọt từ một ứng dụng theo dõi thông thường trở thành một **Trợ Lý Sức Khỏe Toàn Năng Đồng Hành 24/7**, tạo ra lợi thế cạnh tranh vượt trội trên thị trường Health-Tech toàn cầu.

@@ -12,7 +12,7 @@ export default function HomePage() {
           </div>
           <div>
             <span className="font-extrabold text-lg sm:text-xl text-stone-900 tracking-tight">
-              BetterMe <span className="text-peach-500">Next-Gen</span>
+              G-<span className="text-peach-500">AI</span>
             </span>
             <span className="block text-[10px] text-stone-400 font-medium tracking-wide uppercase">
               AI Well-Being & Live PT
@@ -114,7 +114,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="text-center py-6 text-xs text-stone-400 border-t border-stone-200/60 bg-white/40">
-        BetterMe Next-Gen (G-AI) Project • Bản quyền 2026
+        G-AI Platform • Bản quyền 2026
       </footer>
     </div>
   );

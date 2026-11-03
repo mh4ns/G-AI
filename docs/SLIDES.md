@@ -2,7 +2,7 @@
 marp: true
 theme: default
 paginate: true
-header: "BetterMe Next-Gen Pitch Deck"
+header: "G-AI Pitch Deck"
 footer: "Confidential • 2026"
 style: |
   section {
@@ -32,7 +32,7 @@ style: |
 ---
 
 <!-- slide 1: TITLE SLIDE -->
-# BETTERME NEXT-GEN
+# G-AI
 ### Hệ Sinh Thái Huấn Luyện Sức Khỏe Toàn Diện Tích Hợp Real-Time AI Companion
 
 **Người trình bày:** Đội ngũ Phát triển Dự án  
@@ -58,11 +58,11 @@ style: |
 <!-- slide 3: THE SOLUTION -->
 ## 2. Giải Pháp: Hệ Sinh Thái 5 Trụ Cột Hợp Nhất
 
-BetterMe Next-Gen tạo ra **Vòng lặp Phản hồi Tích cực (Self-reinforcing Feedback Loop)**:
+G-AI tạo ra **Vòng lặp Phản hồi Tích cực (Self-reinforcing Feedback Loop)**:
 
 ```
           ┌────────────────────────────────────────────────────────┐
-          │                   BETTERME NEXT-GEN                    │
+          │                   G-AI                    │
           └──────────────────────────┬─────────────────────────────┘
                                      │
     ┌────────────────┬───────────────┼───────────────┬────────────────┐
@@ -209,7 +209,7 @@ flowchart LR
 
 ```mermaid
 gantt
-    title Lộ Trình Phát Triển BetterMe Next-Gen
+    title Lộ Trình Phát Triển G-AI
     dateFormat  YYYY-MM-DD
     section Giai đoạn 1: Nền tảng
     Redux Core & Jetpack Compose Migration :done, 2026-11-01, 30d
@@ -228,7 +228,7 @@ gantt
 <!-- slide 11: KEY METRICS & TARGET IMPACT -->
 ## 10. Bộ Chỉ Số Đánh Giá Thành Công (Target KPIs)
 
-| Chỉ số (KPI) | Hiện trạng (Industry Standard) | Mục tiêu BetterMe Next-Gen | Đòn bẩy Kỹ thuật |
+| Chỉ số (KPI) | Hiện trạng (Industry Standard) | Mục tiêu G-AI | Đòn bẩy Kỹ thuật |
 | :--- | :---: | :---: | :--- |
 | **Tỷ lệ hoàn thành bài tập** | $52\%$ | **$> 80\%$** | AI Companion đồng hành, khích lệ rep cuối |
 | **Tỷ lệ giữ chân sau 30 ngày (D30)** | $28\%$ | **$\ge 42\%$** | Vòng lặp thói quen khép kín (Today Hub, Streaks) |
@@ -242,7 +242,7 @@ gantt
 ## 11. Lợi Thế Cạnh Tranh Tuyệt Đối (The Moat)
 
 1. **Rào cản Phần cứng (Hardware Lock-in)**:
-   * Tương thích sâu với BetterMe Smart Scale & Band thông qua thuật toán độc quyền C++ JNI.
+   * Tương thích sâu với Smart Scale & Band thông qua thuật toán độc quyền C++ JNI.
 2. **Trải nghiệm Đa Giác Quan (Multimodal Experience)**:
    * Thị giác (Khung xương ảo), Âm thanh (Audio Coach Ducking), Cảm ứng lực (Haptic nhịp tim).
 3. **Bảo mật Y tế Tuyệt đối**:
@@ -251,7 +251,7 @@ gantt
 ---
 
 <!-- slide 13: CLOSING -->
-# BETTERME NEXT-GEN
+# G-AI
 ## Sẵn Sàng Định Hình Lại Tương Lai Của Ngành Health-Tech
 
 * **Sản phẩm hoàn thiện**: Kết hợp phần cứng IoT, giáo án khoa học và AI tiên tiến.

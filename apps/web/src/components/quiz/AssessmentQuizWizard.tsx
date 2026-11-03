@@ -163,7 +163,7 @@ export const AssessmentQuizWizard: React.FC = () => {
 
       {/* Footer Branding */}
       <footer className="text-center py-4 text-xs text-stone-400">
-        BetterMe Next-Gen • Hệ Sinh Thái Sức Khỏe Toàn Diện & AI Workout Companion
+        G-AI • Hệ Sinh Thái Sức Khỏe Toàn Diện & AI Workout Companion
       </footer>
     </div>
   );

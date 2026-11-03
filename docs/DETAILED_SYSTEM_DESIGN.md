@@ -1,6 +1,6 @@
-# HỆ THỐNG BETTERME NEXT-GEN: THIẾT KẾ KIẾN TRÚC & TỔNG HỢP USE CASE CHI TIẾT
+# HỆ THỐNG G-AI: THIẾT KẾ KIẾN TRÚC & TỔNG HỢP USE CASE CHI TIẾT
 > **Tài liệu Kỹ thuật Chuyên sâu (Detailed System Design & Use Case Traceability Document)**  
-> **Dự án**: BetterMe Next-Gen (G-AI)  
+> **Dự án**: G-AI (G-AI)  
 > **Phiên bản**: 2.0  
 > **Trạng thái**: Approved for Technical Implementation  
 
@@ -27,7 +27,7 @@
 
 # 1. TỔNG QUAN KIẾN TRÚC PHÂN TẦNG
 
-BetterMe Next-Gen áp dụng mô hình **Clean Architecture kết hợp MVI (Model-View-Intent) dựa trên ReduxCore**. Mọi dòng dữ liệu đều tuân theo nguyên lý **Luồng Dữ liệu Một chiều (Unidirectional Data Flow - UDF)**:
+G-AI áp dụng mô hình **Clean Architecture kết hợp MVI (Model-View-Intent) dựa trên ReduxCore**. Mọi dòng dữ liệu đều tuân theo nguyên lý **Luồng Dữ liệu Một chiều (Unidirectional Data Flow - UDF)**:
 
 1. **Presentation Layer (Tầng Giao diện)**: Xây dựng hoàn toàn bằng **Jetpack Compose**, chia sẻ trạng thái phản ứng (Reactive State) với Redux Store.
 2. **State Management Layer (Tầng Quản lý Trạng thái)**: `ReduxCore Store` quản lý các trạng thái bất biến (Immutable State). Các tác vụ bất đồng bộ và side-effects được xử lý qua chuỗi Middleware.
@@ -169,7 +169,7 @@ flowchart TD
     subgraph INFRA_LAYER ["5. INFRASTRUCTURE, DATA & BACKGROUND SERVICES"]
         RoomDB[("Local SQLite / Room Database")]
         HealthConnect[("Google Health Connect Provider")]
-        CloudAPI[("BetterMe Backend & LLM Gateway")]
+        CloudAPI[("G-AI Backend & LLM Gateway")]
         BgServices["Services: DistanceWorkoutService, VideosDownloaderService, BandNotificationsService"]
     end
 

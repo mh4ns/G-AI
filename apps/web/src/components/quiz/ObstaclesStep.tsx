@@ -98,7 +98,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
           <HeartHandshake className="w-5 h-5" />
         </div>
         <div>
-          <h4 className="font-bold text-stone-800 text-sm">Cam kết từ BetterMe AI Companion</h4>
+          <h4 className="font-bold text-stone-800 text-sm">Cam kết từ G-AI Companion</h4>
           <p className="text-xs text-stone-600 mt-1 leading-relaxed">
             AI sẽ sửa dáng trực tiếp qua webcam và trò chuyện CBT giúp bạn điều hòa cảm xúc, vượt qua cơn thèm ăn mà không cần ép buộc bản thân.
           </p>

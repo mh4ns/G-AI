@@ -35,7 +35,7 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-peach-50 border border-peach-100">
           <Sparkles className="w-4 h-4 text-peach-500 animate-pulse" />
           <span className="text-xs font-semibold text-peach-600 tracking-wide uppercase">
-            BetterMe AI • Thiết lập Lộ trình
+            G-AI • Thiết lập Lộ trình
           </span>
         </div>
 

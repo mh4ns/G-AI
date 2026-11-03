@@ -1,5 +1,5 @@
 # KẾ HOẠCH BẺ NHỎ & PHÂN TÁCH USE CASE — HỆ THỐNG WEB & APP (HARDWARE-FREE)
-> **Dự án**: BetterMe Next-Gen (G-AI)  
+> **Dự án**: G-AI (G-AI)  
 > **Kiến trúc**: Web Responsive (Next.js / React) + Mobile App (Flutter / React Native / Android Compose) + Backend AI Service (FastAPI / Node.js)  
 > **Đặc điểm**: **100% Thuần Phần Mềm (Software-Only)** — Loại bỏ hoàn toàn phụ thuộc vào phần cứng (không cần cân điện tử, không cần vòng đeo tay BLE).
 

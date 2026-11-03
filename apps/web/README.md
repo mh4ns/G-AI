@@ -1,4 +1,4 @@
-# BetterMe Next-Gen (G-AI) — Web Application
+# G-AI — Web Application
 
 ## 1. Overview
 Modern Next.js 15 Web Application supporting:
