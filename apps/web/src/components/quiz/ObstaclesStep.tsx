@@ -1,87 +1,78 @@
+"use client";
+
 import React from "react";
-import { FitnessObstacle } from "@/types/quiz";
-import { ShieldCheck, HeartHandshake, Check } from "lucide-react";
+import { Check, HeartHandshake, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FitnessObstacle } from "@/types/quiz";
 
 interface ObstaclesStepProps {
   selectedObstacles: FitnessObstacle[];
-  onToggleObstacle: (obstacle: FitnessObstacle) => void;
+  onToggleObstacle: (obstacleId: FitnessObstacle) => void;
   onSubmit: () => void;
 }
+
+const OBSTACLES: {
+  id: FitnessObstacle;
+  title: string;
+  desc: string;
+  emoji: string;
+}[] = [
+  { id: "sweet_cravings", title: "Cơn Thèm Ngọt & Ăn Vặt Đêm", desc: "Thường xuyên thèm đồ ngọt hoặc ăn theo cảm xúc khi căng thẳng.", emoji: "🍫" },
+  { id: "busy_schedule", title: "Lịch Trình Bận Rộn", desc: "Khó dành ra 1-2 tiếng đến phòng gym, chỉ có thể tập 15-20 phút tại nhà.", emoji: "⏰" },
+  { id: "sore_back", title: "Đau Lưng & Khớp Gối Nhạy Cảm", desc: "Cần các bài tập Low-Impact trên tường hoặc thảm, không nhảy xóc hay chấn thương.", emoji: "🦴" },
+  { id: "lack_of_motivation", title: "Dễ Nản Khi Tập Một Mình", desc: "Cần phản hồi khích lệ và hướng dẫn sửa động tác ngay khi thực hiện.", emoji: "🤍" },
+];
 
 export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
   selectedObstacles,
   onToggleObstacle,
   onSubmit,
 }) => {
-  const obstacles: { id: FitnessObstacle; title: string; desc: string; emoji: string }[] = [
-    {
-      id: "sweet_cravings",
-      title: "Thèm đồ ngọt & ăn vặt ban đêm",
-      desc: "Khó kiềm chế trước trà sữa, bánh ngọt khi ở nhà muộn",
-      emoji: "🍰",
-    },
-    {
-      id: "stress_eating",
-      title: "Ăn uống do căng thẳng (Stress Eating)",
-      desc: "Áp lực công việc khiến mình muốn ăn nhiều hơn bình thường",
-      emoji: "🧠",
-    },
-    {
-      id: "low_motivation",
-      title: "Dễ nản & bỏ dở sau vài ngày",
-      desc: "Tập một mình rất buồn, thiếu người đếm nhịp và khích lệ",
-      emoji: "😔",
-    },
-    {
-      id: "lack_of_time",
-      title: "Lịch trình bận rộn, ít thời gian",
-      desc: "Cần các bài tập ngắn 15–20 phút nhưng đốt mỡ hiệu quả cao",
-      emoji: "⏰",
-    },
-    {
-      id: "sore_back",
-      title: "Đau mỏi vai gáy & sợ sai tư thế",
-      desc: "Lo sợ tự tập sai dáng sẽ gây đau lưng hoặc chấn thương khớp",
-      emoji: "🩹",
-    },
-  ];
-
   return (
-    <div className="w-full max-w-xl mx-auto px-4 py-4 animate-in fade-in duration-300">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-stone-800 mb-2">
-          Điều gì từng khiến bạn gặp khó khăn nhất?
-        </h1>
-        <p className="text-stone-500 text-sm sm:text-base">
-          Chia sẻ thật lòng để AI hiểu bạn và trở thành điểm tựa tâm lý vững vàng.
+    <div className="w-full max-w-xl mx-auto px-4 py-6 animate-in fade-in duration-300">
+      <div className="text-center mb-8">
+        <span className="text-xs font-bold tracking-widest text-stone-400 uppercase">
+          Bước 5 / 5
+        </span>
+        <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
+          Rào Cản Lớn Nhất Của Bạn?
+        </h2>
+        <p className="text-stone-500 text-sm mt-1">
+          Chia sẻ để AI hiểu bạn và xây dựng lộ trình thích nghi dễ dàng nhất.
         </p>
       </div>
 
       <div className="space-y-3 mb-6">
-        {obstacles.map((item) => {
+        {OBSTACLES.map((item) => {
           const isSelected = selectedObstacles.includes(item.id);
           return (
             <div
               key={item.id}
               onClick={() => onToggleObstacle(item.id)}
               className={cn(
-                "p-4 rounded-2xl border cursor-pointer transition-all duration-200 flex items-center gap-3.5 bg-white",
+                "p-4 sm:p-5 rounded-2xl border bg-white cursor-pointer transition-all duration-200 flex items-center justify-between shadow-soft hover:shadow-card",
                 isSelected
-                  ? "border-peach-500 bg-peach-50/20 shadow-card ring-2 ring-peach-200/50"
-                  : "border-stone-200 hover:border-peach-200"
+                  ? "border-[#FF5A36] ring-2 ring-[#FF5A36]/20 bg-peach-50/20"
+                  : "border-stone-200 hover:border-stone-300"
               )}
             >
-              <span className="text-2xl shrink-0">{item.emoji}</span>
-              <div className="flex-1">
-                <h3 className="font-semibold text-stone-800 text-sm sm:text-base">{item.title}</h3>
-                <p className="text-xs text-stone-500 mt-0.5">{item.desc}</p>
+              <div className="flex items-center gap-3.5">
+                <span className="text-2xl shrink-0">{item.emoji}</span>
+                <div>
+                  <h3 className="font-bold text-stone-900 text-sm sm:text-base">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-stone-500 mt-0.5 leading-snug">
+                    {item.desc}
+                  </p>
+                </div>
               </div>
+
               <div
                 className={cn(
-                  "w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors",
+                  "w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-3 transition-colors",
                   isSelected
-                    ? "bg-peach-500 border-peach-500 text-white"
+                    ? "border-[#FF5A36] bg-[#FF5A36] text-white"
                     : "border-stone-300 bg-stone-50"
                 )}
               >
@@ -92,25 +83,27 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
         })}
       </div>
 
-      {/* AI Companion Guarantee Card */}
-      <div className="p-4 rounded-2xl bg-gradient-to-br from-peach-50 via-cream-100 to-sage-50 border border-peach-200/80 mb-8 flex items-start gap-3.5 shadow-soft">
-        <div className="w-9 h-9 rounded-xl bg-peach-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+      {/* AI Live PT Guarantee Card */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-peach-50/60 via-white to-emerald-50/40 border border-peach-200/80 mb-8 flex items-start gap-3.5 shadow-soft">
+        <div className="w-10 h-10 rounded-2xl bg-[#FF5A36] text-white flex items-center justify-center shrink-0 shadow-sm">
           <HeartHandshake className="w-5 h-5" />
         </div>
         <div>
-          <h4 className="font-bold text-stone-800 text-sm">Cam kết từ G-AI Companion</h4>
+          <h4 className="font-bold text-stone-900 text-sm">
+            Cam kết đồng hành từ G—AI Companion
+          </h4>
           <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-            AI sẽ sửa dáng trực tiếp qua webcam và trò chuyện CBT giúp bạn điều hòa cảm xúc, vượt qua cơn thèm ăn mà không cần ép buộc bản thân.
+            AI sẽ quan sát qua webcam để nhắc bạn siết cơ bụng, sửa võng lưng và động viên kịp thời. 100% thuần phần mềm, không yêu cầu thiết bị đắt tiền.
           </p>
         </div>
       </div>
 
       <button
         onClick={onSubmit}
-        className="w-full py-4 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-600 hover:from-peach-600 hover:to-peach-700 text-white font-semibold text-base shadow-soft hover:shadow-glow transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2"
+        className="w-full py-4 rounded-full bg-[#FF5A36] hover:bg-[#E64E2B] text-white font-bold text-base transition-all duration-300 shadow-soft active:scale-[0.99] flex items-center justify-center gap-2"
       >
         <ShieldCheck className="w-5 h-5" />
-        Tạo Lộ Trình Cá Nhân Hóa Của Tôi
+        <span>Tạo Lộ Trình Cá Nhân Hóa 28 Ngày</span>
       </button>
     </div>
   );

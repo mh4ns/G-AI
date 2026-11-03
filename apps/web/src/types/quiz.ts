@@ -1,6 +1,13 @@
 export type Gender = 'female' | 'male';
 
-export type PrimaryGoal = 'lose_weight' | 'tone_muscle' | 'improve_posture' | 'boost_energy';
+export type PrimaryGoal = 
+  | 'lose_weight' 
+  | 'tone_muscle' 
+  | 'improve_posture' 
+  | 'boost_energy'
+  | 'tone_glutes'
+  | 'fix_posture'
+  | 'mindful_flexibility';
 
 export type BodyFocusArea = 'belly' | 'thighs' | 'glutes' | 'back' | 'arms' | 'full_body';
 
@@ -8,7 +15,14 @@ export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active'
 
 export type DietPreference = 'balanced' | 'vegetarian' | 'low_carb' | 'intermittent_fasting';
 
-export type FitnessObstacle = 'stress_eating' | 'lack_of_time' | 'low_motivation' | 'sore_back' | 'sweet_cravings';
+export type FitnessObstacle = 
+  | 'stress_eating' 
+  | 'lack_of_time' 
+  | 'low_motivation' 
+  | 'sore_back' 
+  | 'sweet_cravings'
+  | 'busy_schedule'
+  | 'lack_of_motivation';
 
 export interface QuizResponses {
   gender: Gender;

@@ -1,19 +1,46 @@
 import { QuizResponses, PersonalizedPlanResult } from "@/types/quiz";
 
+export function calculateBMI(weightKg: number, heightCm: number): number {
+  const heightM = heightCm / 100;
+  return parseFloat((weightKg / (heightM * heightM)).toFixed(1));
+}
+
+export function getBMICategory(bmi: number): { label: string; color: string; advice: string } {
+  if (bmi < 18.5) {
+    return {
+      label: "Thiếu cân",
+      color: "border-blue-200 text-blue-700 bg-blue-50",
+      advice: "Cần tăng cường dinh dưỡng lành mạnh và tập các bài kháng lực tăng khối cơ.",
+    };
+  }
+  if (bmi < 24.9) {
+    return {
+      label: "Cân đối lý tưởng",
+      color: "border-emerald-200 text-emerald-700 bg-emerald-50",
+      advice: "Tuyệt vời! Bạn đang ở dải cân nặng khỏe mạnh. Giáo án sẽ tập trung siết cơ và định hình đường cong.",
+    };
+  }
+  if (bmi < 29.9) {
+    return {
+      label: "Thừa cân nhẹ",
+      color: "border-amber-200 text-amber-700 bg-amber-50",
+      advice: "Thâm hụt nhẹ 300-450 kcal/ngày kết hợp Pilates sẽ giúp giảm mỡ an toàn mà không mệt mỏi.",
+    };
+  }
+  return {
+    label: "Cần kiểm soát cân nặng",
+    color: "border-rose-200 text-rose-700 bg-rose-50",
+    advice: "Ưu tiên các bài tập Low-Impact trên thảm để bảo vệ khớp gối và đốt mỡ từ từ.",
+  };
+}
+
 export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlanResult {
   // 1. Calculate BMI
-  const heightM = data.heightCm / 100;
-  const bmi = parseFloat((data.currentWeightKg / (heightM * heightM)).toFixed(1));
-
-  let bmiCategory = "Cân đối";
-  if (bmi < 18.5) bmiCategory = "Thiếu cân";
-  else if (bmi < 24.9) bmiCategory = "Cân đối lý tưởng";
-  else if (bmi < 29.9) bmiCategory = "Hơi thừa cân";
-  else bmiCategory = "Cần quản lý cân nặng";
+  const bmi = calculateBMI(data.currentWeightKg, data.heightCm);
+  const bmiCategoryObj = getBMICategory(bmi);
+  const bmiCategory = bmiCategoryObj.label;
 
   // 2. Calculate BMR (Mifflin-St Jeor Equation)
-  // Men: 10 * weight(kg) + 6.25 * height(cm) - 5 * age + 5
-  // Women: 10 * weight(kg) + 6.25 * height(cm) - 5 * age - 161
   let bmr = 10 * data.currentWeightKg + 6.25 * data.heightCm - 5 * data.age;
   if (data.gender === "male") {
     bmr += 5;
@@ -42,7 +69,6 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     // Goal: Lose weight (healthy safe deficit of 350-500 kcal/day)
     calorieDeficitDaily = 450;
     dailyCalorieTarget = Math.max(1200, tdee - calorieDeficitDaily);
-    // 1kg of body fat is roughly 7700 kcal
     const totalDeficitNeeded = weightDiff * 7700;
     const weeklyDeficit = calorieDeficitDaily * 7;
     estimatedWeeks = Math.max(2, Math.round(totalDeficitNeeded / weeklyDeficit));
