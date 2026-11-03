@@ -1,5 +1,5 @@
-import Link from "react";
-import { Sparkles, Video, Flame, Heart, ArrowRight, ShieldCheck, Smile, Award } from "lucide-react";
+import Link from "next/link";
+import { Sparkles, Video, Flame, Heart, ArrowRight, ShieldCheck, Smile, Award, Compass } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -21,18 +21,25 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <a
-            href="/store"
-            className="text-xs sm:text-sm font-semibold text-stone-700 hover:text-[#FF6542] transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-stone-200"
+          <Link
+            href="/prediction"
+            className="text-xs sm:text-sm font-semibold text-stone-700 hover:text-[#FF5A36] transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-stone-200 flex items-center gap-1.5"
           >
-            🛍️ Cửa Hàng (Store)
-          </a>
-          <a
+            <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <span>Digital Twin</span>
+          </Link>
+          <Link
+            href="/store"
+            className="text-xs sm:text-sm font-semibold text-stone-700 hover:text-[#FF5A36] transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-stone-200"
+          >
+            Cửa Hàng (Store)
+          </Link>
+          <Link
             href="/today"
-            className="text-xs sm:text-sm font-semibold text-stone-600 hover:text-peach-600 transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-transparent hover:border-peach-100"
+            className="text-xs sm:text-sm font-semibold text-stone-600 hover:text-[#FF5A36] transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-transparent hover:border-peach-100"
           >
             Đến Bảng Điều Khiển →
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -58,19 +65,26 @@ export default function HomePage() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-14">
-          <a
+          <Link
             href="/quiz"
-            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-peach-500 via-peach-600 to-amber-500 hover:from-peach-600 hover:to-amber-600 text-white font-bold text-base shadow-soft hover:shadow-glow transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2.5"
+            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[#FF5A36] to-amber-500 hover:from-[#e04825] hover:to-amber-600 text-white font-bold text-base shadow-soft hover:shadow-glow transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2.5"
           >
             <span>Làm Khảo Sát & Nhận Lộ Trình</span>
             <ArrowRight className="w-5 h-5" />
-          </a>
-          <a
+          </Link>
+          <Link
+            href="/prediction"
+            className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-semibold text-base border border-stone-800 shadow-card transition-all duration-200 flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span>Xem Mô Hình Nhân Vật (Digital Twin)</span>
+          </Link>
+          <Link
             href="/today"
             className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-stone-50 text-stone-700 font-semibold text-base border border-stone-200 shadow-card transition-all duration-200"
           >
-            Khám Phá Today Dashboard
-          </a>
+            Bảng Điều Khiển Today
+          </Link>
         </div>
 
         {/* 3 Pillar Feature Cards */}

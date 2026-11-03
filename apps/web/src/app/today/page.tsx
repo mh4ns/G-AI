@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Flame,
   Droplets,
@@ -159,7 +160,28 @@ export default function TodayDashboardPage() {
           </div>
         </section>
 
-        {/* Today's Workout Card with AI Live PT Spotlight */}
+        {/* Digital Twin AI Prediction Teaser Banner */}
+        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 border border-stone-800 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-[#FF5A36]/20 border border-[#FF5A36]/30 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-[#FF5A36]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-white">Mô Hình Nhân Vật Biến Đổi 28 Ngày (Digital Twin)</h3>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-semibold">MỚI</span>
+              </div>
+              <p className="text-xs text-stone-400 mt-0.5">Kéo thanh timeline để xem mô phỏng gù lưng giảm dần và siết eo tự nhiên.</p>
+            </div>
+          </div>
+          <Link
+            href="/prediction"
+            className="px-5 py-2.5 rounded-full bg-white text-stone-900 hover:bg-stone-200 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <span>Xem Mô Phỏng</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </section>
         <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-soft relative overflow-hidden">
           <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 w-48 h-48 rounded-full bg-peach-500/10 blur-2xl pointer-events-none" />
 

@@ -2,8 +2,9 @@
 
 import React, { useEffect } from "react";
 import { QuizResponses, PersonalizedPlanResult } from "@/types/quiz";
-import { Trophy, Calendar, CheckCircle2, ArrowRight, Video, Flame, Droplets, HeartHandshake } from "lucide-react";
+import { Trophy, Calendar, CheckCircle2, ArrowRight, Video, Flame, Droplets, HeartHandshake, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
+import Link from "next/link";
 
 interface PlanResultViewProps {
   responses: QuizResponses;
@@ -152,14 +153,24 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
         </div>
       </div>
 
-      {/* Call to Action to Enter Today Dashboard */}
-      <button
-        onClick={onGoToDashboard}
-        className="w-full py-4 px-6 rounded-full bg-[#FF5A36] hover:bg-[#E64E2B] text-white font-black text-base sm:text-lg shadow-soft hover:shadow-card transition-all duration-300 active:scale-[0.99] flex items-center justify-center gap-2.5"
-      >
-        <span>Bắt Đầu Hành Trình Ngay Hôm Nay</span>
-        <ArrowRight className="w-5 h-5" />
-      </button>
+      {/* Call to Action to Enter Today Dashboard & Digital Twin */}
+      <div className="space-y-3">
+        <button
+          onClick={onGoToDashboard}
+          className="w-full py-4 px-6 rounded-full bg-[#FF5A36] hover:bg-[#E64E2B] text-white font-black text-base sm:text-lg shadow-soft hover:shadow-card transition-all duration-300 active:scale-[0.99] flex items-center justify-center gap-2.5"
+        >
+          <span>Bắt Đầu Hành Trình Ngay Hôm Nay</span>
+          <ArrowRight className="w-5 h-5" />
+        </button>
+
+        <Link
+          href="/prediction"
+          className="w-full py-3.5 px-6 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 border border-stone-800"
+        >
+          <Sparkles className="w-4 h-4 text-emerald-400" />
+          <span>Kéo Thanh Thời Gian Dự Đoán Biến Đổi Hình Thể (Digital Twin)</span>
+        </Link>
+      </div>
 
       <div className="flex items-center justify-center gap-2 text-stone-400 text-xs mt-4">
         <HeartHandshake className="w-4 h-4 text-[#FF5A36]" />
