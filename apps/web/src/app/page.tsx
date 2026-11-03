@@ -20,12 +20,20 @@ export default function HomePage() {
           </div>
         </div>
 
-        <a
-          href="/today"
-          className="text-xs sm:text-sm font-semibold text-stone-600 hover:text-peach-600 transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-transparent hover:border-peach-100"
-        >
-          Đến Bảng Điều Khiển →
-        </a>
+        <div className="flex items-center gap-3">
+          <a
+            href="/store"
+            className="text-xs sm:text-sm font-semibold text-stone-700 hover:text-[#FF6542] transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-stone-200"
+          >
+            🛍️ Cửa Hàng (Store)
+          </a>
+          <a
+            href="/today"
+            className="text-xs sm:text-sm font-semibold text-stone-600 hover:text-peach-600 transition-colors px-3 py-1.5 rounded-full hover:bg-white/80 border border-transparent hover:border-peach-100"
+          >
+            Đến Bảng Điều Khiển →
+          </a>
+        </div>
       </header>
 
       {/* Hero Section */}

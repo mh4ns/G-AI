@@ -89,6 +89,13 @@ export default function TodayDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <a
+              href="/store"
+              className="text-xs font-semibold text-stone-600 hover:text-[#FF6542] px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors"
+            >
+              🛍️ Store
+            </a>
+
             {/* Streak Badge */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold shadow-sm">
               <span className="text-sm">🔥</span>
