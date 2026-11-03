@@ -36,3 +36,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
