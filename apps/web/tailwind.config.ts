@@ -44,6 +44,22 @@ const config: Config = {
           400: "#FBBF24",
           500: "#F59E0B",
         },
+        pitch: "#121314",
+        ecru: {
+          50: "#FAF9F5",
+          100: "#F5F3EF",
+          200: "#EFECE6",
+          300: "#E3DFD7",
+        },
+        espresso: {
+          700: "#4D3B36",
+          800: "#3D2D29",
+          900: "#2B1F1C",
+        },
+        terracotta: {
+          500: "#E85A37",
+          600: "#D34B29",
+        },
       },
       fontFamily: {
         sans: ["var(--font-outfit)", "system-ui", "sans-serif"],

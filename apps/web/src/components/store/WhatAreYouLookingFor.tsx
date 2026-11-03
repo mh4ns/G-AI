@@ -1,53 +1,97 @@
 "use client";
 
 import React from "react";
-import { ArrowUpRight } from "lucide-react";
-import { CATEGORY_GRID_ITEMS } from "@/data/mockStoreData";
 import Link from "next/link";
 
 export const WhatAreYouLookingFor: React.FC = () => {
   return (
-    <section className="py-12 sm:py-20 lg:py-24 bg-white border-b border-stone-100">
+    <section className="py-16 sm:py-24 bg-white border-b border-ecru-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-stone-900">
-            What Are You Looking For?
-          </h2>
-          <p className="text-stone-500 text-sm sm:text-base mt-2">
-            Chọn danh mục để khám phá trang phục và dụng cụ phù hợp với bạn
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 pb-4 border-b border-ecru-200 gap-4">
+          <div>
+            <span className="text-xs font-mono tracking-widest text-stone-500 uppercase">
+              Curated Index
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-[-0.03em] text-pitch mt-1">
+              Primary Divisions
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-stone-500 max-w-sm">
+            Disciplined garment cuts and tactile Pilates instruments structured for daily functional practice.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-          {CATEGORY_GRID_ITEMS.map((item, idx) => (
-            <Link
-              key={idx}
-              href={item.link}
-              className="group flex flex-col overflow-hidden rounded-2xl bg-stone-50 border border-stone-200/80 hover:border-stone-400/80 transition-all duration-300 hover:shadow-card"
-            >
-              {/* Image Container with Hover Scale */}
-              <div className="relative aspect-[4/5] overflow-hidden bg-stone-200">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-stone-700 group-hover:bg-black group-hover:text-white transition-colors shadow-sm">
-                  <ArrowUpRight className="w-4 h-4" />
-                </div>
-              </div>
+        {/* Asymmetric 3-Tile Architectural Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Tile 1: Dominant Portrait Feature (7 cols) */}
+          <Link
+            href="/store#catalog"
+            className="lg:col-span-7 group relative aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/4] rounded-2xl overflow-hidden bg-ecru-100 border border-ecru-200 flex flex-col justify-end p-6 sm:p-8"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80"
+              alt="Full-Length Catsuits & Sculpt Bodysuits"
+              className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ease-out"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-pitch/80 via-pitch/20 to-transparent" />
 
-              {/* Text Info */}
-              <div className="p-4 sm:p-5">
-                <h3 className="font-bold text-stone-900 text-base sm:text-lg group-hover:text-[#FF6542] transition-colors">
-                  {item.title}
+            <div className="relative z-10 text-white space-y-1.5">
+              <span className="text-[11px] font-mono tracking-widest text-ecru-300 uppercase">
+                Division 01 — Seamless Architecture
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                Catsuits & Compression Bodysuits
+              </h3>
+              <p className="text-xs text-ecru-200/90 max-w-md hidden sm:block">
+                Continuous seamlines, zero waistline pinching, and full kinematic freedom for dynamic Pilates postures.
+              </p>
+            </div>
+          </Link>
+
+          {/* Tiles 2 & 3: Stacked Landscape Tiles (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <Link
+              href="/store#apparatus"
+              className="group relative flex-1 aspect-[16/9] sm:aspect-[16/8] lg:aspect-auto rounded-2xl overflow-hidden bg-ecru-100 border border-ecru-200 flex flex-col justify-end p-6"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1598971861713-54ad16a7e72e?auto=format&fit=crop&w=800&q=80"
+                alt="Pilates Apparatus & Essential Kits"
+                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-pitch/75 via-pitch/20 to-transparent" />
+
+              <div className="relative z-10 text-white">
+                <span className="text-[10px] font-mono tracking-widest text-ecru-300 uppercase">
+                  Division 02 — Apparatus
+                </span>
+                <h3 className="text-xl font-bold tracking-tight text-white">
+                  Pilates Resistance Kits & Reformer
                 </h3>
-                <p className="text-xs text-stone-500 mt-1 line-clamp-1">
-                  {item.desc}
-                </p>
               </div>
             </Link>
-          ))}
+
+            <Link
+              href="/store#catalog"
+              className="group relative flex-1 aspect-[16/9] sm:aspect-[16/8] lg:aspect-auto rounded-2xl overflow-hidden bg-ecru-100 border border-ecru-200 flex flex-col justify-end p-6"
+            >
+              <img
+                src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80"
+                alt="Coordinated Sets in Chocolate and Raw Ecru"
+                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-pitch/75 via-pitch/20 to-transparent" />
+
+              <div className="relative z-10 text-white">
+                <span className="text-[10px] font-mono tracking-widest text-ecru-300 uppercase">
+                  Division 03 — Coordinated Sets
+                </span>
+                <h3 className="text-xl font-bold tracking-tight text-white">
+                  Chocolate Knitwear & High-Waist Capris
+                </h3>
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
     </section>
