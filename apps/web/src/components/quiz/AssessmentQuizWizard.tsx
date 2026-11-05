@@ -176,14 +176,18 @@ export const AssessmentQuizWizard: React.FC = () => {
 
         {step === 3 && (
           <FocusAreaStep
+            archetype={responses.archetype}
             selectedAreas={responses.focusAreas}
+            equipmentAccess={responses.equipmentAccess}
             onToggleArea={handleToggleFocusArea}
+            onSelectEquipment={(equipmentAccess) => setResponses((prev) => ({ ...prev, equipmentAccess }))}
             onNext={handleNext}
           />
         )}
 
         {step === 4 && (
           <BodyStatsStep
+            archetype={responses.archetype}
             heightCm={responses.heightCm}
             currentWeightKg={responses.currentWeightKg}
             targetWeightKg={responses.targetWeightKg}
@@ -194,8 +198,21 @@ export const AssessmentQuizWizard: React.FC = () => {
 
         {step === 5 && (
           <ObstaclesStep
+            archetype={responses.archetype}
             selectedObstacles={responses.obstacles}
+            selectedInjuries={responses.injuries}
             onToggleObstacle={handleToggleObstacle}
+            onToggleInjury={(injury) =>
+              setResponses((prev) => {
+                const exists = prev.injuries.includes(injury);
+                return {
+                  ...prev,
+                  injuries: exists
+                    ? prev.injuries.filter((i) => i !== injury)
+                    : [...prev.injuries, injury],
+                };
+              })
+            }
             onSubmit={handleSubmit}
           />
         )}

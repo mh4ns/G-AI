@@ -1,10 +1,12 @@
 "use client";
 
 import React from "react";
-import { ArrowRight, Sparkles, Scale, Info } from "lucide-react";
+import { ArrowRight, Sparkles, Scale, Info, Plus, Minus } from "lucide-react";
 import { calculateBMI, getBMICategory } from "@/lib/quiz-calculations";
+import { AthleticArchetype } from "@/types/quiz";
 
 interface BodyStatsStepProps {
+  archetype?: AthleticArchetype;
   heightCm: number;
   currentWeightKg: number;
   targetWeightKg: number;
@@ -13,12 +15,14 @@ interface BodyStatsStepProps {
 }
 
 export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
+  archetype = "female_pilates",
   heightCm,
   currentWeightKg,
   targetWeightKg,
   onChangeStats,
   onNext,
 }) => {
+  const isMale = archetype === "male_strength";
   const bmi = calculateBMI(currentWeightKg, heightCm);
   const bmiCategory = getBMICategory(bmi);
   const weightDiff = targetWeightKg - currentWeightKg;
@@ -26,23 +30,33 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-6 animate-in fade-in duration-300">
       <div className="text-center mb-6">
-        <span className="text-xs font-bold tracking-widest text-stone-400 uppercase">
-          Bước 4 / 5
+        <span className={`text-xs font-bold tracking-widest uppercase ${
+          isMale ? "text-[#FF5A36]" : "text-[#FF6B4A]"
+        }`}>
+          Bước 4 / 5 • Chỉ Số Thể Trạng
         </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
-          Chỉ Số Thể Trạng Hiện Tại
+        <h2 className={`text-2xl sm:text-3xl font-black tracking-tight mt-1 ${
+          isMale ? "text-white" : "text-stone-900"
+        }`}>
+          Chiều Cao & Cân Nặng Mục Tiêu
         </h2>
-        <p className="text-stone-500 text-sm mt-1">
-          Dữ liệu giúp thuật toán tính chính xác năng lượng trao đổi chất cơ bản (BMR).
+        <p className={`text-sm mt-1 max-w-md mx-auto ${
+          isMale ? "text-stone-400" : "text-stone-600"
+        }`}>
+          Dữ liệu giúp thuật toán tính chính xác năng lượng chuyển hóa sinh học (BMR) và chỉ số khối (BMI).
         </p>
       </div>
 
       {/* Live BMI Radiant Display Card */}
-      <div className="p-5 rounded-3xl bg-white border border-stone-200/90 shadow-card mb-6">
+      <div className={`p-5 rounded-3xl border shadow-card mb-6 ${
+        isMale ? "bg-[#161514] border-stone-800" : "bg-white border-stone-200/90"
+      }`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Scale className="w-4 h-4 text-[#FF5A36]" />
-            <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            <Scale className={`w-4 h-4 ${isMale ? "text-[#FF5A36]" : "text-[#FF6B4A]"}`} />
+            <span className={`text-xs font-bold uppercase tracking-wider ${
+              isMale ? "text-stone-400" : "text-stone-500"
+            }`}>
               Chỉ Số Khối Cơ Thể (BMI)
             </span>
           </div>
@@ -52,96 +66,152 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
         </div>
 
         <div className="flex items-baseline gap-3 mb-2">
-          <span className="text-4xl sm:text-5xl font-black text-stone-900">
+          <span className={`text-4xl sm:text-5xl font-black ${
+            isMale ? "text-white" : "text-stone-900"
+          }`}>
             {bmi}
           </span>
           <span className="text-xs text-stone-400 font-mono">kg/m²</span>
         </div>
 
-        <p className="text-xs text-stone-600 leading-relaxed bg-stone-50 p-3 rounded-2xl border border-stone-100 flex items-start gap-2">
-          <Info className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
-          <span>{bmiCategory.advice}</span>
+        <p className={`text-xs leading-relaxed ${
+          isMale ? "text-stone-400" : "text-stone-600"
+        }`}>
+          {bmiCategory.advice}
         </p>
       </div>
 
-      {/* Controls Card */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-stone-200/90 shadow-card space-y-6 mb-8">
-        {/* Height Slider */}
-        <div>
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="font-bold text-stone-700">Chiều cao</span>
-            <span className="font-extrabold text-[#FF5A36] text-lg font-mono">{heightCm} cm</span>
+      {/* 3 Metric Numeric Sliders / Steppers */}
+      <div className="space-y-4 mb-8">
+        {/* Height */}
+        <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+          isMale ? "bg-[#161514] border-stone-800" : "bg-white border-stone-200"
+        }`}>
+          <div>
+            <div className={`text-xs font-bold uppercase ${isMale ? "text-stone-400" : "text-stone-500"}`}>
+              Chiều Cao
+            </div>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className={`text-2xl font-black ${isMale ? "text-white" : "text-stone-900"}`}>
+                {heightCm}
+              </span>
+              <span className="text-xs text-stone-400">cm</span>
+            </div>
           </div>
-          <input
-            type="range"
-            min={135}
-            max={210}
-            value={heightCm}
-            onChange={(e) => onChangeStats("heightCm", Number(e.target.value))}
-            className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A36]"
-          />
-          <div className="flex justify-between text-[10px] text-stone-400 mt-1 font-mono">
-            <span>135 cm</span>
-            <span>170 cm</span>
-            <span>210 cm</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onChangeStats("heightCm", Math.max(130, heightCm - 1))}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onChangeStats("heightCm", Math.min(220, heightCm + 1))}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
         {/* Current Weight */}
-        <div>
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="font-bold text-stone-700">Cân nặng hiện tại</span>
-            <span className="font-extrabold text-[#FF5A36] text-lg font-mono">{currentWeightKg} kg</span>
+        <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+          isMale ? "bg-[#161514] border-stone-800" : "bg-white border-stone-200"
+        }`}>
+          <div>
+            <div className={`text-xs font-bold uppercase ${isMale ? "text-stone-400" : "text-stone-500"}`}>
+              Cân Nặng Hiện Tại
+            </div>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className={`text-2xl font-black ${isMale ? "text-white" : "text-stone-900"}`}>
+                {currentWeightKg}
+              </span>
+              <span className="text-xs text-stone-400">kg</span>
+            </div>
           </div>
-          <input
-            type="range"
-            min={35}
-            max={150}
-            value={currentWeightKg}
-            onChange={(e) => onChangeStats("currentWeightKg", Number(e.target.value))}
-            className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#FF5A36]"
-          />
-          <div className="flex justify-between text-[10px] text-stone-400 mt-1 font-mono">
-            <span>35 kg</span>
-            <span>60 kg</span>
-            <span>150 kg</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onChangeStats("currentWeightKg", Math.max(35, currentWeightKg - 1))}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onChangeStats("currentWeightKg", Math.min(180, currentWeightKg + 1))}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
         {/* Target Weight */}
-        <div>
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="font-bold text-stone-700">Cân nặng mong muốn</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-stone-500">
-                ({weightDiff > 0 ? `+${weightDiff}` : weightDiff} kg)
+        <div className={`p-4 rounded-2xl border flex items-center justify-between ${
+          isMale ? "bg-[#161514] border-stone-800" : "bg-white border-stone-200"
+        }`}>
+          <div>
+            <div className={`text-xs font-bold uppercase ${isMale ? "text-stone-400" : "text-stone-500"}`}>
+              Cân Nặng Mục Tiêu
+            </div>
+            <div className="flex items-baseline gap-2 mt-0.5">
+              <span className={`text-2xl font-black ${isMale ? "text-white" : "text-stone-900"}`}>
+                {targetWeightKg}
               </span>
-              <span className="font-extrabold text-emerald-600 text-lg font-mono">{targetWeightKg} kg</span>
+              <span className="text-xs text-stone-400">kg</span>
+              {weightDiff !== 0 && (
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  weightDiff > 0 
+                    ? "bg-emerald-100 text-emerald-700" 
+                    : "bg-blue-100 text-blue-700"
+                }`}>
+                  {weightDiff > 0 ? `+${weightDiff} kg tăng cơ` : `${weightDiff} kg giảm mỡ`}
+                </span>
+              )}
             </div>
           </div>
-          <input
-            type="range"
-            min={35}
-            max={120}
-            value={targetWeightKg}
-            onChange={(e) => onChangeStats("targetWeightKg", Number(e.target.value))}
-            className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-          />
-          <div className="flex justify-between text-[10px] text-stone-400 mt-1 font-mono">
-            <span>35 kg</span>
-            <span>50 kg</span>
-            <span>120 kg</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onChangeStats("targetWeightKg", Math.max(35, targetWeightKg - 1))}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onChangeStats("targetWeightKg", Math.min(180, targetWeightKg + 1))}
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
 
-      <button
-        onClick={onNext}
-        className="w-full py-4 rounded-full bg-[#FF5A36] hover:bg-[#E64E2B] text-white font-bold text-base transition-all duration-300 shadow-soft active:scale-[0.99] flex items-center justify-center gap-2"
-      >
-        <span>Tiếp Tục</span>
-        <ArrowRight className="w-4 h-4" />
-      </button>
+      {/* Next Button */}
+      <div className="flex justify-end pt-2">
+        <button
+          onClick={onNext}
+          className={`px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
+            isMale
+              ? "bg-[#FF5A36] hover:bg-[#ff461e] text-white shadow-[#FF5A36]/25"
+              : "bg-[#FF6B4A] hover:bg-[#ff5530] text-white shadow-[#FF6B4A]/25"
+          }`}
+        >
+          <span>Tiếp Tục</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };
