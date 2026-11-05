@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export default function TodayDashboardPage() {
   const [plan, setPlan] = useState<PersonalizedPlanResult>({
@@ -115,11 +116,11 @@ export default function TodayDashboardPage() {
       {/* Top Navbar */}
       <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-stone-200/70">
         <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <a href="/" className="w-9 h-9 rounded-xl bg-gradient-to-tr from-peach-500 to-peach-400 text-white flex items-center justify-center font-bold text-lg shadow-soft">
-              G
-            </a>
-            <div>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+              <BrandLogo variant="horizontal" isLight={true} size="sm" />
+            </Link>
+            <div className="border-l border-stone-200 pl-3">
               <h1 className="font-bold text-stone-800 text-sm sm:text-base leading-tight">
                 Hôm nay, 2 Tháng 11
               </h1>

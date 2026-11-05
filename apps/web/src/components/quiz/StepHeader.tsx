@@ -4,6 +4,7 @@ import React from "react";
 import { ArrowLeft, Lock } from "lucide-react";
 import Link from "next/link";
 import { AthleticArchetype } from "@/types/quiz";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 interface StepHeaderProps {
   currentStep: number;
@@ -43,18 +44,10 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
           <div className="w-9" />
         )}
 
-        <Link href="/" className="flex items-center gap-2">
-          <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm ${
-            isMale ? "bg-[#FF5A36] text-white" : "bg-stone-900 text-white"
-          }`}>
-            G
-          </span>
-          <span className={`font-extrabold text-sm tracking-tight ${
-            isMale ? "text-white" : "text-stone-900"
-          }`}>
-            G—AI <span className="font-normal text-stone-400 text-xs">
-              {isMale ? "STRENGTH" : "PILATES"}
-            </span>
+        <Link href="/" className="flex items-center gap-2 group">
+          <BrandLogo isLight={!isMale} size="sm" />
+          <span className="font-mono text-[10px] tracking-widest text-stone-400 uppercase hidden sm:inline">
+            / {isMale ? "STRENGTH" : "PILATES"}
           </span>
         </Link>
 

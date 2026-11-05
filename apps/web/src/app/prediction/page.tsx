@@ -6,6 +6,7 @@ import { ArrowLeft, Sparkles, Compass, CheckCircle2, ChevronRight, Share2, Downl
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
 import { TimelineScrubber } from "@/components/prediction/TimelineScrubber";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export default function PredictionPage() {
   const [currentDay, setCurrentDay] = useState(0);
@@ -32,12 +33,9 @@ export default function PredictionPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="flex items-baseline gap-2">
-              <span className="font-black text-xl tracking-tighter text-white">G—AI</span>
-              <span className="text-[10px] font-mono tracking-widest text-[#FF5A36] uppercase font-semibold">
-                / Biometric Digital Twin
-              </span>
-            </div>
+            <Link href="/" className="flex items-center group">
+              <BrandLogo isLight={false} size="sm" showSubtitle subtitle="Biometric Digital Twin" />
+            </Link>
           </div>
 
           <div className="flex items-center gap-3">

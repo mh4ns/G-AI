@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { FlipTextHover } from "@/components/home/KineticText";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 interface HomeNavbarProps {
   isLight?: boolean;
@@ -19,15 +20,8 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ isLight = false }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
         {/* Brand Typographic Identity */}
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-baseline gap-2 group">
-            <span className={`font-black text-xl sm:text-2xl tracking-tighter transition-colors ${
-              isLight ? "text-stone-950 group-hover:text-[#FF6B4A]" : "text-white group-hover:text-[#FF5A36]"
-            }`}>
-              G—AI
-            </span>
-            <span className="text-[10px] font-mono tracking-widest text-stone-400 uppercase hidden sm:inline">
-              / Biometric Kinetic Lab
-            </span>
+          <Link href="/" className="flex items-center group">
+            <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
           </Link>
         </div>
 

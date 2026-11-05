@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Search, ShoppingBag, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 interface StoreHeaderProps {
   cartCount: number;
@@ -29,13 +30,8 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ cartCount, onOpenCart 
 
           {/* Architectural Brand Identity */}
           <div className="flex items-center gap-4">
-            <Link href="/store" className="flex items-baseline gap-2 group">
-              <span className="font-extrabold text-lg sm:text-xl tracking-[-0.04em] text-pitch">
-                G—AI
-              </span>
-              <span className="text-[10px] font-mono tracking-widest text-stone-500 uppercase">
-                / Movement Goods
-              </span>
+            <Link href="/" className="flex items-center group">
+              <BrandLogo isLight={true} size="sm" showSubtitle subtitle="Movement Goods" />
             </Link>
           </div>
 
