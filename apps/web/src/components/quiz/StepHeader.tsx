@@ -3,12 +3,14 @@
 import React from "react";
 import { ArrowLeft, Lock } from "lucide-react";
 import Link from "next/link";
+import { AthleticArchetype } from "@/types/quiz";
 
 interface StepHeaderProps {
   currentStep: number;
   totalSteps: number;
   onBack: () => void;
   canGoBack: boolean;
+  archetype?: AthleticArchetype;
 }
 
 export const StepHeader: React.FC<StepHeaderProps> = ({
@@ -16,7 +18,9 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
   totalSteps,
   onBack,
   canGoBack,
+  archetype = "female_pilates",
 }) => {
+  const isMale = archetype === "male_strength";
   const progressPercent = Math.round((currentStep / totalSteps) * 100);
 
   return (
@@ -26,7 +30,11 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
         {canGoBack ? (
           <button
             onClick={onBack}
-            className="w-9 h-9 rounded-full bg-white border border-stone-200 shadow-sm flex items-center justify-center text-stone-600 hover:text-black hover:border-black transition-colors"
+            className={`w-9 h-9 rounded-full border shadow-sm flex items-center justify-center transition-colors ${
+              isMale
+                ? "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-[#FF5A36]"
+                : "bg-white border-stone-200 text-stone-600 hover:text-black hover:border-black"
+            }`}
             aria-label="Quay lại"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2]" />
@@ -36,11 +44,17 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
         )}
 
         <Link href="/" className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-lg bg-stone-900 text-white flex items-center justify-center font-black text-sm">
+          <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm ${
+            isMale ? "bg-[#FF5A36] text-white" : "bg-stone-900 text-white"
+          }`}>
             G
           </span>
-          <span className="font-extrabold text-sm tracking-tight text-stone-900">
-            G—AI <span className="font-normal text-stone-400">PILATES</span>
+          <span className={`font-extrabold text-sm tracking-tight ${
+            isMale ? "text-white" : "text-stone-900"
+          }`}>
+            G—AI <span className="font-normal text-stone-400 text-xs">
+              {isMale ? "STRENGTH" : "PILATES"}
+            </span>
           </span>
         </Link>
 
@@ -50,9 +64,13 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
       </div>
 
       {/* Radiant Minimal Progress Line */}
-      <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+      <div className={`w-full h-1.5 rounded-full overflow-hidden ${
+        isMale ? "bg-stone-800" : "bg-stone-100"
+      }`}>
         <div
-          className="h-full bg-[#FF5A36] rounded-full transition-all duration-500 ease-out"
+          className={`h-full rounded-full transition-all duration-500 ease-out ${
+            isMale ? "bg-[#FF5A36]" : "bg-[#FF6B4A]"
+          }`}
           style={{ width: `${progressPercent}%` }}
         />
       </div>

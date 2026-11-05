@@ -1,32 +1,40 @@
 "use client";
 
 import React, { useState } from "react";
-import { QuizResponses, PersonalizedPlanResult, PrimaryGoal, BodyFocusArea, FitnessObstacle } from "@/types/quiz";
+import { 
+  QuizResponses, 
+  PersonalizedPlanResult, 
+  PrimaryGoal, 
+  BodyFocusArea, 
+  FitnessObstacle, 
+  AthleticArchetype 
+} from "@/types/quiz";
 import { calculatePersonalizedPlan } from "@/lib/quiz-calculations";
 import { StepHeader } from "./StepHeader";
-import { AgeSelectionFirstPage } from "./AgeSelectionFirstPage";
-import { GoalSelectionStep } from "./GoalSelectionStep";
+import { ArchetypeSelectionStep } from "./ArchetypeSelectionStep";
+import { AgeGoalStep } from "./AgeGoalStep";
 import { FocusAreaStep } from "./FocusAreaStep";
 import { BodyStatsStep } from "./BodyStatsStep";
 import { ObstaclesStep } from "./ObstaclesStep";
 import { AnalyzingLoader } from "./AnalyzingLoader";
 import { PlanResultView } from "./PlanResultView";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
 export const AssessmentQuizWizard: React.FC = () => {
   const router = useRouter();
 
-  // Step 1: Age Selection (First Page), 2: Goal, 3: Focus Area, 4: Body Stats, 5: Obstacles, 6: Analyzing, 7: Result
+  // Step 1: Archetype, 2: Age & Goal, 3: Focus & Equipment, 4: Body Stats, 5: Lifestyle & Injuries, 6: Analyzing, 7: Result
   const [step, setStep] = useState<number>(1);
 
   // Form State
   const [responses, setResponses] = useState<QuizResponses>({
     archetype: "female_pilates",
     gender: "female",
-    goal: "lose_weight",
+    goal: "tone_muscle",
     focusAreas: ["belly", "glutes"],
     age: 26,
-    heightCm: 163,
+    heightCm: 165,
     currentWeightKg: 58,
     targetWeightKg: 50,
     activityLevel: "lightly_active",
@@ -38,8 +46,15 @@ export const AssessmentQuizWizard: React.FC = () => {
 
   const [planResult, setPlanResult] = useState<PersonalizedPlanResult | null>(null);
 
-  const handleSelectAge = (age: number, range: string) => {
-    setResponses((prev) => ({ ...prev, age }));
+  const handleSelectArchetype = (archetype: AthleticArchetype) => {
+    const isMale = archetype === "male_strength";
+    setResponses((prev) => ({
+      ...prev,
+      archetype,
+      gender: isMale ? "male" : "female",
+      goal: isMale ? "hypertrophy" : "tone_muscle",
+      focusAreas: isMale ? ["chest", "arms"] : ["belly", "glutes"],
+    }));
     setStep(2);
   };
 
@@ -104,12 +119,16 @@ export const AssessmentQuizWizard: React.FC = () => {
     setStep(7);
   };
 
-  const handleGoToDashboard = () => {
-    router.push("/today");
-  };
+  const isMaleTheme = responses.archetype === "male_strength";
 
   return (
-    <div className="min-h-screen bg-white text-stone-900 flex flex-col justify-between selection:bg-[#FF5A36]/20 selection:text-[#FF5A36]">
+    <div
+      className={`min-h-screen flex flex-col justify-between transition-colors duration-500 ${
+        isMaleTheme
+          ? "bg-[#0A0908] text-white selection:bg-[#FF5A36]/30 selection:text-white"
+          : "bg-[#FFFDF9] text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
+      }`}
+    >
       {/* Header with progress line (shown for steps 2 to 5) */}
       {step >= 2 && step <= 5 && (
         <StepHeader
@@ -117,21 +136,42 @@ export const AssessmentQuizWizard: React.FC = () => {
           totalSteps={5}
           onBack={handleBack}
           canGoBack={true}
+          archetype={responses.archetype}
         />
       )}
 
       {/* Main Wizard Step Content */}
       <main className="flex-1 flex flex-col justify-center">
         {step === 1 && (
-          <AgeSelectionFirstPage onSelectAge={handleSelectAge} />
+          <ArchetypeSelectionStep
+            selectedArchetype={responses.archetype}
+            onSelect={handleSelectArchetype}
+          />
         )}
 
         {step === 2 && (
-          <GoalSelectionStep
-            selectedGoal={responses.goal}
-            onSelectGoal={handleSelectGoal}
-            onNext={handleNext}
-          />
+          <div className="flex flex-col items-center">
+            <AgeGoalStep
+              archetype={responses.archetype}
+              selectedAge={responses.age}
+              selectedGoal={responses.goal}
+              onSelectAge={(age) => setResponses((prev) => ({ ...prev, age }))}
+              onSelectGoal={handleSelectGoal}
+            />
+            <div className="w-full max-w-4xl px-4 pb-8 flex justify-end">
+              <button
+                onClick={handleNext}
+                className={`px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
+                  isMaleTheme
+                    ? "bg-[#FF5A36] hover:bg-[#ff461e] text-white shadow-[#FF5A36]/25"
+                    : "bg-[#FF6B4A] hover:bg-[#ff5530] text-white shadow-[#FF6B4A]/25"
+                }`}
+              >
+                <span>Tiếp Tục</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
 
         {step === 3 && (
@@ -168,15 +208,10 @@ export const AssessmentQuizWizard: React.FC = () => {
           <PlanResultView
             responses={responses}
             result={planResult}
-            onGoToDashboard={handleGoToDashboard}
+            onGoToDashboard={() => router.push("/today")}
           />
         )}
       </main>
-
-      {/* Footer Branding */}
-      <footer className="text-center py-4 text-xs text-stone-400 font-mono border-t border-stone-100">
-        G—AI • Kinetic Home Pilates & Assessment Studio
-      </footer>
     </div>
   );
 };
