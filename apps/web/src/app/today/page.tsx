@@ -21,17 +21,55 @@ import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
 
 export default function TodayDashboardPage() {
   const [plan, setPlan] = useState<PersonalizedPlanResult>({
+    archetype: "female_pilates",
     bmi: 22.1,
     bmiCategory: "Cân đối lý tưởng",
     bmr: 1350,
     tdee: 1850,
     dailyCalorieTarget: 1450,
     calorieDeficitDaily: 400,
+    macroSplit: { proteinG: 96, carbsG: 160, fatG: 40 },
     estimatedWeeks: 6,
     estimatedTargetDate: "15 Tháng 12, 2026",
     recommendedWaterMl: 2100,
     weeklyWorkoutsCount: 4,
     focusHighlights: ["Đốt mỡ phẳng bụng", "Nâng và săn chắc vòng 3"],
+    safetyNotes: ["Đã bảo vệ cột sống và khớp gối"],
+    excludedExercises: [],
+    weeklyRoutine: [
+      {
+        dayNumber: 1,
+        title: "Thảm Mat: Siết Eo & Phẳng Bụng",
+        durationMin: 35,
+        target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
+        intensity: "moderate",
+        exerciseCount: 6,
+      },
+      {
+        dayNumber: 2,
+        title: "Glute Bridge & Hip Sculpting",
+        durationMin: 40,
+        target: "Cơ mông lớn & Cơ đùi sau",
+        intensity: "high",
+        exerciseCount: 7,
+      },
+      {
+        dayNumber: 3,
+        title: "Active Recovery: Decompression & Mở Khớp",
+        durationMin: 25,
+        target: "Giải phóng đốt sống lưng",
+        intensity: "low",
+        exerciseCount: 5,
+      },
+      {
+        dayNumber: 4,
+        title: "Pilates Toàn Thân & Cân Bằng Tư Thế",
+        durationMin: 35,
+        target: "Đốt mỡ toàn diện & Định hình đường cong",
+        intensity: "moderate",
+        exerciseCount: 6,
+      },
+    ],
   });
 
   const [waterDrunkMl, setWaterDrunkMl] = useState<number>(750);

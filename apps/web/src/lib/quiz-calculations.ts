@@ -1,4 +1,9 @@
-import { QuizResponses, PersonalizedPlanResult } from "@/types/quiz";
+import { 
+  QuizResponses, 
+  PersonalizedPlanResult, 
+  PlannedWorkoutDay, 
+  MacroSplit 
+} from "@/types/quiz";
 
 export function calculateBMI(weightKg: number, heightCm: number): number {
   const heightM = heightCm / 100;
@@ -17,20 +22,20 @@ export function getBMICategory(bmi: number): { label: string; color: string; adv
     return {
       label: "Cân đối lý tưởng",
       color: "border-emerald-200 text-emerald-700 bg-emerald-50",
-      advice: "Tuyệt vời! Bạn đang ở dải cân nặng khỏe mạnh. Giáo án sẽ tập trung siết cơ và định hình đường cong.",
+      advice: "Tuyệt vời! Bạn đang ở dải cân nặng khỏe mạnh. Giáo án sẽ tập trung siết cơ và định hình đường nét.",
     };
   }
   if (bmi < 29.9) {
     return {
       label: "Thừa cân nhẹ",
       color: "border-amber-200 text-amber-700 bg-amber-50",
-      advice: "Thâm hụt nhẹ 300-450 kcal/ngày kết hợp Pilates sẽ giúp giảm mỡ an toàn mà không mệt mỏi.",
+      advice: "Thâm hụt nhẹ 300-450 kcal/ngày kết hợp tập luyện đều đặn sẽ giúp giảm mỡ an toàn.",
     };
   }
   return {
     label: "Cần kiểm soát cân nặng",
     color: "border-rose-200 text-rose-700 bg-rose-50",
-    advice: "Ưu tiên các bài tập Low-Impact trên thảm để bảo vệ khớp gối và đốt mỡ từ từ.",
+    advice: "Ưu tiên các bài tập Low-Impact trên thảm để bảo vệ khớp gối và đốt mỡ bền vững.",
   };
 }
 
@@ -40,9 +45,13 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   const bmiCategoryObj = getBMICategory(bmi);
   const bmiCategory = bmiCategoryObj.label;
 
+  const isMale = data.archetype === "male_strength" || data.gender === "male";
+
   // 2. Calculate BMR (Mifflin-St Jeor Equation)
+  // Men: BMR = 10W + 6.25H - 5A + 5
+  // Women: BMR = 10W + 6.25H - 5A - 161
   let bmr = 10 * data.currentWeightKg + 6.25 * data.heightCm - 5 * data.age;
-  if (data.gender === "male") {
+  if (isMale) {
     bmr += 5;
   } else {
     bmr -= 161;
@@ -59,26 +68,28 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   const multiplier = multipliers[data.activityLevel] || 1.35;
   const tdee = Math.round(bmr * multiplier);
 
-  // 4. Calorie Target & Timeline
+  // 4. Calorie Target & Timeline Calculation
   const weightDiff = data.currentWeightKg - data.targetWeightKg;
   let dailyCalorieTarget = tdee;
   let calorieDeficitDaily = 0;
   let estimatedWeeks = 4;
 
+  const minCalorieFloor = isMale ? 1500 : 1200;
+
   if (weightDiff > 0) {
-    // Goal: Lose weight (healthy safe deficit of 350-500 kcal/day)
-    calorieDeficitDaily = 450;
-    dailyCalorieTarget = Math.max(1200, tdee - calorieDeficitDaily);
-    const totalDeficitNeeded = weightDiff * 7700;
+    // Goal: Fat loss
+    calorieDeficitDaily = isMale ? 500 : 400;
+    dailyCalorieTarget = Math.max(minCalorieFloor, tdee - calorieDeficitDaily);
+    const totalDeficitNeeded = weightDiff * 7700; // ~7700 kcal per kg of fat
     const weeklyDeficit = calorieDeficitDaily * 7;
-    estimatedWeeks = Math.max(2, Math.round(totalDeficitNeeded / weeklyDeficit));
+    estimatedWeeks = Math.max(3, Math.round(totalDeficitNeeded / weeklyDeficit));
   } else if (weightDiff < 0) {
-    // Goal: Gain muscle
-    calorieDeficitDaily = -300;
-    dailyCalorieTarget = tdee + 300;
-    estimatedWeeks = Math.max(4, Math.round((Math.abs(weightDiff) * 5000) / (300 * 7)));
+    // Goal: Hypertrophy / Gain mass
+    calorieDeficitDaily = -350;
+    dailyCalorieTarget = tdee + 350;
+    estimatedWeeks = Math.max(4, Math.round((Math.abs(weightDiff) * 5500) / (350 * 7)));
   } else {
-    // Goal: Maintain / tone
+    // Maintenance & Toning
     dailyCalorieTarget = tdee;
     estimatedWeeks = 4;
   }
@@ -92,31 +103,175 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     year: "numeric",
   });
 
-  // 6. Recommended Water Intake (ml): ~35ml per kg of weight
+  // 6. Macro Split Breakdown
+  const proteinPerKg = isMale ? 2.0 : 1.6;
+  const proteinG = Math.round(data.currentWeightKg * proteinPerKg);
+  const proteinKcal = proteinG * 4;
+
+  const fatKcal = Math.round(dailyCalorieTarget * 0.25);
+  const fatG = Math.round(fatKcal / 9);
+
+  const carbsKcal = Math.max(0, dailyCalorieTarget - proteinKcal - fatKcal);
+  const carbsG = Math.round(carbsKcal / 4);
+
+  const macroSplit: MacroSplit = {
+    proteinG,
+    carbsG,
+    fatG,
+  };
+
+  // 7. Recommended Water Intake (ml): ~35ml per kg of weight
   const recommendedWaterMl = Math.round((data.currentWeightKg * 35) / 100) * 100;
 
-  // 7. Focus highlights
+  // 8. Focus Highlights
   const areaLabels: Record<string, string> = {
-    belly: "Đốt mỡ phẳng bụng",
+    belly: "Đốt mỡ phẳng bụng & săn chắc cơ lõi",
     thighs: "Thon gọn đùi & bắp chân",
     glutes: "Nâng và săn chắc vòng 3",
-    back: "Cải thiện tư thế & thẳng lưng",
-    arms: "Săn chắc bắp tay",
-    full_body: "Đốt mỡ toàn thân & tăng sức bền",
+    back: "Cải thiện tư thế, thẳng lưng & giảm đau mỏi",
+    arms: "Săn chắc bắp tay & cơ vai",
+    chest: "Dày cơ ngực & mở rộng lồng ngực",
+    full_body: "Đốt mỡ toàn thân & tăng sức bền tim mạch",
   };
-  const focusHighlights = data.focusAreas.map((area) => areaLabels[area] || area);
+  const focusHighlights = (data.focusAreas || []).map((area) => areaLabels[area] || area);
+
+  // 9. Injury & Joint Safety Analysis
+  const safetyNotes: string[] = [];
+  const excludedExercises: string[] = [];
+
+  const injuries = data.injuries || [];
+  if (injuries.includes("lower_back")) {
+    safetyNotes.push(
+      "Đã bảo vệ cột sống: Loại trừ các bài nén trục nặng (Deadlift, Good Morning) và gập lưng biên độ sâu."
+    );
+    excludedExercises.push(
+      "Barbell Deadlift",
+      "Heavy Back Squat",
+      "Good Morning",
+      "Extreme Lumbar Hyper-extension"
+    );
+  }
+
+  if (injuries.includes("knee")) {
+    safetyNotes.push(
+      "Đã bảo vệ khớp gối: Thay thế bài bật nhảy va đập cao bằng bài tập Low-Impact kiểm soát góc gập."
+    );
+    excludedExercises.push(
+      "Jump Squat",
+      "Plyometric Box Jump",
+      "Walking Lunges quá mũi chân",
+      "Heavy Sissy Squat"
+    );
+  }
+
+  if (injuries.includes("neck_shoulder")) {
+    safetyNotes.push(
+      "Đã giải tỏa cổ vai gáy: Tránh bài kéo đẩy qua đầu góc hẹp và kéo xà sau gáy."
+    );
+    excludedExercises.push(
+      "Behind-The-Neck Overhead Press",
+      "Upright Barbell Row",
+      "Aggressive Neck Crunches"
+    );
+  }
+
+  if (safetyNotes.length === 0) {
+    safetyNotes.push("Thể trạng cơ khớp hoàn hảo: Giáo án mở khóa 100% bài tập với biên độ chuyển động đầy đủ.");
+  }
+
+  // 10. Generate 4-day workout routine tailored to Archetype & Equipment
+  const isGym = data.equipmentAccess === "gym";
+  let weeklyRoutine: PlannedWorkoutDay[] = [];
+
+  if (data.archetype === "female_pilates") {
+    weeklyRoutine = [
+      {
+        dayNumber: 1,
+        title: isGym ? "Reformer & Mat Core Sculpt" : "Thảm Mat: Siết Eo & Phẳng Bụng",
+        durationMin: 35,
+        target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
+        intensity: "moderate",
+        exerciseCount: 6,
+      },
+      {
+        dayNumber: 2,
+        title: isGym ? "Dây Kháng Lực & Hip Thrust" : "Glute Bridge & Hip Sculpting",
+        durationMin: 40,
+        target: "Cơ mông lớn, Mông nhỡ & Cơ đùi sau",
+        intensity: "high",
+        exerciseCount: 7,
+      },
+      {
+        dayNumber: 3,
+        title: "Active Recovery: Decompression & Mở Khớp",
+        durationMin: 25,
+        target: "Giải phóng đốt sống lưng & giãn cơ toàn thân",
+        intensity: "low",
+        exerciseCount: 5,
+      },
+      {
+        dayNumber: 4,
+        title: isGym ? "Cable Core & Slender Tone" : "Pilates Toàn Thân & Cân Bằng Tư Thế",
+        durationMin: 35,
+        target: "Đốt mỡ toàn diện & Định hình đường cong",
+        intensity: "moderate",
+        exerciseCount: 6,
+      },
+    ];
+  } else {
+    // Male Strength Archetype
+    weeklyRoutine = [
+      {
+        dayNumber: 1,
+        title: isGym ? "Upper Hypertrophy: Ngực, Vai & Tay Sau" : "Push Power: Chống Đẩy Đa Góc & Dây Kháng Lực",
+        durationMin: 45,
+        target: "Cơ ngực, Cơ delta & Cơ tay sau",
+        intensity: "high",
+        exerciseCount: 7,
+      },
+      {
+        dayNumber: 2,
+        title: isGym ? "Pull Dominance: Lưng Xô & Tay Trước" : "Hít Xà & Kháng Lực Lưng Xô",
+        durationMin: 45,
+        target: "Cơ lưng xô, Cơ trám & Cơ tay trước",
+        intensity: "high",
+        exerciseCount: 7,
+      },
+      {
+        dayNumber: 3,
+        title: "Active Mobility & Phục Hồi Thần Kinh Cơ",
+        durationMin: 30,
+        target: "Giãn khớp hông, vai & giải tỏa axit lactic",
+        intensity: "low",
+        exerciseCount: 5,
+      },
+      {
+        dayNumber: 4,
+        title: isGym ? "Lower & Core: Chân, Đùi Sau & Bụng 6 Múi" : "Chân & Sức Mạnh Lõi Bùng Nổ",
+        durationMin: 50,
+        target: "Cơ tứ đầu, Đùi sau & Cơ bụng thẳng",
+        intensity: "high",
+        exerciseCount: 8,
+      },
+    ];
+  }
 
   return {
+    archetype: data.archetype || "female_pilates",
     bmi,
     bmiCategory,
     bmr,
     tdee,
     dailyCalorieTarget,
     calorieDeficitDaily,
+    macroSplit,
     estimatedWeeks,
     estimatedTargetDate,
     recommendedWaterMl,
     weeklyWorkoutsCount: 4,
     focusHighlights,
+    safetyNotes,
+    excludedExercises,
+    weeklyRoutine,
   };
 }

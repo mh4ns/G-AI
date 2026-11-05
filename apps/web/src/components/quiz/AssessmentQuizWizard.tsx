@@ -21,6 +21,7 @@ export const AssessmentQuizWizard: React.FC = () => {
 
   // Form State
   const [responses, setResponses] = useState<QuizResponses>({
+    archetype: "female_pilates",
     gender: "female",
     goal: "lose_weight",
     focusAreas: ["belly", "glutes"],
@@ -31,6 +32,8 @@ export const AssessmentQuizWizard: React.FC = () => {
     activityLevel: "lightly_active",
     dietPreference: "balanced",
     obstacles: ["sweet_cravings", "sore_back"],
+    equipmentAccess: "home",
+    injuries: [],
   });
 
   const [planResult, setPlanResult] = useState<PersonalizedPlanResult | null>(null);
