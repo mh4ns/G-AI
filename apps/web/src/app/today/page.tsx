@@ -83,11 +83,16 @@ export default function TodayDashboardPage() {
     fasting: false,
   });
 
+  const [hasCustomPlan, setHasCustomPlan] = useState<boolean>(true);
+
   useEffect(() => {
     try {
       const savedPlan = localStorage.getItem("g_ai_user_plan");
       if (savedPlan) {
         setPlan(JSON.parse(savedPlan));
+        setHasCustomPlan(true);
+      } else {
+        setHasCustomPlan(false);
       }
     } catch (e) {
       // fallback
@@ -129,12 +134,12 @@ export default function TodayDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <a
-              href="/store"
+            <Link
+              href="/#movement-goods"
               className="text-xs font-semibold text-stone-600 hover:text-[#FF6542] px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors"
             >
-              🛍️ Store
-            </a>
+              🛍️ Dụng Cụ
+            </Link>
 
             {/* Streak Badge */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold shadow-sm">
@@ -152,6 +157,29 @@ export default function TodayDashboardPage() {
           </div>
         </div>
       </header>
+
+      {/* Demo Mode / Missing Quiz Alert Banner */}
+      {!hasCustomPlan && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-peach-500/10 to-amber-500/10 border-b border-amber-200/80 px-4 py-3">
+          <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5 text-stone-700">
+              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-mono font-bold text-[10px]">
+                LỘ TRÌNH MẪU
+              </span>
+              <span>
+                Bạn đang xem lộ trình mẫu chưa cá nhân hóa. Hãy làm bài khảo sát thể trạng 2 phút để thuật toán AI tối ưu riêng cho bạn.
+              </span>
+            </div>
+            <Link
+              href="/quiz"
+              className="px-4 py-1.5 rounded-full bg-stone-900 hover:bg-black text-white font-mono font-bold text-xs shrink-0 transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>Làm Khảo Sát Ngay</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Main Dashboard Body */}
       <main className="w-full max-w-4xl mx-auto px-4 py-6 space-y-5">

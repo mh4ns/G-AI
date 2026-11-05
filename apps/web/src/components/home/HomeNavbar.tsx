@@ -2,15 +2,16 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Lightbulb, ShoppingBag } from "lucide-react";
 import { FlipTextHover } from "@/components/home/KineticText";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 
 interface HomeNavbarProps {
   isLight?: boolean;
+  onToggleTheme?: () => void;
 }
 
-export const HomeNavbar: React.FC<HomeNavbarProps> = ({ isLight = false }) => {
+export const HomeNavbar: React.FC<HomeNavbarProps> = ({ isLight = false, onToggleTheme }) => {
   return (
     <header className={`sticky top-0 z-50 backdrop-blur-md border-b select-none transition-colors duration-300 ${
       isLight 
@@ -18,48 +19,47 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ isLight = false }) => {
         : "bg-[#0A0908]/90 border-stone-800 text-white"
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-        {/* Brand Typographic Identity */}
+        {/* Brand Typographic Identity (Pure Geometric G Monogram) */}
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center group">
             <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
           </Link>
         </div>
 
-        {/* Desktop Navigation Links with Flip-Text Stagger */}
+        {/* Streamlined Desktop Navigation (Only 2 Core Links - No Duplicates) */}
         <nav className={`hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider ${
           isLight ? "text-stone-700" : "text-stone-300"
         }`}>
-          <Link href="/quiz" className={`transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
-            <FlipTextHover text="Khảo Sát 28 Ngày" activeClassName={isLight ? "text-[#FF6B4A]" : "text-[#FF5A36]"} />
-          </Link>
-
           <Link href="/prediction" className={`flex items-center gap-1.5 transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
             <FlipTextHover text="Bản Sao Số (Digital Twin)" activeClassName="text-emerald-500" />
           </Link>
 
-          <Link href="/today" className={`transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
-            <FlipTextHover text="Today Dashboard" activeClassName={isLight ? "text-[#FF6B4A]" : "text-[#FF5A36]"} />
-          </Link>
-
-          <Link href="/store" className={`transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
-            <FlipTextHover text="Apparatus & Apparel" activeClassName={isLight ? "text-black" : "text-white"} />
+          <Link href="/#movement-goods" className={`flex items-center gap-1.5 transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
+            <ShoppingBag className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <FlipTextHover text="Dụng Cụ Tập" activeClassName={isLight ? "text-stone-950" : "text-white"} />
           </Link>
         </nav>
 
-        {/* CTA Buttons */}
+        {/* Action Controls: Theme Switcher + Single Primary CTA */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/prediction"
-            className={`hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full border text-xs font-mono transition-colors ${
-              isLight
-                ? "border-stone-300 bg-stone-100/80 text-stone-800 hover:border-stone-400"
-                : "border-stone-800 bg-stone-900/60 text-stone-300 hover:text-white hover:border-stone-600"
-            }`}
-          >
-            <span>Mô Hình 28 Ngày</span>
-          </Link>
+          {/* Lightbulb Theme Toggle Button */}
+          {onToggleTheme && (
+            <button
+              onClick={onToggleTheme}
+              className={`p-2.5 rounded-full border transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 ${
+                isLight
+                  ? "bg-stone-100 border-stone-300 text-amber-500 hover:border-amber-400"
+                  : "bg-stone-900 border-stone-800 text-stone-400 hover:text-amber-400 hover:border-amber-400/50"
+              }`}
+              title={isLight ? "Chuyển sang Chế độ Tối (Dark Mode)" : "Chuyển sang Chế độ Sáng (Light Mode)"}
+              aria-label="Toggle Theme"
+            >
+              <Lightbulb className={`w-4 h-4 transition-colors ${isLight ? "fill-amber-400 text-amber-500" : "text-stone-400"}`} />
+            </button>
+          )}
 
+          {/* Single High-Impact CTA Button */}
           <Link
             href="/quiz"
             className={`px-5 py-2.5 rounded-full text-white text-xs font-bold font-mono transition-all shadow-lg active:scale-[0.98] flex items-center gap-1.5 ${

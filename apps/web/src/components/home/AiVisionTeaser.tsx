@@ -45,14 +45,17 @@ export const AiVisionTeaser: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
               <Link
-                href="/today"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-stone-900 font-bold text-xs font-mono hover:bg-stone-200 transition-colors"
+                href="/quiz"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-stone-900 font-bold text-xs font-mono hover:bg-stone-200 transition-all shadow-lg active:scale-95"
               >
-                <span>Trải Nghiệm Live PT Trên Today Hub</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Làm Khảo Sát Để Kích Hoạt AI Live PT</span>
+                <ArrowRight className="w-4 h-4 text-[#FF5A36]" />
               </Link>
+              <p className="text-[11px] text-stone-500 font-mono">
+                * Hoàn thành đánh giá thể trạng 2 phút để thuật toán cá nhân hóa góc khớp và giáo án riêng cho bạn.
+              </p>
             </div>
           </div>
 

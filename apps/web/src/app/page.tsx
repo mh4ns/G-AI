@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { HomeNavbar } from "@/components/home/HomeNavbar";
@@ -8,19 +8,45 @@ import { DualAthleteHero } from "@/components/home/DualAthleteHero";
 import { VelocityMarquee } from "@/components/home/VelocityMarquee";
 import { DualAthleteGallery } from "@/components/home/DualAthleteGallery";
 import { AiVisionTeaser } from "@/components/home/AiVisionTeaser";
+import { MovementGoodsSection } from "@/components/home/MovementGoodsSection";
 
 export default function HomePage() {
   const [athleteMode, setAthleteMode] = useState<"female" | "male">("female");
   const [theme, setTheme] = useState<"dark" | "light">("light");
+  const [isManualTheme, setIsManualTheme] = useState<boolean>(false);
+
+  // Restore persistent theme preference from LocalStorage
+  useEffect(() => {
+    try {
+      const savedManual = localStorage.getItem("g_ai_theme_manual");
+      const savedTheme = localStorage.getItem("g_ai_theme") as "dark" | "light" | null;
+      if (savedManual === "true" && savedTheme) {
+        setIsManualTheme(true);
+        setTheme(savedTheme);
+      }
+    } catch (e) {
+      // LocalStorage safety fallback
+    }
+  }, []);
 
   const handleSelectAthlete = (mode: "female" | "male") => {
     setAthleteMode(mode);
-    // Automatic default: male -> dark, female -> light
-    setTheme(mode === "male" ? "dark" : "light");
+    // Only apply automatic color default if the user hasn't chosen a manual theme
+    if (!isManualTheme) {
+      setTheme(mode === "male" ? "dark" : "light");
+    }
   };
 
   const handleToggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    setIsManualTheme(true);
+    try {
+      localStorage.setItem("g_ai_theme", nextTheme);
+      localStorage.setItem("g_ai_theme_manual", "true");
+    } catch (e) {
+      // LocalStorage safety fallback
+    }
   };
 
   const isLight = theme === "light";
@@ -33,8 +59,8 @@ export default function HomePage() {
           : "bg-[#0A0908] text-stone-100 selection:bg-[#FF5A36]/30 selection:text-white"
       }`}
     >
-      {/* 1. Tactical Glassmorphic Header with Light/Dark Adaptation */}
-      <HomeNavbar isLight={isLight} />
+      {/* 1. Tactical Glassmorphic Header with Light/Dark Adaptation & Streamlined Links */}
+      <HomeNavbar isLight={isLight} onToggleTheme={handleToggleTheme} />
 
       {/* 2. Interactive Dual-Athlete Hero Stage with Lightbulb Switcher */}
       <DualAthleteHero
@@ -53,7 +79,10 @@ export default function HomePage() {
       {/* 5. AI Live PT Computer Vision Teaser */}
       <AiVisionTeaser />
 
-      {/* 6. Ecosystem Call to Action Banner */}
+      {/* 6. Curated Movement Goods & Biomechanical Equipment Section */}
+      <MovementGoodsSection isLight={isLight} />
+
+      {/* 7. Ecosystem Call to Action Banner */}
       <section className={`py-20 sm:py-28 border-t text-center relative overflow-hidden transition-colors duration-500 ${
         isLight
           ? "bg-white border-stone-200"
