@@ -218,7 +218,10 @@ export const AssessmentQuizWizard: React.FC = () => {
         )}
 
         {step === 6 && (
-          <AnalyzingLoader onComplete={handleAnalysisComplete} />
+          <AnalyzingLoader
+            archetype={responses.archetype}
+            onComplete={handleAnalysisComplete}
+          />
         )}
 
         {step === 7 && planResult && (
