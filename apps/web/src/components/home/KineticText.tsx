@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 
 interface SweepHighlightProps {
   children: React.ReactNode;
-  color?: "coral" | "emerald" | "amber" | "white";
-  direction?: "left" | "right";
+  color?: "coral" | "emerald" | "amber" | "white" | "orange";
   delayMs?: number;
   className?: string;
 }
@@ -13,8 +12,7 @@ interface SweepHighlightProps {
 export const SweepHighlight: React.FC<SweepHighlightProps> = ({
   children,
   color = "coral",
-  direction = "right",
-  delayMs = 0,
+  delayMs = 150,
   className = "",
 }) => {
   const [isRevealed, setIsRevealed] = useState(false);
@@ -26,36 +24,28 @@ export const SweepHighlight: React.FC<SweepHighlightProps> = ({
     return () => clearTimeout(timer);
   }, [delayMs]);
 
-  const colorMap = {
-    coral: "bg-[#FF5A36]",
-    emerald: "bg-[#10B981]",
-    amber: "bg-[#F59E0B]",
-    white: "bg-white",
+  const colorStyles = {
+    coral: "bg-[#FF6B4A] text-white shadow-lg shadow-[#FF6B4A]/25",
+    orange: "bg-[#FF5A36] text-white shadow-lg shadow-[#FF5A36]/25",
+    emerald: "bg-[#10B981] text-white shadow-lg shadow-[#10B981]/25",
+    amber: "bg-[#F59E0B] text-stone-950 shadow-lg shadow-[#F59E0B]/25",
+    white: "bg-white text-stone-900 shadow-md",
   };
 
-  const sweepBg = colorMap[color];
+  const activeStyle = colorStyles[color] || colorStyles.coral;
 
   return (
-    <span className={`relative inline-block overflow-hidden align-baseline ${className}`}>
-      {/* Moving Curtain Div (Curtain scales from 1 to 0 after revealing text) */}
+    <span className={`relative inline-block align-baseline whitespace-nowrap mx-1 my-0.5 ${className}`}>
+      {/* 1. Background Highlight Pill (Always underneath text at z-0) */}
       <span
-        className={`absolute inset-0 ${sweepBg} z-10 transition-transform duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] ${
-          direction === "right" ? "origin-right" : "origin-left"
-        }`}
+        className={`absolute inset-0 rounded-2xl ${activeStyle} z-0 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] origin-left`}
         style={{
-          transform: isRevealed ? "scaleX(0)" : "scaleX(1)",
-          transitionDelay: `${delayMs + 200}ms`,
+          transform: isRevealed ? "scaleX(1)" : "scaleX(0)",
         }}
       />
 
-      {/* Text Container with Clip-path wipe */}
-      <span
-        className="inline-block transition-all duration-700 ease-out"
-        style={{
-          clipPath: isRevealed ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-          transitionDelay: `${delayMs}ms`,
-        }}
-      >
+      {/* 2. Text Container (Always on top at z-20, 100% visible, never obstructed) */}
+      <span className="relative z-20 inline-block px-3 py-1 text-white font-black tracking-tight select-none">
         {children}
       </span>
     </span>
