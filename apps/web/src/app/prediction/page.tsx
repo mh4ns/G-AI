@@ -2,29 +2,76 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Compass, CheckCircle2, ChevronRight, Share2, Download } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  Compass,
+  CheckCircle2,
+  ChevronRight,
+  Share2,
+  Download,
+  Brain,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
 import { TimelineScrubber } from "@/components/prediction/TimelineScrubber";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { GenerateTwinModal } from "@/components/prediction/GenerateTwinModal";
 
 export default function PredictionPage() {
-  const [currentDay, setCurrentDay] = useState(0);
+  const [currentDay, setCurrentDay] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"profile" | "front" | "threeQuarter">("profile");
   const [activeHotspot, setActiveHotspot] = useState<string | null>("core");
+  const [archetype, setArchetype] = useState<"female_pilates" | "male_strength">("female_pilates");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [customMilestones, setCustomMilestones] = useState<string[] | undefined>(undefined);
+  const [generatedPrompts, setGeneratedPrompts] = useState<any[] | undefined>(undefined);
+  const [showPromptsView, setShowPromptsView] = useState<boolean>(false);
+
+  // Read archetype & cached twin images from localStorage
+  useEffect(() => {
+    try {
+      const savedPlan = localStorage.getItem("g_ai_user_plan");
+      if (savedPlan) {
+        const parsed = JSON.parse(savedPlan);
+        if (parsed.archetype) {
+          setArchetype(parsed.archetype);
+        }
+      }
+      const savedTwin = localStorage.getItem("g_ai_twin_milestones");
+      if (savedTwin) {
+        setCustomMilestones(JSON.parse(savedTwin));
+      }
+    } catch (e) {
+      // LocalStorage safety fallback
+    }
+  }, []);
 
   // Normalized progress from 0.0 (Day 0) to 1.0 (Day 28)
   const progress = currentDay / 28.0;
 
-  // Sync scroll or chapter clicks to day
+  // Jump to specific milestone day
   const setChapter = (targetDay: number) => {
     setCurrentDay(targetDay);
+  };
+
+  const handleGenerated = (images: string[], prompts: any[]) => {
+    setCustomMilestones(images);
+    setGeneratedPrompts(prompts);
+    try {
+      localStorage.setItem("g_ai_twin_milestones", JSON.stringify(images));
+    } catch (e) {
+      // LocalStorage safety fallback
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#0A0908] text-stone-100 font-sans selection:bg-[#FF5A36]/30 selection:text-white">
       {/* 1. Tactical Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-[#0A0908]/90 backdrop-blur-md border-b border-stone-800">
+      <header className="sticky top-0 z-40 bg-[#0A0908]/90 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
@@ -38,17 +85,28 @@ export default function PredictionPage() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* AI Generation Trigger Button */}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-[#FF5A36] to-amber-500 hover:from-[#ff6b4a] hover:to-amber-400 text-white font-mono text-xs font-bold transition-all shadow-lg shadow-[#FF5A36]/25 flex items-center gap-1.5 active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+              <span className="hidden sm:inline">Cá Nhân Hóa Bằng AI</span>
+              <span className="sm:hidden">Tạo Lại AI</span>
+            </button>
+
             <Link
               href="/quiz"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-stone-700 text-xs font-mono text-stone-300 hover:text-white hover:border-stone-500 transition-colors"
+              className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-stone-700 text-xs font-mono text-stone-300 hover:text-white hover:border-stone-500 transition-colors"
             >
               <Compass className="w-3.5 h-3.5 text-[#FF5A36]" />
-              <span>Khảo Sát Lại Thể Trạng</span>
+              <span>Khảo Sát Lại</span>
             </Link>
+
             <Link
               href="/today"
-              className="px-5 py-2 rounded-full bg-[#FF5A36] hover:bg-[#e04825] text-white text-xs font-bold font-mono transition-all shadow-lg shadow-[#FF5A36]/20"
+              className="px-5 py-2 rounded-full bg-white hover:bg-stone-200 text-stone-900 text-xs font-bold font-mono transition-all shadow-md"
             >
               Mở Today Hub
             </Link>
@@ -59,43 +117,33 @@ export default function PredictionPage() {
       {/* 2. Main Scrollytelling Grid Stage */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column (Sticky Pinned Avatar Canvas - Inspired by Mecha XYZ) */}
+          {/* Left Column (Sticky Pinned Avatar Canvas) */}
           <div className="lg:col-span-6 lg:sticky lg:top-24 flex flex-col items-center">
             {/* Visual Header Pill */}
             <div className="w-full flex items-center justify-between mb-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-stone-400 text-xs font-mono">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Mô Hình Cơ Sinh Học 28 Ngày</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-stone-300 text-xs font-mono">
+                <Brain className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Bản Sao Số Tạo Sinh • ChatGPT & Gemini</span>
               </div>
               <span className="text-xs font-mono text-stone-500">
                 Góc nhìn: {viewMode === "profile" ? "Cột Sống (Profile)" : "Chính Diện (Front)"}
               </span>
             </div>
 
-            {/* Avatar Visual Container */}
-            <div className="w-full rounded-3xl bg-stone-950/80 border border-stone-800/80 p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-xl">
-              {/* Corner Sci-Fi Telemetry Accents */}
-              <div className="absolute top-4 left-4 text-[9px] font-mono text-stone-600">
-                AXIS: 160.00 / SCALE: 1.0X
-              </div>
-              <div className="absolute top-4 right-4 text-[9px] font-mono text-stone-600">
-                FPS: 60 / LATENCY: 0MS
-              </div>
-              <div className="absolute bottom-4 left-4 text-[9px] font-mono text-stone-600">
-                ALGORITHM: MIFFLIN-ST JEOR V2
-              </div>
-
-              {/* The Morphing Biomechanical Avatar */}
+            {/* Avatar Visual Container with 60 FPS Continuous Crossfade */}
+            <div className="w-full rounded-3xl bg-stone-950/80 border border-stone-800/80 p-2 sm:p-4 shadow-2xl relative overflow-hidden backdrop-blur-xl">
               <MorphingAvatar
                 progress={progress}
                 viewMode={viewMode}
                 activeHotspot={activeHotspot}
                 onSelectHotspot={(hotspot) => setActiveHotspot(hotspot)}
+                archetype={archetype}
+                customImages={customMilestones}
               />
             </div>
 
             {/* Hotspot Quick Legend */}
-            <div className="w-full flex justify-center gap-6 mt-4 text-xs text-stone-400 select-none">
+            <div className="w-full flex flex-wrap justify-center gap-4 sm:gap-6 mt-4 text-xs text-stone-400 select-none">
               <button
                 onClick={() => setActiveHotspot("cervical")}
                 className={`flex items-center gap-1.5 transition-colors ${
@@ -106,13 +154,22 @@ export default function PredictionPage() {
                 <span>Cổ & Vai Gáy</span>
               </button>
               <button
+                onClick={() => setActiveHotspot("thoracic")}
+                className={`flex items-center gap-1.5 transition-colors ${
+                  activeHotspot === "thoracic" ? "text-white font-bold" : "hover:text-stone-300"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-sky-400"></span>
+                <span>Lưng Trên (Gù)</span>
+              </button>
+              <button
                 onClick={() => setActiveHotspot("core")}
                 className={`flex items-center gap-1.5 transition-colors ${
                   activeHotspot === "core" ? "text-white font-bold" : "hover:text-stone-300"
                 }`}
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>Vùng Bụng Sâu</span>
+                <span>Cơ Lõi & Eo</span>
               </button>
               <button
                 onClick={() => setActiveHotspot("pelvis")}
@@ -124,16 +181,46 @@ export default function PredictionPage() {
                 <span>Khung Chậu & Mông</span>
               </button>
             </div>
+
+            {/* AI Prompt Transparency Drawer Trigger */}
+            {generatedPrompts && generatedPrompts.length > 0 && (
+              <div className="w-full mt-4 p-4 rounded-2xl bg-stone-900/60 border border-stone-800 text-xs font-mono">
+                <button
+                  onClick={() => setShowPromptsView(!showPromptsView)}
+                  className="w-full flex items-center justify-between text-stone-300 hover:text-white transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-[#FF5A36]" />
+                    <span>Xem 5 Visual Prompts Giải Phẫu Do ChatGPT Tạo</span>
+                  </div>
+                  {showPromptsView ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {showPromptsView && (
+                  <div className="mt-3 space-y-2 pt-2 border-t border-stone-800 text-[11px] text-stone-400">
+                    {generatedPrompts.map((p, idx) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-stone-950/80 border border-stone-800/80">
+                        <span className="text-emerald-400 font-bold block mb-1">
+                          {p.stage}: {p.title}
+                        </span>
+                        <p className="line-clamp-2 text-stone-300 font-sans">{p.prompt}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Column (Timeline Scrubber + Telemetry HUD + Scrollytelling Story Chapters) */}
           <div className="lg:col-span-6 space-y-6">
-            {/* Interactive Timeline Scrubber Bar */}
+            {/* Interactive Timeline Scrubber Bar with 60 FPS Float precision & Ticker */}
             <TimelineScrubber
               currentDay={currentDay}
               onDayChange={setCurrentDay}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
+              archetype={archetype}
             />
 
             {/* Reactive Telemetry HUD */}
@@ -223,7 +310,7 @@ export default function PredictionPage() {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-mono text-emerald-400 font-bold">TUẦN 4 • DAY 22 — 28</span>
-                  <span className="text-xs font-mono text-stone-400">Đạt 56.5kg (-6.0kg hoàn thành)</span>
+                  <span className="text-xs font-mono text-stone-400">Đạt vóc dáng tối ưu (-6.0kg)</span>
                 </div>
                 <h5 className="text-base font-bold text-white mb-1.5">
                   Vóc Dáng Điêu Khắc & Khí Chất Tự Tin
@@ -243,15 +330,23 @@ export default function PredictionPage() {
                 Bắt Đầu Lộ Trình Ngay Hôm Nay
               </Link>
               <Link
-                href="/store"
+                href="/#movement-goods"
                 className="px-6 py-4 rounded-2xl border border-stone-700 text-stone-300 hover:text-white hover:border-stone-500 font-mono text-xs text-center transition-colors"
               >
-                Trang Phục Tương Thích AI
+                Dụng Cụ & Đồ Tập AI
               </Link>
             </div>
           </div>
         </div>
       </main>
+
+      {/* 3. Multi-stage Generative Twin Modal */}
+      <GenerateTwinModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        archetype={archetype}
+        onGenerated={handleGenerated}
+      />
     </div>
   );
 }
