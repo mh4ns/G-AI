@@ -36,18 +36,37 @@ body {
   animation: pulse-slow 3s ease-in-out infinite;
 }
 
-/* Custom friendly scrollbar */
+/* Impeccable Neutral Adaptive Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #faf7f0;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #eadccb;
+  background: rgba(120, 113, 108, 0.28);
   border-radius: 9999px;
+  transition: background-color 0.2s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff8a6e;
+  background: #FF5A36;
+}
+
+/* Brand Text Selection */
+::selection {
+  background: #FF5A36;
+  color: #FFFFFF;
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

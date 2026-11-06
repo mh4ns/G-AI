@@ -16,9 +16,11 @@ import {
   Clock,
   ArrowRight,
   TrendingUp,
+  Lightbulb,
 } from "lucide-react";
 import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 
 export default function TodayDashboardPage() {
   const [plan, setPlan] = useState<PersonalizedPlanResult>({
@@ -84,6 +86,8 @@ export default function TodayDashboardPage() {
   });
 
   const [hasCustomPlan, setHasCustomPlan] = useState<boolean>(true);
+  const [isStudioOpen, setIsStudioOpen] = useState<boolean>(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     try {
@@ -94,10 +98,32 @@ export default function TodayDashboardPage() {
       } else {
         setHasCustomPlan(false);
       }
+      const savedTheme = localStorage.getItem("g_ai_theme");
+      if (savedTheme === "dark") {
+        setTheme("dark");
+      }
     } catch (e) {
       // fallback
     }
   }, []);
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem("g_ai_theme", nextTheme);
+      localStorage.setItem("g_ai_theme_manual", "true");
+    } catch (e) {
+      // fallback
+    }
+  };
+
+  const handleFinishWorkout = (summary: WorkoutSummaryData) => {
+    setCaloriesBurned((prev) => prev + summary.caloriesBurned);
+    setChecklist((prev) => ({ ...prev, workout: true }));
+  };
+
+  const isLight = theme === "light";
 
   const remainingCalories = plan.dailyCalorieTarget - caloriesEaten + caloriesBurned;
   const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
@@ -117,16 +143,22 @@ export default function TodayDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-cream-50 text-stone-800 pb-16">
+    <div className={`min-h-screen transition-colors duration-300 pb-16 ${
+      isLight ? "bg-[#FAF8F5] text-stone-800" : "bg-[#0A0908] text-stone-100"
+    }`}>
       {/* Top Navbar */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-stone-200/70">
+      <header className={`backdrop-blur-md sticky top-0 z-30 border-b transition-colors duration-300 ${
+        isLight ? "bg-white/80 border-stone-200/70" : "bg-[#11100F]/90 border-stone-800"
+      }`}>
         <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
-              <BrandLogo variant="horizontal" isLight={true} size="sm" />
+              <BrandLogo variant="horizontal" isLight={isLight} size="sm" />
             </Link>
-            <div className="border-l border-stone-200 pl-3">
-              <h1 className="font-bold text-stone-800 text-sm sm:text-base leading-tight">
+            <div className={`border-l pl-3 ${isLight ? "border-stone-200" : "border-stone-800"}`}>
+              <h1 className={`font-bold text-sm sm:text-base leading-tight ${
+                isLight ? "text-stone-800" : "text-white"
+              }`}>
                 Hôm nay, 2 Tháng 11
               </h1>
               <p className="text-[11px] text-stone-400 font-medium">Lộ trình 28 ngày • Tuần 1, Ngày 3</p>
@@ -136,20 +168,42 @@ export default function TodayDashboardPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/#movement-goods"
-              className="text-xs font-semibold text-stone-600 hover:text-[#FF6542] px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors"
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                isLight
+                  ? "text-stone-600 hover:text-[#FF5A36] bg-stone-100 hover:bg-stone-200"
+                  : "text-stone-300 hover:text-white bg-stone-900 hover:bg-stone-800"
+              }`}
             >
               🛍️ Dụng Cụ
             </Link>
 
             {/* Streak Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold shadow-sm">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold shadow-sm">
               <span className="text-sm">🔥</span>
               <span>3 Ngày Chuỗi</span>
             </div>
 
+            {/* Theme Toggle */}
+            <button
+              onClick={handleToggleTheme}
+              className={`p-2 rounded-xl transition-colors ${
+                isLight
+                  ? "text-amber-500 hover:bg-stone-100"
+                  : "text-stone-400 hover:text-amber-400 hover:bg-stone-800"
+              }`}
+              title="Đổi Giao Diện Sáng / Tối"
+              aria-label="Toggle Theme"
+            >
+              <Lightbulb className={`w-4 h-4 ${isLight ? "fill-amber-400 text-amber-500" : "text-stone-400"}`} />
+            </button>
+
             <a
               href="/quiz"
-              className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+              className={`p-2 rounded-xl transition-colors ${
+                isLight
+                  ? "text-stone-400 hover:text-stone-700 hover:bg-stone-100"
+                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-800"
+              }`}
               title="Khảo sát lại kế hoạch"
             >
               <RotateCcw className="w-4 h-4" />
@@ -267,11 +321,11 @@ export default function TodayDashboardPage() {
             </div>
 
             <button
-              onClick={() => alert("Tính năng AI Live PT qua Webcam đang khởi tạo! Bạn sẽ được kết nối ở Sprint 4.")}
+              onClick={() => setIsStudioOpen(true)}
               className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-600 hover:from-peach-600 hover:to-peach-700 text-white font-bold text-sm shadow-glow transition-all duration-200 active:scale-[0.98] flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-center"
             >
               <Play className="w-4 h-4 fill-white" />
-              <span>Bắt Đầu Tập Ngay</span>
+              <span>Bắt Đầu Tập Ngay (AI Studio)</span>
             </button>
           </div>
         </section>
@@ -416,6 +470,14 @@ export default function TodayDashboardPage() {
           </div>
         </section>
       </main>
+
+      {/* AI Live PT Studio Modal */}
+      <LiveWorkoutStudio
+        isOpen={isStudioOpen}
+        onClose={() => setIsStudioOpen(false)}
+        onFinishWorkout={handleFinishWorkout}
+        archetype={plan.archetype}
+      />
     </div>
   );
 }

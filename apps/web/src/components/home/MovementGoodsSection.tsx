@@ -4,11 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Sparkles, ShoppingBag, Check, Star, ArrowUpRight, ShieldCheck } from "lucide-react";
 
-interface MovementGoodsSectionProps {
-  isLight?: boolean;
-}
-
-interface CuratedProduct {
+export interface CuratedProduct {
   id: string;
   name: string;
   category: "Dụng Cụ Studio" | "Trang Phục Định Hình";
@@ -22,7 +18,12 @@ interface CuratedProduct {
   description: string;
 }
 
-const CURATED_GOODS: CuratedProduct[] = [
+interface MovementGoodsSectionProps {
+  isLight?: boolean;
+  onAddToCart?: (product: CuratedProduct) => void;
+}
+
+export const CURATED_GOODS: CuratedProduct[] = [
   {
     id: "g1",
     name: "Pilates Essential Alignment Kit",
@@ -103,7 +104,7 @@ const CURATED_GOODS: CuratedProduct[] = [
   },
 ];
 
-export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ isLight = false }) => {
+export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ isLight = false, onAddToCart }) => {
   const [selectedFilter, setSelectedFilter] = useState<"all" | "Dụng Cụ Studio" | "Trang Phục Định Hình">("all");
   const [addedProductId, setAddedProductId] = useState<string | null>(null);
 
@@ -111,8 +112,9 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ isLi
     ? CURATED_GOODS 
     : CURATED_GOODS.filter((p) => p.category === selectedFilter);
 
-  const handleQuickAdd = (productId: string) => {
-    setAddedProductId(productId);
+  const handleQuickAdd = (product: CuratedProduct) => {
+    setAddedProductId(product.id);
+    onAddToCart?.(product);
     setTimeout(() => {
       setAddedProductId(null);
     }, 2200);
@@ -287,7 +289,7 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ isLi
                     </div>
 
                     <button
-                      onClick={() => handleQuickAdd(product.id)}
+                      onClick={() => handleQuickAdd(product)}
                       className={`px-4 py-2 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-1.5 active:scale-95 ${
                         isAdded
                           ? "bg-emerald-600 text-white"

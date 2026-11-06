@@ -9,9 +9,16 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 interface HomeNavbarProps {
   isLight?: boolean;
   onToggleTheme?: () => void;
+  cartCount?: number;
+  onOpenCart?: () => void;
 }
 
-export const HomeNavbar: React.FC<HomeNavbarProps> = ({ isLight = false, onToggleTheme }) => {
+export const HomeNavbar: React.FC<HomeNavbarProps> = ({
+  isLight = false,
+  onToggleTheme,
+  cartCount = 0,
+  onOpenCart,
+}) => {
   return (
     <header className={`sticky top-0 z-50 backdrop-blur-md border-b select-none transition-colors duration-300 ${
       isLight 
@@ -41,8 +48,29 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({ isLight = false, onToggl
           </Link>
         </nav>
 
-        {/* Action Controls: Theme Switcher + Single Primary CTA */}
-        <div className="flex items-center gap-3">
+        {/* Action Controls: Cart + Theme Switcher + Single Primary CTA */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Shopping Bag Cart Drawer Trigger */}
+          {onOpenCart && (
+            <button
+              onClick={onOpenCart}
+              className={`relative p-2.5 rounded-full border transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 ${
+                isLight
+                  ? "bg-stone-100 border-stone-300 text-stone-700 hover:text-[#FF5A36] hover:border-stone-400"
+                  : "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-stone-700"
+              }`}
+              title="Mở Giỏ Hàng"
+              aria-label="Mở giỏ hàng"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF5A36] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-sm animate-pulse">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Lightbulb Theme Toggle Button */}
           {onToggleTheme && (
             <button
