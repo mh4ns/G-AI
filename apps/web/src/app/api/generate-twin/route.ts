@@ -57,21 +57,21 @@ export async function POST(req: NextRequest) {
       // For now, if key is present or in production, we can execute or fallback cleanly.
     }
 
-    // Default calibrated high-fidelity image milestones
+    // Default calibrated high-fidelity image milestones (Transparent cutouts - zero background photo)
     const defaultMilestones = isMale
       ? [
-          "/twins/male-day-0.jpg",
-          "/twins/male-day-7.jpg",
-          "/twins/male-day-14.jpg",
-          "/twins/male-day-21.jpg",
-          "/twins/male-day-28.jpg",
+          "/twins/male-day-0.png",
+          "/twins/male-day-7.png",
+          "/twins/male-day-14.png",
+          "/twins/male-day-21.png",
+          "/twins/male-day-28.png",
         ]
       : [
-          "/twins/female-day-0.jpg",
-          "/twins/female-day-7.jpg",
-          "/twins/female-day-14.jpg",
-          "/twins/female-day-21.jpg",
-          "/twins/female-day-28.jpg",
+          "/twins/female-day-0.png",
+          "/twins/female-day-7.png",
+          "/twins/female-day-14.png",
+          "/twins/female-day-21.png",
+          "/twins/female-day-28.png",
         ];
 
     return NextResponse.json({
