@@ -1,10 +1,64 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Play, Pause, RotateCcw } from "lucide-react";
+
+export interface TimelineMilestone {
+  day: number;
+  weekLabel: string;
+  stageTitle: string;
+  focusDesc: string;
+  weightDelta: string;
+  waistDelta: string;
+  postureScore: number;
+  postureState: string;
+}
+
+export const MILESTONES_4_STEPS: TimelineMilestone[] = [
+  {
+    day: 0,
+    weekLabel: "Ngày 0",
+    stageTitle: "Khởi điểm",
+    focusDesc: "Xác định trục cơ thể, nhận biết thói quen gù lưng & võng eo",
+    weightDelta: "0.0 kg",
+    waistDelta: "0.0 cm",
+    postureScore: 55,
+    postureState: "Cần cải thiện (Đổ thân trước)",
+  },
+  {
+    day: 7,
+    weekLabel: "Tuần 1",
+    stageTitle: "Kích hoạt",
+    focusDesc: "Đánh thức cơ hoành, giảm tích nước & giảm 40% mỏi gáy",
+    weightDelta: "-0.6 kg",
+    waistDelta: "-1.0 cm",
+    postureScore: 66,
+    postureState: "Đang thích nghi (Cổ vươn nhẹ)",
+  },
+  {
+    day: 14,
+    weekLabel: "Tuần 2",
+    stageTitle: "Tái căn chỉnh",
+    focusDesc: "Kích hoạt cơ dựng sống, siết cơ bụng sâu & phẳng bụng dưới",
+    weightDelta: "-1.4 kg",
+    waistDelta: "-1.8 cm",
+    postureScore: 76,
+    postureState: "Tiến triển tốt (Lưng thẳng tự nhiên)",
+  },
+  {
+    day: 28,
+    weekLabel: "Tuần 4",
+    stageTitle: "Vóc dáng mới",
+    focusDesc: "Trục cơ thể cân bằng vững vàng, vai mở mềm mại & eo thon gọn",
+    weightDelta: "-2.1 kg",
+    waistDelta: "-3.0 cm",
+    postureScore: 88,
+    postureState: "Cân bằng vững vàng (Chuẩn dáng)",
+  },
+];
 
 interface TimelineScrubberProps {
-  currentDay: number; // 0.0 to 28.0
+  currentDay: number; // 0, 7, 14, 28
   onDayChange: (day: number) => void;
   viewMode: "profile" | "front" | "threeQuarter";
   onViewModeChange: (mode: "profile" | "front" | "threeQuarter") => void;
@@ -19,93 +73,54 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
   archetype = "female_pilates",
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const sliderRef = useRef<HTMLInputElement>(null);
-  const isMale = archetype === "male_strength";
 
-  // Milestones with magnetic snap threshold
-  const milestones = [
-    { day: 0, label: "Day 0", title: "Khởi đầu", desc: "Đo góc lệch" },
-    { day: 7, label: "Day 7", title: "Thải nước", desc: "Giảm phù nề" },
-    { day: 14, label: "Day 14", title: "Siết eo", desc: "Căn chỉnh cột sống" },
-    { day: 21, label: "Day 21", title: "Sức bền", desc: "Tăng cơ sâu" },
-    { day: 28, label: "Day 28", title: "Mục tiêu", desc: "Tối ưu hóa thể trạng" },
-  ];
+  // Find active step index (0, 1, 2, 3)
+  const stepDays = [0, 7, 14, 28];
+  const activeIndex = stepDays.reduce((closestIdx, day, idx) => {
+    return Math.abs(day - currentDay) < Math.abs(stepDays[closestIdx] - currentDay) ? idx : closestIdx;
+  }, 0);
 
-  // 60 FPS Smooth Auto-Play animation loop
+  const activeMilestone = MILESTONES_4_STEPS[activeIndex] || MILESTONES_4_STEPS[0];
+
+  // Auto-play cycling through the 4 milestone weeks
   useEffect(() => {
     if (!isPlaying) return;
 
-    let animationFrameId: number;
-    let lastTime = performance.now();
-
-    const step = (time: number) => {
-      const delta = (time - lastTime) / 1000;
-      lastTime = time;
-
-      // Advance by ~2.5 days per second (takes ~11s for a smooth 28-day cinematic scrub)
-      const nextDay = currentDay + delta * 2.8;
-
-      if (nextDay >= 28) {
-        onDayChange(28);
+    const interval = setInterval(() => {
+      onDayChange(stepDays[(activeIndex + 1) % stepDays.length]);
+      if (activeIndex === stepDays.length - 1) {
         setIsPlaying(false);
-      } else {
-        onDayChange(parseFloat(nextDay.toFixed(2)));
-        animationFrameId = requestAnimationFrame(step);
       }
-    };
+    }, 2400);
 
-    animationFrameId = requestAnimationFrame(step);
+    return () => clearInterval(interval);
+  }, [isPlaying, activeIndex, onDayChange]);
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, currentDay, onDayChange]);
-
-  // Handle slider scrub with magnetic snap
-  const handleSliderChange = (rawVal: number) => {
-    // Check if within magnetic snap zone (+/- 0.35 days of a milestone)
-    let snappedVal = rawVal;
-    for (const m of milestones) {
-      if (Math.abs(rawVal - m.day) < 0.35) {
-        snappedVal = m.day;
-        break;
-      }
-    }
-    onDayChange(parseFloat(snappedVal.toFixed(1)));
+  const handleSliderStep = (stepIdx: number) => {
+    const targetDay = stepDays[stepIdx] ?? 0;
+    onDayChange(targetDay);
   };
 
-  // Real-time delta calculations based on current scrub position (0 to 28)
-  const progressRatio = currentDay / 28;
-  const weightLossKg = (currentDay * (isMale ? 0.16 : 0.13)).toFixed(1);
-  const waistReductionCm = (currentDay * (isMale ? 0.18 : 0.24)).toFixed(1);
-  const kyphosisAngle = Math.max(12, Math.round(36 - progressRatio * 24));
-  const weekNumber = Math.min(4, Math.floor(currentDay / 7) + 1);
-
-  // Percentage position of the thumb for floating tooltip alignment
-  const thumbPercent = (currentDay / 28) * 100;
-
   return (
-    <div className="w-full bg-[#11100F]/95 border border-stone-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl select-none shadow-2xl relative">
-      {/* Controls Header */}
+    <div className="w-full bg-[#11100F] border border-stone-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl select-none shadow-2xl">
+      {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] font-mono tracking-widest text-[#FF5A36] uppercase font-bold">
-              60 FPS Kinetic Timeline Scrubber
-            </span>
-          </div>
-          <h3 className="text-lg font-bold text-white mt-1">
-            Dự Đoán Thay Đổi Hình Thể Từng Mi-li-mét
+          <span className="text-[11px] font-mono tracking-widest text-[#FF5A36] uppercase font-bold">
+            Tiến Trình Chuyển Hóa 4 Tuần
+          </span>
+          <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
+            Kéo để xem thay đổi qua 4 tuần
           </h3>
         </div>
 
-        {/* View Angle Toggle & Play Buttons */}
+        {/* View Angle & Play Controls */}
         <div className="flex items-center gap-2.5">
           {/* Angle buttons */}
-          <div className="inline-flex rounded-xl bg-stone-900/90 p-1 border border-stone-800">
+          <div className="inline-flex rounded-xl bg-stone-900 p-1 border border-stone-800 text-xs font-mono">
             <button
               onClick={() => onViewModeChange("profile")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
                 viewMode === "profile"
                   ? "bg-[#FF5A36] text-white shadow-sm"
                   : "text-stone-400 hover:text-white"
@@ -115,17 +130,17 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
             </button>
             <button
               onClick={() => onViewModeChange("front")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
                 viewMode === "front"
                   ? "bg-[#FF5A36] text-white shadow-sm"
                   : "text-stone-400 hover:text-white"
               }`}
             >
-              Chính Diện (Eo & Cơ Lõi)
+              Chính Diện (Vòng Eo)
             </button>
           </div>
 
-          {/* Play/Pause Button */}
+          {/* Play/Pause Cycle Button */}
           <button
             onClick={() => {
               if (currentDay >= 28 && !isPlaying) {
@@ -134,8 +149,8 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
               setIsPlaying(!isPlaying);
             }}
             className="p-2.5 rounded-xl bg-white text-stone-900 hover:bg-stone-200 transition-colors flex items-center justify-center shrink-0 active:scale-95 shadow-md"
-            title={isPlaying ? "Tạm dừng" : "Xem tua nhanh 60 FPS"}
-            aria-label="Play timeline"
+            title={isPlaying ? "Tạm dừng" : "Tự động tua qua các tuần"}
+            aria-label="Tự động chuyển tuần"
           >
             {isPlaying ? (
               <Pause className="w-4 h-4 text-stone-900 fill-stone-900" />
@@ -148,82 +163,69 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
         </div>
       </div>
 
-      {/* Interactive Slider Track with Floating Telemetry Ticker */}
+      {/* Snap-to-Step Interactive Track */}
       <div className="relative py-4">
-        {/* Floating Ticker Badge attaching to thumb position */}
-        <div
-          className="absolute -top-7 pointer-events-none transition-all duration-75 flex flex-col items-center z-20"
-          style={{
-            left: `calc(${thumbPercent}% + ${(15 - thumbPercent * 0.3)}px)`,
-            transform: "translateX(-50%)",
-          }}
-        >
-          <div className="px-2.5 py-1 rounded-lg bg-stone-900/95 border border-[#FF5A36]/60 text-white font-mono text-[11px] font-bold shadow-xl flex items-center gap-1.5 whitespace-nowrap">
-            <span className="text-[#FF5A36]">Day {currentDay.toFixed(1)}</span>
-            <span className="text-stone-500">•</span>
-            <span className="text-emerald-400">-{weightLossKg}kg</span>
-            <span className="text-stone-500">•</span>
-            <span className="text-sky-400">-{waistReductionCm}cm</span>
-            <span className="text-stone-500">•</span>
-            <span className="text-amber-400">{kyphosisAngle}° lệch</span>
-          </div>
-          {/* Caret pointing down */}
-          <div className="w-1.5 h-1.5 bg-stone-900 border-r border-b border-[#FF5A36]/60 rotate-45 -mt-1" />
-        </div>
-
-        {/* Range Input Slider (Step 0.1 float precision) */}
+        {/* Step Range Input */}
         <input
-          ref={sliderRef}
           type="range"
           min="0"
-          max="28"
-          step="0.1"
-          value={currentDay}
-          onMouseDown={() => setIsDragging(true)}
-          onMouseUp={() => setIsDragging(false)}
-          onTouchStart={() => setIsDragging(true)}
-          onTouchEnd={() => setIsDragging(false)}
-          onChange={(e) => handleSliderChange(parseFloat(e.target.value))}
-          className="w-full h-3 bg-stone-800 rounded-lg appearance-none cursor-grab active:cursor-grabbing accent-[#FF5A36] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/50 transition-all"
+          max="3"
+          step="1"
+          value={activeIndex}
+          onChange={(e) => handleSliderStep(parseInt(e.target.value, 10))}
+          className="w-full h-3 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-[#FF5A36] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/40"
         />
 
-        {/* Milestone Indicator Markers with Magnetic Snap Points */}
-        <div className="flex justify-between items-start mt-4 text-xs">
-          {milestones.map((m) => {
-            const isPassed = currentDay >= m.day;
-            const isCurrent = Math.abs(currentDay - m.day) < 0.5;
+        {/* 4 Discrete Milestone Nodes */}
+        <div className="grid grid-cols-4 gap-2 mt-4 text-center">
+          {MILESTONES_4_STEPS.map((m, idx) => {
+            const isSelected = activeIndex === idx;
+            const isPassed = activeIndex >= idx;
 
             return (
               <button
                 key={m.day}
-                onClick={() => onDayChange(m.day)}
-                className={`flex flex-col items-center group transition-all text-center ${
-                  isCurrent
-                    ? "text-white font-bold"
-                    : isPassed
-                    ? "text-stone-300"
-                    : "text-stone-500 hover:text-stone-300"
+                onClick={() => handleSliderStep(idx)}
+                className={`flex flex-col items-center group transition-all p-2 rounded-2xl ${
+                  isSelected
+                    ? "bg-stone-900/90 border border-stone-700 shadow-lg text-white"
+                    : "hover:bg-stone-900/40 text-stone-400"
                 }`}
               >
+                {/* Milestone Node Dot */}
                 <div
-                  className={`w-3 h-3 rounded-full mb-1.5 transition-all duration-200 ${
-                    isCurrent
+                  className={`w-3.5 h-3.5 rounded-full mb-2 transition-all duration-300 ${
+                    isSelected
                       ? "bg-[#FF5A36] ring-4 ring-[#FF5A36]/30 scale-125"
                       : isPassed
                       ? "bg-emerald-400"
                       : "bg-stone-700 group-hover:bg-stone-500"
                   }`}
                 />
-                <span className="font-mono text-[11px]">{m.label}</span>
-                <span className="text-[10px] hidden sm:block text-stone-300 font-semibold mt-0.5">
-                  {m.title}
+
+                <span className={`font-mono text-xs ${isSelected ? "text-white font-bold" : "text-stone-300"}`}>
+                  {m.weekLabel}
                 </span>
-                <span className="text-[9px] font-mono hidden md:block text-stone-500">
-                  {m.desc}
+
+                <span className={`text-[11px] font-medium mt-0.5 ${isSelected ? "text-[#FF5A36]" : "text-stone-400"}`}>
+                  {m.stageTitle}
                 </span>
               </button>
             );
           })}
+        </div>
+
+        {/* Milestone Detail Banner */}
+        <div className="mt-4 p-3.5 rounded-2xl bg-stone-900/70 border border-stone-800/80 flex items-center justify-between text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-stone-300 font-bold">{activeMilestone.weekLabel} • {activeMilestone.stageTitle}</span>
+          </div>
+          <div className="flex items-center gap-3 text-stone-400">
+            <span>Cân nặng: <strong className="text-emerald-400">{activeMilestone.weightDelta}</strong></span>
+            <span className="hidden sm:inline">•</span>
+            <span className="hidden sm:inline">Vòng eo: <strong className="text-sky-400">{activeMilestone.waistDelta}</strong></span>
+          </div>
         </div>
       </div>
     </div>
