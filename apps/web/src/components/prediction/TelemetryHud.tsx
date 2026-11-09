@@ -479,7 +479,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
           <span>Lời khuyên của Huấn luyện viên AI</span>
         </div>
         <p className="text-stone-300 leading-relaxed italic text-xs sm:text-sm">
-          "{current.coachInsight}"
+          &ldquo;{current.coachInsight}&rdquo;
         </p>
       </div>
 

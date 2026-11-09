@@ -1,6 +1,6 @@
 import React from "react";
 import { Gender, PrimaryGoal } from "@/types/quiz";
-import { Flame, Dumbbell, HeartPulse, Sparkles, Check } from "lucide-react";
+import { Flame, Dumbbell, HeartPulse, Sparkles, Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface GenderAndGoalStepProps {
@@ -16,7 +16,7 @@ export const GenderAndGoalStep: React.FC<GenderAndGoalStepProps> = ({
   onUpdate,
   onNext,
 }) => {
-  const goals: { id: PrimaryGoal; title: string; subtitle: string; icon: any; color: string }[] = [
+  const goals: { id: PrimaryGoal; title: string; subtitle: string; icon: LucideIcon; color: string }[] = [
     {
       id: "lose_weight",
       title: "Giảm mỡ & Thon gọn",

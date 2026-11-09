@@ -7,6 +7,28 @@ import {
 
 export const PROMPT_VERSION = "v3.0-identity-preserving";
 
+const GENERIC_GENERATION_MESSAGE =
+  "Không thể sinh ảnh dự đoán lúc này. Vui lòng thử lại sau ít phút.";
+
+/**
+ * `message` is for server logs (may contain operator hints such as API-key or
+ * model configuration); only `userMessage` is ever shown to end users.
+ */
+export class GenerationError extends Error {
+  constructor(
+    message: string,
+    public readonly code: "SAFETY" | "QUOTA" | "CONFIG" | "UPSTREAM",
+    public readonly userMessage: string = GENERIC_GENERATION_MESSAGE
+  ) {
+    super(message);
+    this.name = "GenerationError";
+  }
+
+  get isSafetyFilter(): boolean {
+    return this.code === "SAFETY";
+  }
+}
+
 export interface BiometricDeltas {
   bodyFatChangePct: number;
   waistChangeCm: number;
@@ -331,7 +353,7 @@ export async function callGeminiImageToImage(
   maxRetries: number = 2
 ): Promise<string> {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-  let lastError: any = null;
+  let lastError: unknown = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
@@ -385,37 +407,35 @@ export async function callGeminiImageToImage(
 
         // 1. Quota exceeded on Free Tier
         if (res.status === 429 || errMsg.includes("Quota exceeded") || errMsg.includes("free_tier")) {
-          const quotaErr: any = new Error(
-            "Tài khoản Google Gemini của bạn đang ở gói Miễn phí (Free Tier), Google quy định hạn mức tạo sinh ảnh là 0 lượt/ngày. Vui lòng kích hoạt thanh toán (Pay-as-you-go) tại aistudio.google.com/app/plan_information."
+          throw new GenerationError(
+            "Tài khoản Google Gemini của bạn đang ở gói Miễn phí (Free Tier), Google quy định hạn mức tạo sinh ảnh là 0 lượt/ngày. Vui lòng kích hoạt thanh toán (Pay-as-you-go) tại aistudio.google.com/app/plan_information.",
+            "QUOTA"
           );
-          quotaErr.isQuotaFilter = true;
-          throw quotaErr;
         }
 
         // 2. Unregistered caller / Missing API key
         if (res.status === 403 && (errMsg.includes("unregistered callers") || errMsg.includes("API Key"))) {
-          throw new Error(
-            "Chưa nhận diện được Gemini API Key (Lỗi 403 unregistered caller). Hãy kiểm tra GEMINI_API_KEY trong .env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev)."
+          throw new GenerationError(
+            "Chưa nhận diện được Gemini API Key (Lỗi 403 unregistered caller). Hãy kiểm tra GEMINI_API_KEY trong .env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev).",
+            "CONFIG"
           );
         }
 
         // 3. Model not found or deprecated
         if (res.status === 404) {
-          throw new Error(
-            `Mô hình ${modelName} không tồn tại hoặc đã ngừng hỗ trợ. Vui lòng kiểm tra biến IMAGE_MODEL trong file .env.local.`
+          throw new GenerationError(
+            `Mô hình ${modelName} không tồn tại hoặc đã ngừng hỗ trợ. Vui lòng kiểm tra biến IMAGE_MODEL trong file .env.local.`,
+            "CONFIG"
           );
         }
 
         // 4. Content Safety Filter
         if (res.status === 400 && (errText.includes("SAFETY") || errMsg.includes("safety"))) {
-          const safetyErr: any = new Error(
-            "Ảnh không đáp ứng tiêu chuẩn an toàn nội dung. Vui lòng chọn ảnh trang phục thể thao kín đáo hơn."
-          );
-          safetyErr.isSafetyFilter = true;
-          throw safetyErr;
+          const safetyMessage = "Ảnh không đáp ứng tiêu chuẩn an toàn nội dung. Vui lòng chọn ảnh trang phục thể thao kín đáo hơn.";
+          throw new GenerationError(safetyMessage, "SAFETY", safetyMessage);
         }
 
-        throw new Error(`Gemini API error [${res.status}]: ${errMsg.slice(0, 200)}`);
+        throw new GenerationError(`Gemini API error [${res.status}]: ${errMsg.slice(0, 200)}`, "UPSTREAM");
       }
 
       const data = await res.json();
@@ -429,10 +449,11 @@ export async function callGeminiImageToImage(
       }
 
       throw new Error("Mô hình phản hồi nhưng không chứa dữ liệu ảnh kết quả.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeoutId);
       lastError = err;
-      if (err?.isSafetyFilter) break; // Don't retry safety blocks
+      // Safety blocks and configuration problems will not fix themselves on retry.
+      if (err instanceof GenerationError && (err.code === "SAFETY" || err.code === "CONFIG")) break;
     }
   }
 

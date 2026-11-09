@@ -1,6 +1,6 @@
 import React from "react";
 import { ActivityLevel, DietPreference } from "@/types/quiz";
-import { Coffee, Footprints, Bike, Zap, Apple, Salad, Fish, Clock, Check } from "lucide-react";
+import { Coffee, Footprints, Bike, Zap, Apple, Salad, Fish, Clock, Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LifestyleAndDietStepProps {
@@ -16,7 +16,7 @@ export const LifestyleAndDietStep: React.FC<LifestyleAndDietStepProps> = ({
   onUpdate,
   onNext,
 }) => {
-  const activities: { id: ActivityLevel; title: string; desc: string; icon: any }[] = [
+  const activities: { id: ActivityLevel; title: string; desc: string; icon: LucideIcon }[] = [
     {
       id: "sedentary",
       title: "Ít vận động (Bàn giấy)",
@@ -43,7 +43,7 @@ export const LifestyleAndDietStep: React.FC<LifestyleAndDietStepProps> = ({
     },
   ];
 
-  const diets: { id: DietPreference; title: string; desc: string; icon: any }[] = [
+  const diets: { id: DietPreference; title: string; desc: string; icon: LucideIcon }[] = [
     {
       id: "balanced",
       title: "Ăn uống cân bằng",

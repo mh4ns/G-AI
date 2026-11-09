@@ -7,6 +7,7 @@ import {
   callGeminiImageToImage,
   checkRateLimit,
   createPredictionJob,
+  GenerationError,
   getClientId,
   serializeJob,
   updatePredictionJob,
@@ -97,13 +98,17 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
     if (!apiKey || apiKey === "your_gemini_api_key_here") {
+      console.error("[Prediction API] GEMINI_API_KEY is not configured.");
       return NextResponse.json(
         {
           success: false,
-          code: "MISSING_API_KEY",
-          error: "Chưa nhận diện được GEMINI_API_KEY. Vui lòng kiểm tra file apps/web/.env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev) để hệ thống nhận key.",
+          code: "SERVICE_UNAVAILABLE",
+          error:
+            process.env.NODE_ENV === "production"
+              ? "Tính năng dự đoán ảnh tạm thời chưa sẵn sàng."
+              : "Chưa có GEMINI_API_KEY. Thêm vào apps/web/.env.local rồi khởi động lại `npm run dev`.",
         },
-        { status: 400 }
+        { status: 503 }
       );
     }
 
@@ -228,17 +233,18 @@ export async function POST(req: NextRequest) {
             stageMessage: "Đã hoàn thành toàn bộ 3 mốc dự đoán.",
           },
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Log without the request body or model output: both may contain the user's photo.
-        console.error(`[Prediction Job ${jobId}] Failed:`, err?.message || "unknown error");
+        console.error(`[Prediction Job ${jobId}] Failed:`, err instanceof Error ? err.message : "unknown error");
+        const genErr = err instanceof GenerationError ? err : null;
         updatePredictionJob(jobId, {
           status: "failed",
           error: {
-            code: err?.isSafetyFilter ? "CONTENT_SAFETY_VIOLATION" : "GENERATION_ERROR",
+            code: genErr?.isSafetyFilter ? "CONTENT_SAFETY_VIOLATION" : "GENERATION_ERROR",
             message:
-              err?.message ||
+              genErr?.userMessage ??
               "Không thể sinh ảnh dự đoán. Vui lòng kiểm tra lại ảnh chụp và thử lại.",
-            isSafetyFilter: Boolean(err?.isSafetyFilter),
+            isSafetyFilter: Boolean(genErr?.isSafetyFilter),
           },
         });
       }
@@ -246,8 +252,8 @@ export async function POST(req: NextRequest) {
 
     // Return job_id immediately (Step 3 Async Requirement)
     return NextResponse.json({ success: true, jobToken: job.accessToken, ...serializeJob(job) });
-  } catch (error: any) {
-    console.error("[Prediction API] Generate error:", error?.message || "unknown error");
+  } catch (error: unknown) {
+    console.error("[Prediction API] Generate error:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json(
       {
         success: false,

@@ -304,9 +304,9 @@ export default function PredictionPage() {
           // Polling network hiccup; retry next tick
         }
       }, 1500);
-    } catch (err: any) {
+    } catch {
       setIsGenerating(false);
-      setGenerationError(err?.message || "Lỗi kết nối máy chủ khi tạo sinh ảnh.");
+      setGenerationError("Lỗi kết nối máy chủ khi tạo sinh ảnh.");
     }
   };
 
