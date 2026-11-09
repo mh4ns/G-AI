@@ -1,0 +1,18 @@
+{
+  "name": "g-ai",
+  "private": true,
+  "description": "G-AI monorepo: brand site, coaching app, shared UI package (backend is Python, see apps/backend).",
+  "workspaces": [
+    "packages/ui",
+    "apps/site",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:site": "npm run dev -w g-ai-site",
+    "dev:app": "npm run dev -w g-ai-web",
+    "build": "npm run build -w g-ai-site && npm run build -w g-ai-web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present"
+  }
+}

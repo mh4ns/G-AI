@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { appUrl } from "@g-ai/ui";
 
 const EDITIONS = [
   {
@@ -96,7 +97,7 @@ export const HeroBannerSlider: React.FC = () => {
                 {item.primaryAction}
               </a>
               <Link
-                href="/quiz"
+                href={appUrl("/quiz")}
                 className="px-6 py-3.5 rounded-full border border-pitch/30 text-pitch text-xs font-mono font-medium hover:border-pitch hover:bg-white transition-colors"
               >
                 Fit & Movement Quiz

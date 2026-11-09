@@ -13,7 +13,7 @@ export default function StoreRedirectPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#0A0908] text-white flex flex-col items-center justify-center p-6 text-center font-sans">
+    <div className="min-h-screen bg-canvas-dark text-white flex flex-col items-center justify-center p-6 text-center font-sans">
       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-300 text-xs font-mono mb-4">
         <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
         <span>Movement Goods Đã Được Tích Hợp Vào Trang Chủ</span>

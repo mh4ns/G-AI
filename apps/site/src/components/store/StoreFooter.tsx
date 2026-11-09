@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { appUrl } from "@g-ai/ui";
 
 export const StoreFooter: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -79,8 +80,8 @@ export const StoreFooter: React.FC = () => {
               App Ecosystem
             </h4>
             <ul className="space-y-2 text-stone-400">
-              <li><Link href="/quiz" className="hover:text-white transition-colors">28-Day Movement Plan</Link></li>
-              <li><Link href="/today" className="hover:text-white transition-colors">Daily Practice Hub</Link></li>
+              <li><Link href={appUrl("/quiz")} className="hover:text-white transition-colors">28-Day Movement Plan</Link></li>
+              <li><Link href={appUrl("/today")} className="hover:text-white transition-colors">Daily Practice Hub</Link></li>
               <li><a href="#" className="hover:text-white transition-colors">On-Device Pose Engine</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Metabolic Calculator</a></li>
             </ul>

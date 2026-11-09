@@ -116,7 +116,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         <div
           className={`w-screen max-w-md sm:max-w-lg flex flex-col shadow-2xl transition-transform duration-300 border-l ${
             isLight
-              ? "bg-[#FFFDF9] text-stone-900 border-stone-200"
+              ? "bg-canvas text-stone-900 border-stone-200"
               : "bg-[#0E0D0C] text-stone-100 border-stone-800"
           }`}
         >

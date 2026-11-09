@@ -1,7 +1,10 @@
+/// <reference path="./assets.d.ts" />
 "use client";
 
 import React from "react";
 import Image from "next/image";
+import iconBlack from "../assets/logo-icon-black.png";
+import iconWhite from "../assets/logo-icon-white.png";
 
 export interface BrandLogoProps {
   isLight?: boolean;
@@ -30,9 +33,9 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   const { height, width } = sizeMap[size] || sizeMap.md;
 
-  const iconSrc = isWhite
-    ? "/brand/logo-icon-white.png"
-    : "/brand/logo-icon-black.png";
+  // Static imports: the logo ships with this package, so both sites render it
+  // without keeping copies in each app's public/ folder.
+  const iconSrc = isWhite ? iconWhite : iconBlack;
 
   return (
     <div className={`inline-flex items-center gap-2.5 shrink-0 select-none ${className}`}>

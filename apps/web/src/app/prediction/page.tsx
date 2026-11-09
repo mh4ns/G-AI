@@ -16,7 +16,7 @@ import {
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
 import { TimelineScrubber } from "@/components/prediction/TimelineScrubber";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandLogo, siteUrl } from "@g-ai/ui";
 import { BodyCalibrationModal } from "@/components/prediction/BodyCalibrationModal";
 import { PlanSummaryCard, PlanConfig } from "@/components/prediction/PlanSummaryCard";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
@@ -385,9 +385,9 @@ export default function PredictionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0908] text-stone-100 font-sans selection:bg-[#FF5A36]/30 selection:text-white">
+    <div className="min-h-screen bg-canvas-dark text-stone-100 font-sans selection:bg-[#FF5A36]/30 selection:text-white">
       {/* 1. Step 8: Header with ONLY ONE Primary Button ("Bắt đầu Ngày 1") + More Menu ("⋯") */}
-      <header className="sticky top-0 z-40 bg-[#0A0908]/90 backdrop-blur-md border-b border-stone-800">
+      <header className="sticky top-0 z-40 bg-canvas-dark/90 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -397,7 +397,7 @@ export default function PredictionPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <Link href="/" className="flex items-center group">
+            <Link href={siteUrl("/")} className="flex items-center group">
               <BrandLogo isLight={false} size="sm" showSubtitle subtitle="Dự đoán vóc dáng 28 ngày" />
             </Link>
           </div>
@@ -712,7 +712,7 @@ export default function PredictionPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/#movement-goods"
+                href={siteUrl("/#movement-goods")}
                 className="px-6 py-3.5 sm:py-4 rounded-2xl border border-stone-800 text-stone-300 hover:text-white hover:border-stone-600 text-xs text-center transition-colors flex items-center justify-center font-medium"
               >
                 Dụng cụ khuyên dùng
@@ -722,7 +722,7 @@ export default function PredictionPage() {
         </div>
 
         {/* Step 8: Mobile Sticky Scrubber (Fixed at bottom on screens <= 768px) */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#0A0908]/95 backdrop-blur-xl border-t border-stone-800 shadow-[0_-8px_24px_rgba(0,0,0,0.85)]">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-canvas-dark/95 backdrop-blur-xl border-t border-stone-800 shadow-[0_-8px_24px_rgba(0,0,0,0.85)]">
           <div className="max-w-md mx-auto">
             <TimelineScrubber
               currentDay={currentDay}

@@ -151,8 +151,8 @@ export const AssessmentQuizWizard: React.FC = () => {
     <div
       className={`min-h-screen flex flex-col justify-between transition-colors duration-500 ${
         isMaleTheme
-          ? "bg-[#0A0908] text-white selection:bg-[#FF5A36]/30 selection:text-white"
-          : "bg-[#FFFDF9] text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
+          ? "bg-canvas-dark text-white selection:bg-[#FF5A36]/30 selection:text-white"
+          : "bg-canvas text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
       }`}
     >
       {/* Header with progress line (shown for steps 2 to 6) */}

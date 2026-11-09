@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Video, ShieldCheck, CheckCircle2, AlertCircle, Sparkles, ArrowRight } from "lucide-react";
+import { appUrl } from "@g-ai/ui";
 
 export const AiVisionTeaser: React.FC = () => {
   const [activeJoint, setActiveJoint] = useState<"hip" | "knee" | "spine">("knee");
@@ -47,7 +48,7 @@ export const AiVisionTeaser: React.FC = () => {
 
             <div className="pt-2 space-y-2">
               <Link
-                href="/quiz"
+                href={appUrl("/quiz")}
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-stone-900 font-bold text-xs font-mono hover:bg-stone-200 transition-all shadow-lg active:scale-95"
               >
                 <span>Làm Khảo Sát Để Kích Hoạt AI Live PT</span>

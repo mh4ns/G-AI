@@ -125,7 +125,7 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ isLi
       id="movement-goods"
       className={`py-20 sm:py-28 border-t select-none transition-colors duration-500 scroll-mt-20 ${
         isLight
-          ? "bg-[#FAF8F5] border-stone-200 text-stone-900"
+          ? "bg-canvas border-stone-200 text-stone-900"
           : "bg-[#090807] border-stone-800 text-white"
       }`}
     >

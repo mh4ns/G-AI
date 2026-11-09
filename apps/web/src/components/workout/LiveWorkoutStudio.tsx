@@ -390,7 +390,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0A0908] text-white flex flex-col select-none overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 bg-canvas-dark text-white flex flex-col select-none overflow-hidden animate-in fade-in duration-300">
       {/* 1. Header Bar */}
       <header className="h-16 px-4 sm:px-6 border-b border-stone-800/80 bg-stone-950/80 backdrop-blur-md flex items-center justify-between z-20">
         <div className="flex items-center gap-3">

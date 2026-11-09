@@ -1,20 +1,38 @@
-# Deploying the web app to Vercel
+# Deploying to Vercel (two projects)
 
-The Next.js app in `apps/web` deploys to Vercel through Vercel's Git integration.
+The repo ships **two independent websites** that share one design foundation (`packages/ui`):
+
+| Vercel project | Root Directory | What it serves |
+|---|---|---|
+| `g-ai-site` | `apps/site` | Brand landing page and Movement Goods store |
+| `g-ai-app` | `apps/web` | Onboarding quiz, photo prediction, Today dashboard, login, `/api/prediction/*` |
+
 The FastAPI backend is **not** hosted on Vercel. Deploy it separately (see "Backend" below) and point
-the web app at it with `BACKEND_URL`.
+the app at it with `BACKEND_URL`.
 
-## 1. Import the repository
+## 1. Create both projects
 
-1. Go to <https://vercel.com/new> and import `mh4ns/G-AI` (grant the Vercel GitHub app access to it if asked).
-2. **Root Directory:** `apps/web`. Framework preset: Next.js (auto-detected). Leave build and install commands at their defaults.
-3. Add the environment variables below, then click **Deploy**.
+For each row in the table above:
 
-Each push to `main` deploys to production. Every other branch gets a preview URL.
+1. Go to <https://vercel.com/new> and import `mh4ns/G-AI`.
+2. Set **Root Directory** to the value in the table. Vercel detects the npm workspace and installs from
+   the repo root, so `packages/ui` is available. Keep the framework preset (Next.js) and the default commands.
+3. Add that project's environment variables (below), then click **Deploy**.
+
+Pushing to `main` redeploys both projects. To skip builds for unrelated changes, set
+Settings → Git → **Ignored Build Step** to `git diff --quiet HEAD^ HEAD -- . ../../packages/ui`.
 
 ## 2. Environment variables
 
-Set these under Project → Settings → Environment Variables (for Production and Preview).
+**Both projects:** set these so the two sites can link to each other. They are read at build time, so
+redeploy after changing them.
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | Public URL of `g-ai-site`, e.g. `https://g-ai.vercel.app` |
+| `NEXT_PUBLIC_APP_URL` | Public URL of `g-ai-app`, e.g. `https://g-ai-app.vercel.app` |
+
+**`g-ai-app` only:**
 
 | Variable | Required | Value |
 |---|---|---|
@@ -23,10 +41,10 @@ Set these under Project → Settings → Environment Variables (for Production a
 | `BACKEND_URL` | for login and Today sync | Public HTTPS URL of the FastAPI backend, e.g. `https://g-ai-api.onrender.com` |
 | `IMAGE_MODEL`, `VISION_MODEL` | no | Override the default Gemini models |
 
-`BACKEND_URL` is read **at build time** (Next.js rewrites). After you change it, redeploy.
+`BACKEND_URL` is also read **at build time** (Next.js rewrites).
 
-Without `BACKEND_URL` the site still builds and guests can use the quiz, the prediction page and a
-local-only Today page, but login and server sync return errors.
+Without `BACKEND_URL`, guests can still use the quiz, the prediction page and a local-only Today page,
+but login and server sync return errors.
 
 ## 3. Known limitation: photo predictions
 

@@ -19,7 +19,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandLogo, siteUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
 
@@ -224,7 +224,7 @@ export default function TodayDashboardPage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 pb-16 ${
-      isLight ? "bg-[#FAF8F5] text-stone-800" : "bg-[#0A0908] text-stone-100"
+      isLight ? "bg-canvas text-stone-800" : "bg-canvas-dark text-stone-100"
     }`}>
       {/* Top Navbar */}
       <header className={`backdrop-blur-md sticky top-0 z-30 border-b transition-colors duration-300 ${
@@ -232,7 +232,7 @@ export default function TodayDashboardPage() {
       }`}>
         <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+            <Link href={siteUrl("/")} className="hover:opacity-80 transition-opacity flex items-center">
               <BrandLogo variant="horizontal" isLight={isLight} size="sm" />
             </Link>
             <div className={`border-l pl-3 ${isLight ? "border-stone-200" : "border-stone-800"}`}>
@@ -247,7 +247,7 @@ export default function TodayDashboardPage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/#movement-goods"
+              href={siteUrl("/#movement-goods")}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                 isLight
                   ? "text-stone-600 hover:text-[#FF5A36] bg-stone-100 hover:bg-stone-200"

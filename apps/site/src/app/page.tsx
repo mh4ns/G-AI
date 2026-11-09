@@ -10,6 +10,7 @@ import { DualAthleteGallery } from "@/components/home/DualAthleteGallery";
 import { AiVisionTeaser } from "@/components/home/AiVisionTeaser";
 import { MovementGoodsSection, CuratedProduct } from "@/components/home/MovementGoodsSection";
 import { CartDrawer, CartItem } from "@/components/home/CartDrawer";
+import { appUrl } from "@g-ai/ui";
 
 export default function HomePage() {
   const [athleteMode, setAthleteMode] = useState<"female" | "male">("female");
@@ -120,8 +121,8 @@ export default function HomePage() {
     <div
       className={`min-h-screen font-sans transition-colors duration-500 ${
         isLight
-          ? "bg-[#FFFDF9] text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
-          : "bg-[#0A0908] text-stone-100 selection:bg-[#FF5A36]/30 selection:text-white"
+          ? "bg-canvas text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
+          : "bg-canvas-dark text-stone-100 selection:bg-[#FF5A36]/30 selection:text-white"
       }`}
     >
       {/* 1. Tactical Glassmorphic Header with Light/Dark Adaptation & Streamlined Links */}
@@ -182,7 +183,7 @@ export default function HomePage() {
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/quiz"
+              href={appUrl("/quiz")}
               className={`w-full sm:w-auto px-8 py-4 rounded-full text-white font-bold text-sm transition-all shadow-xl flex items-center justify-center gap-2 ${
                 isLight
                   ? "bg-[#FF6B4A] hover:bg-[#ff5530] shadow-[#FF6B4A]/25"
@@ -194,7 +195,7 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="/prediction"
+              href={appUrl("/prediction")}
               className={`w-full sm:w-auto px-8 py-4 rounded-full font-mono text-xs transition-colors flex items-center justify-center gap-2 border ${
                 isLight
                   ? "bg-stone-100 hover:bg-stone-200 border-stone-300 text-stone-800"

@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Lightbulb, ShoppingBag } from "lucide-react";
 import { FlipTextHover } from "@/components/home/KineticText";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandLogo, appUrl } from "@g-ai/ui";
 
 interface HomeNavbarProps {
   isLight?: boolean;
@@ -23,7 +23,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
     <header className={`sticky top-0 z-50 backdrop-blur-md border-b select-none transition-colors duration-300 ${
       isLight 
         ? "bg-white/90 border-stone-200 text-stone-900" 
-        : "bg-[#0A0908]/90 border-stone-800 text-white"
+        : "bg-canvas-dark/90 border-stone-800 text-white"
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
         {/* Brand Typographic Identity (Pure Geometric G Monogram) */}
@@ -37,7 +37,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
         <nav className={`hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider ${
           isLight ? "text-stone-700" : "text-stone-300"
         }`}>
-          <Link href="/prediction" className={`flex items-center gap-1.5 transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
+          <Link href={appUrl("/prediction")} className={`flex items-center gap-1.5 transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
             <FlipTextHover text="Bản Sao Số (Digital Twin)" activeClassName="text-emerald-500" />
           </Link>
@@ -88,7 +88,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
           )}
 
           <Link
-            href="/login"
+            href={appUrl("/login")}
             className={`hidden sm:inline text-xs font-semibold transition-colors ${
               isLight ? "text-stone-600 hover:text-black" : "text-stone-300 hover:text-white"
             }`}
@@ -98,7 +98,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
 
           {/* Single High-Impact CTA Button */}
           <Link
-            href="/quiz"
+            href={appUrl("/quiz")}
             className={`px-5 py-2.5 rounded-full text-white text-xs font-bold font-mono transition-all shadow-lg active:scale-[0.98] flex items-center gap-1.5 ${
               isLight
                 ? "bg-[#FF6B4A] hover:bg-[#ff5530] shadow-[#FF6B4A]/25"

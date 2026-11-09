@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Activity, ShieldCheck, Flame, Compass, Play, Lightbulb } from "lucide-react";
 import { SweepHighlight, FlipTextHover } from "@/components/home/KineticText";
+import { appUrl } from "@g-ai/ui";
 
 interface DualAthleteHeroProps {
   athleteMode: "female" | "male";
@@ -162,7 +163,7 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col sm:flex-row gap-3.5">
               <Link
-                href="/quiz"
+                href={appUrl("/quiz")}
                 className={`px-7 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-xl active:scale-[0.99] text-white ${
                   athleteMode === "male"
                     ? "bg-[#10B981] hover:bg-[#0da06f] shadow-[#10B981]/25"
@@ -174,7 +175,7 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({
               </Link>
 
               <Link
-                href="/prediction"
+                href={appUrl("/prediction")}
                 className={`px-6 py-4 rounded-2xl font-mono text-xs flex items-center justify-center gap-2 transition-colors border ${
                   isLight
                     ? "bg-white hover:bg-stone-50 text-stone-800 border-stone-300 shadow-sm"
@@ -254,7 +255,7 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({
                 </div>
 
                 <Link
-                  href="/quiz"
+                  href={appUrl("/quiz")}
                   className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-mono text-stone-200 border border-white/20 transition-colors"
                 >
                   Mở Camera PT →

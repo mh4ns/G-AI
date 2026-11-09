@@ -10,6 +10,7 @@ if (process.env.VERCEL && !process.env.BACKEND_URL) {
 
 const nextConfig = {
   reactStrictMode: true,
+  transpilePackages: ["@g-ai/ui"],
   images: {
     remotePatterns: [
       {
@@ -17,6 +18,10 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
+  },
+  // The coaching app starts with onboarding; the brand landing page is the site app.
+  async redirects() {
+    return [{ source: "/", destination: "/quiz", permanent: false }];
   },
   // Same-origin proxy to FastAPI so the httpOnly session cookie is first-party.
   async rewrites() {

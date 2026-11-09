@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Search, ShoppingBag, Menu, X } from "lucide-react";
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandLogo, appUrl } from "@g-ai/ui";
 
 interface StoreHeaderProps {
   cartCount: number;
@@ -49,10 +49,10 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ cartCount, onOpenCart 
             <Link href="/store#pigments" className="hover:text-pitch transition-colors">
               Pigment Study
             </Link>
-            <Link href="/quiz" className="hover:text-pitch transition-colors text-stone-500 hover:text-pitch">
+            <Link href={appUrl("/quiz")} className="hover:text-pitch transition-colors text-stone-500 hover:text-pitch">
               28-Day Assessment
             </Link>
-            <Link href="/today" className="hover:text-pitch transition-colors text-stone-500 hover:text-pitch">
+            <Link href={appUrl("/today")} className="hover:text-pitch transition-colors text-stone-500 hover:text-pitch">
               Daily Hub
             </Link>
           </nav>
@@ -112,14 +112,14 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ cartCount, onOpenCart 
           </Link>
           <div className="pt-2 flex flex-col gap-2">
             <Link
-              href="/quiz"
+              href={appUrl("/quiz")}
               onClick={() => setMobileMenuOpen(false)}
               className="py-2.5 px-4 rounded-xl bg-pitch text-ecru-50 text-xs font-mono text-center"
             >
               Complete Physical Assessment
             </Link>
             <Link
-              href="/today"
+              href={appUrl("/today")}
               onClick={() => setMobileMenuOpen(false)}
               className="py-2.5 px-4 rounded-xl border border-ecru-300 text-pitch text-xs font-mono text-center"
             >

@@ -18,6 +18,10 @@
 | Cửa hàng | 🚧 API đặt hàng an toàn đã có; giao diện web vẫn dùng dữ liệu mẫu, chưa có cổng thanh toán |
 | Dinh dưỡng, IoT/BLE, CBT Journal, Premium, App mobile | 📝 Chưa bắt đầu |
 
+**Hai website, một nền thiết kế:** `apps/site` (trang thương hiệu + cửa hàng, cổng 3001) và `apps/web`
+(ứng dụng huấn luyện, cổng 3000) dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
+`npm run dev:site` và `npm run dev:app`. Deploy: `docs/deploy-vercel.md`.
+
 **Chạy nhanh:** `docker compose up --build` (sao chép `.env.example` thành `.env` trước), hoặc chạy riêng
 từng app theo `apps/backend/README.md` và `apps/web/README.md`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
 
@@ -30,11 +34,13 @@ Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho n�
 ```text
 G-ai/
 ├── apps/
-│   ├── web/                     # Ứng dụng Web (Next.js 15, React 19, Tailwind CSS, MediaPipe Pose)
+│   ├── site/                    # Web 1: trang thương hiệu + cửa hàng (Next.js 15)
+│   ├── web/                     # Web 2: ứng dụng huấn luyện — quiz, dự đoán ảnh, Today (Next.js 15)
 │   ├── mobile/                  # Ứng dụng Di động (React Native / Flutter)
 │   └── backend/                 # API Server & AI Core (Python FastAPI, Uvicorn, SQLAlchemy)
 │
 ├── packages/
+│   ├── ui/                      # Nền thiết kế chung cho 2 web: màu nền canvas, token, CSS gốc, logo
 │   └── shared-types/            # Kiểu dữ liệu & Schemas dùng chung giữa Web, Mobile và Backend
 │
 ├── docs/                        # Toàn bộ tài liệu kỹ thuật, slide, sơ đồ và use case

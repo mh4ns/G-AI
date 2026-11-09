@@ -4,7 +4,7 @@ import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandLogo, siteUrl } from "@g-ai/ui";
 import { ApiError, api } from "@/lib/api-client";
 
 /** Only allow same-site relative redirects (blocks `//evil.com` and absolute URLs). */
@@ -58,8 +58,8 @@ function LoginForm() {
     "w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20";
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center px-4 py-12">
-      <Link href="/" className="mb-8">
+    <div className="min-h-screen bg-canvas flex flex-col items-center justify-center px-4 py-12">
+      <Link href={siteUrl("/")} className="mb-8">
         <BrandLogo variant="horizontal" isLight size="md" />
       </Link>
 
