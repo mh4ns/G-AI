@@ -87,6 +87,15 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
             </button>
           )}
 
+          <Link
+            href="/login"
+            className={`hidden sm:inline text-xs font-semibold transition-colors ${
+              isLight ? "text-stone-600 hover:text-black" : "text-stone-300 hover:text-white"
+            }`}
+          >
+            Đăng nhập
+          </Link>
+
           {/* Single High-Impact CTA Button */}
           <Link
             href="/quiz"
