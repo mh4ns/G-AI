@@ -1,12 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Eye, EyeOff, Sparkles, User, Activity, Camera, Upload } from "lucide-react";
+import {
+  Sparkles,
+  Camera,
+  RotateCcw,
+  AlertCircle,
+  Columns,
+  Eye,
+  EyeOff,
+  Activity,
+  Maximize2,
+  Check,
+} from "lucide-react";
 
 export interface MorphingAvatarProps {
   progress: number; // 0.0 to 1.0 (from currentDay / 28)
   viewMode: "profile" | "front" | "threeQuarter";
+  onViewModeChange?: (mode: "profile" | "front" | "threeQuarter") => void;
   activeHotspot: string | null;
   onSelectHotspot: (hotspot: string) => void;
   archetype?: "female_pilates" | "male_strength";
@@ -19,6 +31,7 @@ export interface MorphingAvatarProps {
 export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   progress,
   viewMode,
+  onViewModeChange,
   activeHotspot,
   onSelectHotspot,
   archetype = "female_pilates",
@@ -27,443 +40,529 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   userPhoto,
   onOpenUploadModal,
 }) => {
-  const [showPlumbLine, setShowPlumbLine] = useState(true);
-  const [displayMode, setDisplayMode] = useState<"model" | "cutout">("cutout");
+  // Mode States
+  const [isComparing, setIsComparing] = useState<boolean>(false);
+  const [comparePos, setComparePos] = useState<number>(50); // 0 to 100%
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [showSkeleton, setShowSkeleton] = useState<boolean>(false); // Step 3: Default OFF
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const isMale = archetype === "male_strength";
 
-  // 5 Calibrated Milestone Cutouts for 28-day kinetic protocol (0, 7, 14, 21, 28)
-  const defaultFemaleCutouts = [
-    userPhoto || "/twins/female-day-0.png",
-    "/twins/female-day-7.png",
-    "/twins/female-day-14.png",
-    "/twins/female-day-21.png",
-    "/twins/female-day-28.png",
-  ];
+  // Check prefers-reduced-motion
+  const isReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const defaultMaleCutouts = [
-    userPhoto || "/twins/male-day-0.png",
-    "/twins/male-day-7.png",
-    "/twins/male-day-14.png",
-    "/twins/male-day-21.png",
-    "/twins/male-day-28.png",
-  ];
+  // 4 Calibrated Milestone Images for 28-day protocol: Day 0, Day 7, Day 14, Day 28
+  const defaultCutouts = isMale
+    ? {
+        0: userPhoto || "/twins/male-day-0.png",
+        7: "/twins/male-day-7.png",
+        14: "/twins/male-day-14.png",
+        28: "/twins/male-day-28.png",
+      }
+    : {
+        0: userPhoto || "/twins/female-day-0.png",
+        7: "/twins/female-day-7.png",
+        14: "/twins/female-day-14.png",
+        28: "/twins/female-day-28.png",
+      };
 
-  const activeMilestones = (customMilestones && customMilestones.length >= 5)
-    ? customMilestones
-    : (isMale ? defaultMaleCutouts : defaultFemaleCutouts);
+  const milestoneImages = {
+    0: userPhoto || defaultCutouts[0],
+    7: (customMilestones && customMilestones[1]) || defaultCutouts[7],
+    14: (customMilestones && customMilestones[2]) || defaultCutouts[14],
+    28: (customMilestones && (customMilestones[4] || customMilestones[3])) || defaultCutouts[28],
+  };
 
-  // Continuous interpolation between milestones across 28 days
-  // Milestones: Day 0 (idx 0), Day 7 (idx 1), Day 14 (idx 2), Day 21 (idx 3), Day 28 (idx 4)
-  const clampedDay = Math.max(0, Math.min(28, currentDay));
-  const segmentDuration = 7;
-  const baseSegment = Math.min(3, Math.floor(clampedDay / segmentDuration));
-  const nextSegment = Math.min(4, baseSegment + 1);
-  const segmentAlpha = (clampedDay - baseSegment * segmentDuration) / segmentDuration; // 0.0 -> 1.0
+  // Determine closest milestone day (0, 7, 14, 28)
+  const milestoneDays = [0, 7, 14, 28];
+  const activeMilestoneDay = milestoneDays.reduce((closest, d) =>
+    Math.abs(d - currentDay) < Math.abs(closest - currentDay) ? d : closest
+  , 0);
 
-  const primaryImage = activeMilestones[baseSegment] || activeMilestones[0];
-  const secondaryImage = activeMilestones[nextSegment] || activeMilestones[baseSegment];
+  // Comparison target image: if Day 0 is selected, compare with Day 28; else compare Day 0 with current milestone
+  const compareTargetDay = activeMilestoneDay === 0 ? 28 : activeMilestoneDay;
+  const compareTargetTitle =
+    compareTargetDay === 7
+      ? "Tuần 1"
+      : compareTargetDay === 14
+      ? "Tuần 2"
+      : "Tuần 4 (Mục tiêu)";
 
-  // Continuous Plumb Line Offsets interpolation
-  // Day 0: 22° / 18° deviation -> Day 28: 0° optimal plumb line
+  // Mouse & Touch Dragging for Before/After Slider
+  const updateSplitPosition = useCallback((clientX: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const percent = Math.round((x / rect.width) * 100);
+    setComparePos(percent);
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isComparing) return;
+    setIsDragging(true);
+    updateSplitPosition(e.clientX);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isComparing) return;
+    setIsDragging(true);
+    if (e.touches[0]) updateSplitPosition(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isComparing || !isDragging) return;
+    if (e.touches[0]) updateSplitPosition(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) updateSplitPosition(e.clientX);
+    };
+    const handleMouseUp = () => {
+      if (isDragging) setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, updateSplitPosition]);
+
+  // Biomechanical coordinate calculations for Skeleton Overlay
+  // Day 0 Ghost Line (Deviated baseline)
+  const day0HeadX = 160 + 24 * 0.7; // ~176.8
+  const day0ThoracicX = 160 - 22 * 0.7; // ~144.6
+  const day0CoreX = 160 + 24 * 0.4; // ~169.6
+  const day0PelvisX = 160 - 16 * 0.4; // ~153.6
+
+  // Current Posture Calculations (adapts with progress 0.0 -> 1.0)
   const headOffset = 24 * (1 - progress) + 2 * progress;
   const kyphosisOffset = 22 * (1 - progress) + 3 * progress;
   const pelvicOffset = 16 * (1 - progress) + 1 * progress;
   const currentAngleDeg = Math.round(18 * (1 - progress));
 
-  const statusColor = progress > 0.75 
-    ? "#10B981" 
-    : progress > 0.35 
-    ? "#F59E0B" 
-    : "#FF5A36";
+  const currentHeadX = 160 + headOffset * 0.7;
+  const currentThoracicX = 160 - kyphosisOffset * 0.7;
+  const currentCoreX = 160 + headOffset * 0.4;
+  const currentPelvisX = 160 - pelvicOffset * 0.4;
 
-  const statusText = progress > 0.75
-    ? "Trục cơ thể: Cân bằng vững vàng (0° lệch)"
-    : progress > 0.35
-    ? `Cơ dựng sống đang nâng thẳng (${currentAngleDeg}° lệch)`
-    : `Độ đổ thân trên & gù lưng (${currentAngleDeg}° lệch)`;
+  const statusColor =
+    progress > 0.75 ? "#10B981" : progress > 0.35 ? "#F59E0B" : "#FF5A36";
 
-  // Dynamic Biomechanical Model Coordinates
-  const headX = 160 + headOffset * 0.7;
-  const headY = 76;
-  const kyphosisX = 160 - kyphosisOffset * 0.7;
-  const thoracicY = 175;
-  const coreX = 160 + headOffset * 0.4;
-  const coreY = 255;
-  const pelvicX = 160 - pelvicOffset * 0.4;
-  const pelvicY = 340;
-
-  // Front view dynamic metrics
-  const waistHalf = (isMale ? 36 : 30) - progress * (isMale ? 6 : 8);
-  const chestHalf = (isMale ? 48 : 42) + progress * 2.5;
-  const hipHalf = isMale ? 38 : 44;
+  const statusLabel =
+    progress > 0.75
+      ? "Trục dóng tối ưu (0° lệch)"
+      : progress > 0.35
+      ? `Cơ dựng sống nâng thẳng (${currentAngleDeg}° lệch)`
+      : `Độ đổ thân trước & gù (${currentAngleDeg}° lệch)`;
 
   return (
-    <div className="relative w-full h-[480px] sm:h-[560px] flex items-center justify-center select-none overflow-hidden rounded-3xl bg-gradient-to-b from-[#141210] to-[#0A0908] border border-stone-800 shadow-2xl">
-      {/* Subtle Studio Floor Radial Ambient Glow */}
-      <div
-        className="absolute w-80 h-80 sm:w-96 sm:h-96 rounded-full blur-3xl pointer-events-none transition-all duration-300 opacity-20"
-        style={{
-          background: `radial-gradient(circle, ${statusColor} 0%, transparent 70%)`,
-        }}
-      />
+    <div className="w-full flex flex-col items-center select-none font-sans">
+      {/* 1. Top Controls Bar: View Mode Tabs (Nghiêng / Chính diện) + Actions */}
+      <div className="w-full flex flex-wrap items-center justify-between gap-2.5 mb-3 px-1">
+        {/* View Mode Tabs (Small Pill Tabs) */}
+        {onViewModeChange && (
+          <div
+            role="tablist"
+            aria-label="Chọn góc nhìn cơ thể"
+            className="inline-flex items-center p-1 rounded-full bg-stone-900 border border-stone-800 backdrop-blur-md shadow-sm"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === "profile"}
+              onClick={() => onViewModeChange("profile")}
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-200 ${
+                viewMode === "profile"
+                  ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
+                  : "text-stone-400 hover:text-stone-200 font-medium"
+              }`}
+            >
+              Góc Nghiêng
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === "front"}
+              onClick={() => onViewModeChange("front")}
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-200 ${
+                viewMode === "front"
+                  ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
+                  : "text-stone-400 hover:text-stone-200 font-medium"
+              }`}
+            >
+              Chính Diện
+            </button>
+          </div>
+        )}
 
-      {/* Holographic Ground Light Ellipse (Under Model Feet) */}
-      <div className="absolute bottom-6 w-64 h-12 rounded-[100%] bg-stone-900/80 blur-md pointer-events-none border border-stone-800/40" />
-      <div
-        className="absolute bottom-6 w-44 h-7 rounded-[100%] blur-sm pointer-events-none transition-all duration-300 opacity-70"
-        style={{
-          background: `radial-gradient(ellipse at center, ${statusColor} 0%, transparent 70%)`,
-        }}
-      />
-
-      {/* Top Controls Bar */}
-      <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-stone-200">
-          <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
-          <span>BẢN SAO SỐ • NGÀY {clampedDay}/28</span>
-          {userPhoto && (
-            <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
-              ẢNH THẬT
-            </span>
-          )}
-        </div>
-
+        {/* Feature Switches: So Sánh Trước/Sau & Khung Xương */}
         <div className="flex items-center gap-2">
-          {/* Photo Re-upload Trigger */}
+          {/* Skeleton Overlay Switch (Mặc định tắt) */}
+          <button
+            type="button"
+            onClick={() => setShowSkeleton((prev) => !prev)}
+            aria-pressed={showSkeleton}
+            className={`px-3 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95 ${
+              showSkeleton
+                ? "bg-[#FF5A36]/20 border-[#FF5A36] text-white font-bold shadow-sm shadow-[#FF5A36]/20"
+                : "bg-stone-900/90 border-stone-800 text-stone-400 hover:text-stone-200"
+            }`}
+            title="Bật/tắt lớp phủ khung xương và trục dóng giải phẫu"
+          >
+            <Activity className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <span>Khung Xương</span>
+            {showSkeleton && <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36]" />}
+          </button>
+
+          {/* Before / After Comparison Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsComparing((prev) => !prev)}
+            aria-pressed={isComparing}
+            className={`px-3 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95 ${
+              isComparing
+                ? "bg-white text-stone-900 font-bold border-white shadow-md"
+                : "bg-stone-900/90 border-stone-800 text-stone-400 hover:text-stone-200"
+            }`}
+            title="Bật thanh kéo so sánh trước/sau trực quan"
+          >
+            <Columns className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <span>So Sánh</span>
+          </button>
+
+          {/* Photo Upload / Change Trigger */}
           {onOpenUploadModal && (
             <button
+              type="button"
               onClick={onOpenUploadModal}
-              className="px-3 py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-800 border border-stone-700 text-stone-200 hover:text-white backdrop-blur-md transition-all flex items-center gap-1.5 active:scale-95"
-              title="Cập nhật hoặc chụp ảnh thể trạng mới"
+              className="px-2.5 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition-colors"
+              title="Cập nhật ảnh thật thể trạng"
+              aria-label="Cập nhật ảnh thật"
             >
               <Camera className="w-3.5 h-3.5 text-[#FF5A36]" />
-              <span className="hidden sm:inline">Đổi Ảnh Thật</span>
             </button>
           )}
-
-          {/* Mode Switcher: Wireframe vs Cutout */}
-          <button
-            onClick={() => setDisplayMode(displayMode === "model" ? "cutout" : "model")}
-            className="px-3 py-1.5 rounded-full bg-black/60 hover:bg-stone-800 border border-white/10 text-stone-300 hover:text-white backdrop-blur-md transition-all flex items-center gap-1.5"
-            title="Chuyển đổi giữa Mô hình 3D và Hình thể Tách nền"
-          >
-            {displayMode === "model" ? (
-              <>
-                <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Mô hình 3D</span>
-              </>
-            ) : (
-              <>
-                <User className="w-3.5 h-3.5 text-[#FF5A36]" />
-                <span className="hidden sm:inline">Người Mẫu Tách Nền</span>
-              </>
-            )}
-          </button>
-
-          {/* Plumb Line Toggle Button */}
-          <button
-            onClick={() => setShowPlumbLine(!showPlumbLine)}
-            className={`px-3 py-1.5 rounded-full border backdrop-blur-md transition-all flex items-center gap-1.5 font-bold ${
-              showPlumbLine
-                ? "bg-[#FF5A36]/20 border-[#FF5A36]/60 text-white shadow-md shadow-[#FF5A36]/20"
-                : "bg-black/60 border-white/10 text-stone-400 hover:text-white"
-            }`}
-            title="Bật/Tắt đường dóng giải phẫu học"
-          >
-            {showPlumbLine ? <Eye className="w-3.5 h-3.5 text-[#FF5A36]" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{showPlumbLine ? "Trục Dóng: Bật" : "Trục Dóng: Tắt"}</span>
-          </button>
         </div>
       </div>
 
-      {/* Mode A: Transparent Cutout Model with Fluid Continuous Crossfade */}
-      {displayMode === "cutout" && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 pb-12 pointer-events-none">
-          <div className="relative w-full max-w-[360px] h-full max-h-[460px] flex items-end justify-center">
-            {/* Primary Base Milestone Image */}
-            <div
-              className="absolute inset-0 transition-opacity duration-150"
-              style={{ opacity: 1 - segmentAlpha * 0.95 }}
+      {/* 2. Central Fixed Aspect-Ratio Visualizer Card (Zero Layout Shift) */}
+      <div
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className={`relative w-full max-w-[420px] mx-auto aspect-[3/4] sm:aspect-[4/5] rounded-3xl overflow-hidden bg-gradient-to-b from-[#141210] to-[#0A0908] border border-stone-800 shadow-2xl ${
+          isComparing ? "cursor-ew-resize select-none" : ""
+        }`}
+      >
+        {/* Subtle Radial Floor Glow */}
+        <div
+          className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-25"
+          style={{
+            background: `radial-gradient(circle at 50% 85%, ${statusColor} 0%, transparent 65%)`,
+          }}
+        />
+
+        {/* Ambient Ground Pedestal */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-52 h-8 rounded-[100%] bg-stone-900/90 blur-md pointer-events-none border border-stone-800/40" />
+
+        {/* --- STATE 1: LOADING STATE --- */}
+        {isLoading && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/80 backdrop-blur-md p-6 animate-pulse">
+            <div className="w-24 h-48 rounded-2xl bg-stone-900 border border-stone-800 mb-4" />
+            <div className="w-40 h-3 bg-stone-800 rounded-full mb-2" />
+            <div className="w-28 h-2 bg-stone-900 rounded-full" />
+            <p className="mt-4 text-xs font-mono text-stone-400">Đang tổng hợp dữ liệu vóc dáng...</p>
+          </div>
+        )}
+
+        {/* --- STATE 2: ERROR STATE WITH RETRY --- */}
+        {hasError && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/90 backdrop-blur-md p-6 text-center">
+            <AlertCircle className="w-8 h-8 text-[#FF5A36] mb-3" />
+            <h5 className="text-sm font-bold text-white mb-1">Không thể tải ảnh mô phỏng</h5>
+            <p className="text-xs text-stone-400 mb-4 max-w-xs">
+              Đã xảy ra sự cố khi tải dữ liệu ảnh thể trạng. Bạn có thể thử tải lại hoặc dùng ảnh mô phỏng mặc định.
+            </p>
+            <button
+              onClick={() => {
+                setHasError(false);
+                setIsLoading(true);
+                setTimeout(() => setIsLoading(false), 500);
+              }}
+              className="px-4 py-2 rounded-full bg-stone-900 border border-stone-700 text-xs font-mono text-white flex items-center gap-2 hover:bg-stone-800 transition-colors shadow-sm"
             >
+              <RotateCcw className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <span>Thử Lại</span>
+            </button>
+          </div>
+        )}
+
+        {/* --- MODE A: STANDARD CROSS-FADE 300MS BETWEEN 4 MILESTONES --- */}
+        {!isComparing && (
+          <div className="absolute inset-0 p-4 pb-10 flex items-center justify-center pointer-events-none">
+            {milestoneDays.map((day) => {
+              const isSelected = activeMilestoneDay === day;
+              const imgSrc = milestoneImages[day as keyof typeof milestoneImages];
+
+              return (
+                <div
+                  key={day}
+                  className={`absolute inset-0 transition-opacity duration-300 ease-in-out ${
+                    isSelected ? "opacity-100 z-10" : "opacity-0 pointer-events-none z-0"
+                  }`}
+                  style={{
+                    transitionDuration: isReducedMotion ? "0ms" : "300ms",
+                  }}
+                >
+                  <Image
+                    src={imgSrc}
+                    alt={`Hình thể dự đoán mốc ngày ${day}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 420px"
+                    className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter contrast-[1.04] brightness-105"
+                    priority={day === 0 || day === activeMilestoneDay}
+                    onError={() => setHasError(true)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* --- MODE B: BEFORE / AFTER INTERACTIVE COMPARISON SLIDER --- */}
+        {isComparing && (
+          <div className="absolute inset-0 p-4 pb-10 overflow-hidden">
+            {/* Layer 1: BEFORE Image (Day 0) - Base underlayer */}
+            <div className="absolute inset-0 p-4 pb-10">
               <Image
-                src={primaryImage}
-                alt={`Mốc ${baseSegment * 7}`}
+                src={milestoneImages[0]}
+                alt="Trước - Ngày 0"
                 fill
-                sizes="(max-width: 768px) 100vw, 360px"
-                className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] filter contrast-[1.06] brightness-105"
-                priority
+                sizes="(max-width: 768px) 100vw, 420px"
+                className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter contrast-[1.04] grayscale-[0.2]"
               />
             </div>
 
-            {/* Secondary Next Milestone Image for Smooth Interpolation */}
-            {baseSegment !== nextSegment && (
-              <div
-                className="absolute inset-0 transition-opacity duration-150"
-                style={{ opacity: segmentAlpha * 0.95 }}
-              >
-                <Image
-                  src={secondaryImage}
-                  alt={`Mốc ${nextSegment * 7}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 360px"
-                  className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] filter contrast-[1.06] brightness-105"
-                  priority
-                />
+            {/* Layer 2: AFTER Image (Target Milestone) - Overlaid and clipped */}
+            <div
+              className="absolute inset-0 p-4 pb-10 pointer-events-none transition-none"
+              style={{
+                clipPath: `inset(0 0 0 ${comparePos}%)`,
+              }}
+            >
+              <Image
+                src={milestoneImages[compareTargetDay as keyof typeof milestoneImages]}
+                alt={`Sau - ${compareTargetTitle}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 420px"
+                className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter contrast-[1.04] brightness-105"
+              />
+            </div>
+
+            {/* Draggable Vertical Split Divider Line */}
+            <div
+              className="absolute top-0 bottom-0 z-30 pointer-events-none"
+              style={{ left: `${comparePos}%` }}
+            >
+              {/* Vertical Glowing Line */}
+              <div className="absolute inset-y-0 -left-[1px] w-[2px] bg-white shadow-[0_0_12px_rgba(255,90,54,0.8)]" />
+
+              {/* Centered Draggable Thumb Button */}
+              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#FF5A36] text-white flex items-center justify-center border-2 border-white shadow-xl shadow-black/80 ring-4 ring-[#FF5A36]/40">
+                <span className="text-[12px] font-mono font-bold tracking-tighter">↔</span>
               </div>
-            )}
+            </div>
+
+            {/* Dynamic Comparison Badges */}
+            <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono font-bold text-stone-300">
+              TRƯỚC • NGÀY 0
+            </div>
+            <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-[#FF5A36]/90 backdrop-blur-md border border-white/20 text-[10px] font-mono font-bold text-white shadow-md">
+              SAU • {compareTargetTitle.toUpperCase()}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* SVG Canvas for Biomechanical Model & Plumb Line Overlay */}
-      <svg
-        viewBox="0 0 320 500"
-        className="absolute inset-0 w-full h-full z-10 pointer-events-none overflow-visible"
-      >
-        <defs>
-          <linearGradient id="humanoidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#383533" />
-            <stop offset="45%" stopColor="#242120" />
-            <stop offset="100%" stopColor="#141312" />
-          </linearGradient>
-
-          <linearGradient id="spineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FF5A36" />
-            <stop offset="50%" stopColor={statusColor} />
-            <stop offset="100%" stopColor="#10B981" />
-          </linearGradient>
-
-          <filter id="plumbGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
-
-        {/* Mode B: Biomechanical 3D Model Wireframe Silhouette */}
-        {displayMode === "model" && (
-          <g className="transition-all duration-300">
-            {viewMode === "profile" ? (
-              /* PROFILE VIEW SILHOUETTE */
-              <g>
-                <circle
-                  cx={headX}
-                  cy={headY}
-                  r="22"
-                  fill="url(#humanoidGradient)"
-                  stroke="#57534E"
-                  strokeWidth="1.5"
-                />
-
-                <path
-                  d={`M ${headX - 6} ${headY + 18} 
-                      Q ${kyphosisX + 10} 115, ${kyphosisX} 145
-                      L ${kyphosisX + 28} 145
-                      Q ${headX + 10} 115, ${headX + 14} ${headY + 16} Z`}
-                  fill="url(#humanoidGradient)"
-                />
-
-                <path
-                  d={`M ${kyphosisX} 145
-                      C ${kyphosisX - 10} 185, ${kyphosisX + 6} 230, ${pelvicX} 270
-                      C ${pelvicX - 18} 300, ${pelvicX - 12} 335, ${pelvicX} 345
-                      L ${coreX + 12} 335
-                      C ${coreX + 18} 280, ${coreX + (headOffset * 0.4 + 10)} 240, ${coreX + 14} 200
-                      C ${coreX + 22} 175, ${headX + 18} 150, ${kyphosisX + 28} 145
-                      Z`}
-                  fill="url(#humanoidGradient)"
-                  stroke={statusColor}
-                  strokeWidth="1.5"
-                  strokeOpacity="0.4"
-                />
-
-                <path
-                  d={`M ${headX + 14} 150 Q ${coreX + 18} 185, ${coreX + 10} 220`}
-                  fill="none"
-                  stroke="#57534E"
-                  strokeWidth="1.5"
-                />
-
-                <path
-                  d={`M ${coreX + 10} 220 Q ${coreX + 8} 265, ${coreX + 4} 310`}
-                  fill="none"
-                  stroke={statusColor}
-                  strokeWidth="1.2"
-                  strokeOpacity="0.6"
-                  strokeDasharray={progress > 0.8 ? "none" : "3 3"}
-                />
-
-                <path
-                  d={`M ${pelvicX} 345 
-                      C ${pelvicX + 6} 380, 162 410, 160 460
-                      L 174 460
-                      C 176 410, ${coreX + 8} 380, ${coreX + 12} 335
-                      Z`}
-                  fill="url(#humanoidGradient)"
-                  stroke="#57534E"
-                  strokeWidth="1.2"
-                />
-
-                <path
-                  d="M 148 460 L 178 460"
-                  stroke="#78716C"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                />
-              </g>
-            ) : (
-              /* FRONTAL VIEW SILHOUETTE */
-              <g>
-                <circle cx="160" cy="72" r="23" fill="url(#humanoidGradient)" stroke="#57534E" strokeWidth="1.5" />
-                <path
-                  d={`M ${160 - chestHalf} 125 
-                      C ${160 - chestHalf + 4} 165, ${160 - waistHalf} 215, ${160 - waistHalf} 240 
-                      C ${160 - waistHalf} 265, ${160 - hipHalf} 280, ${160 - hipHalf} 320
-                      L ${160 + hipHalf} 320
-                      C ${160 + hipHalf} 280, ${160 + waistHalf} 265, ${160 + waistHalf} 240
-                      C ${160 + waistHalf} 215, ${160 + chestHalf - 4} 165, ${160 + chestHalf} 125
-                      Z`}
-                  fill="url(#humanoidGradient)"
-                  stroke={statusColor}
-                  strokeWidth="1.5"
-                  strokeOpacity="0.5"
-                />
-                <line x1="160" y1="145" x2="160" y2="255" stroke={statusColor} strokeWidth="1.5" strokeOpacity="0.7" />
-                <path d="M 132 320 L 138 460" stroke="url(#humanoidGradient)" strokeWidth="20" strokeLinecap="round" />
-                <path d="M 188 320 L 182 460" stroke="url(#humanoidGradient)" strokeWidth="20" strokeLinecap="round" />
-                <line x1="126" y1="462" x2="148" y2="462" stroke="#78716C" strokeWidth="3" strokeLinecap="round" />
-                <line x1="172" y1="462" x2="194" y2="462" stroke="#78716C" strokeWidth="3" strokeLinecap="round" />
-              </g>
-            )}
-          </g>
         )}
 
-        {/* Anatomical Vector Plumb Line Overlay */}
-        {showPlumbLine && (
-          <g>
-            {/* Vertical Reference Axis */}
+        {/* --- OPTIONAL SKELETON OVERLAY (CÔNG TẮC KHUNG XƯƠNG - MẶC ĐỊNH TẮT) --- */}
+        {showSkeleton && (
+          <svg
+            viewBox="0 0 320 500"
+            className="absolute inset-0 w-full h-full z-20 pointer-events-none overflow-visible animate-in fade-in duration-300"
+          >
+            <defs>
+              <filter id="skeletonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            {/* Vertical Plumb Line (Trục trọng tâm y sinh học chuẩn) */}
             <line
               x1="160"
               y1="40"
               x2="160"
-              y2="465"
-              stroke="#57534E"
+              y2="460"
+              stroke="#A8A29E"
               strokeWidth="1.2"
               strokeDasharray="4 4"
-              opacity="0.65"
+              opacity="0.5"
             />
 
-            {viewMode === "profile" ? (
-              <g className="transition-all duration-150">
+            {/* A. Ghost Silhouette of Day 0 (Bóng mờ của Day 0 để thấy độ lệch giảm dần) */}
+            {progress > 0 && (
+              <g opacity="0.4" className="transition-opacity duration-300">
+                {/* Day 0 Ghost Spine Path */}
                 <path
-                  d={`M ${headX} ${headY + 6} 
-                      Q ${kyphosisX} ${thoracicY}, ${coreX} ${coreY} 
-                      T ${pelvicX} ${pelvicY}`}
+                  d={`M ${day0HeadX} 76 
+                      Q ${day0ThoracicX} 175, ${day0CoreX} 255 
+                      T ${day0PelvisX} 340`}
                   fill="none"
-                  stroke={statusColor}
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  filter="url(#plumbGlow)"
-                />
-
-                {/* Ear / Cervical Node */}
-                <circle
-                  cx={headX}
-                  cy={headY + 6}
-                  r="7"
-                  fill={activeHotspot === "cervical" ? "#FFFFFF" : statusColor}
-                  stroke="#FFFFFF"
-                  strokeWidth={activeHotspot === "cervical" ? "2.5" : "1"}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("cervical")}
-                />
-
-                {/* Thoracic Node */}
-                <circle
-                  cx={kyphosisX + 8}
-                  cy={thoracicY}
-                  r="7"
-                  fill={activeHotspot === "thoracic" ? "#FFFFFF" : statusColor}
-                  stroke="#FFFFFF"
-                  strokeWidth={activeHotspot === "thoracic" ? "2.5" : "1"}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("thoracic")}
-                />
-
-                {/* Core Node */}
-                <circle
-                  cx={coreX}
-                  cy={coreY}
-                  r="7"
-                  fill={activeHotspot === "core" ? "#FFFFFF" : statusColor}
-                  stroke="#FFFFFF"
-                  strokeWidth={activeHotspot === "core" ? "2.5" : "1"}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("core")}
-                />
-
-                {/* Pelvis Node */}
-                <circle
-                  cx={pelvicX}
-                  cy={pelvicY}
-                  r="7"
-                  fill={activeHotspot === "pelvis" ? "#FFFFFF" : statusColor}
-                  stroke="#FFFFFF"
-                  strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1"}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("pelvis")}
-                />
-
-                {/* Legs alignment */}
-                <line x1={pelvicX} y1={pelvicY} x2="158" y2="410" stroke={statusColor} strokeWidth="2.5" />
-                <circle cx="158" cy="410" r="4.5" fill={statusColor} />
-                <line x1="158" y1="410" x2="160" y2="460" stroke={statusColor} strokeWidth="2.5" />
-                <circle cx="160" cy="460" r="5" fill="#FFFFFF" stroke={statusColor} strokeWidth="2" />
-              </g>
-            ) : (
-              <g className="transition-all duration-150">
-                <line x1="160" y1="85" x2="160" y2="340" stroke={statusColor} strokeWidth="3.2" strokeLinecap="round" filter="url(#plumbGlow)" />
-                <line
-                  x1={115}
-                  y1={135 - headOffset * 0.15}
-                  x2={205}
-                  y2={135 + headOffset * 0.15}
-                  stroke={statusColor}
+                  stroke="#78716C"
                   strokeWidth="2.5"
-                  strokeLinecap="round"
+                  strokeDasharray="4 4"
                 />
-                <circle cx={115} cy={135 - headOffset * 0.15} r="6" fill={statusColor} className="pointer-events-auto cursor-pointer" onClick={() => onSelectHotspot("cervical")} />
-                <circle cx={205} cy={135 + headOffset * 0.15} r="6" fill={statusColor} className="pointer-events-auto cursor-pointer" onClick={() => onSelectHotspot("cervical")} />
-                <ellipse
-                  cx="160"
-                  cy="240"
-                  rx={45 - (1 - progress) * 8}
-                  ry="14"
-                  fill="none"
-                  stroke={statusColor}
-                  strokeWidth="2"
-                  strokeDasharray="3 3"
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("core")}
-                />
-                <line x1="125" y1="340" x2="195" y2="340" stroke={statusColor} strokeWidth="3" strokeLinecap="round" />
-                <circle cx="160" cy="340" r="7" fill={activeHotspot === "pelvis" ? "#FFFFFF" : statusColor} stroke="#FFFFFF" strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1"} className="pointer-events-auto cursor-pointer" onClick={() => onSelectHotspot("pelvis")} />
+                {/* Day 0 Head ghost */}
+                <circle cx={day0HeadX} cy="76" r="5" fill="none" stroke="#78716C" strokeWidth="1.5" />
+                {/* Day 0 Thoracic ghost */}
+                <circle cx={day0ThoracicX} cy="175" r="4.5" fill="none" stroke="#78716C" strokeWidth="1.5" />
+                {/* Day 0 Pelvis ghost */}
+                <circle cx={day0PelvisX} cy="340" r="5" fill="none" stroke="#78716C" strokeWidth="1.5" />
+                {/* Day 0 Deviation indicator */}
+                <text
+                  x={day0HeadX + 10}
+                  y="80"
+                  fill="#A8A29E"
+                  fontSize="9"
+                  fontFamily="monospace"
+                  opacity="0.8"
+                >
+                  Day 0 (18° lệch)
+                </text>
               </g>
             )}
-          </g>
-        )}
-      </svg>
 
-      {/* Bottom Medical Alignment Status Note */}
-      <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] font-mono text-stone-300 bg-black/70 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: statusColor }}
-          />
-          <span className="font-bold">{statusText}</span>
-        </div>
-        <div className="text-stone-400">
-          Trọng tâm: <span className="text-white font-bold">{progress >= 0.8 ? "Tối ưu hóa" : "Đang căn chỉnh"}</span>
+            {/* B. Active Current Milestone Skeleton (Adaptive with progress) */}
+            <g className="transition-all duration-300">
+              {/* Active Spine Dynamic Curve */}
+              <path
+                d={`M ${currentHeadX} 76 
+                    Q ${currentThoracicX} 175, ${currentCoreX} 255 
+                    T ${currentPelvisX} 340`}
+                fill="none"
+                stroke={statusColor}
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                filter="url(#skeletonGlow)"
+              />
+
+              {/* Cervical Node (Cổ & Vai) */}
+              <circle
+                cx={currentHeadX}
+                cy="76"
+                r="7"
+                fill={activeHotspot === "cervical" ? "#FFFFFF" : statusColor}
+                stroke="#FFFFFF"
+                strokeWidth={activeHotspot === "cervical" ? "2.5" : "1.2"}
+                className="pointer-events-auto cursor-pointer"
+                onClick={() => onSelectHotspot("cervical")}
+              />
+
+              {/* Thoracic Node (Lưng Trên) */}
+              <circle
+                cx={currentThoracicX}
+                cy="175"
+                r="6.5"
+                fill={activeHotspot === "thoracic" ? "#FFFFFF" : statusColor}
+                stroke="#FFFFFF"
+                strokeWidth={activeHotspot === "thoracic" ? "2.5" : "1.2"}
+                className="pointer-events-auto cursor-pointer"
+                onClick={() => onSelectHotspot("thoracic")}
+              />
+
+              {/* Core & Lumbar Node (Cơ Bụng Sâu) */}
+              <circle
+                cx={currentCoreX}
+                cy="255"
+                r="6.5"
+                fill={activeHotspot === "core" ? "#FFFFFF" : statusColor}
+                stroke="#FFFFFF"
+                strokeWidth={activeHotspot === "core" ? "2.5" : "1.2"}
+                className="pointer-events-auto cursor-pointer"
+                onClick={() => onSelectHotspot("core")}
+              />
+
+              {/* Pelvis Node (Khung Chậu) */}
+              <circle
+                cx={currentPelvisX}
+                cy="340"
+                r="7"
+                fill={activeHotspot === "pelvis" ? "#FFFFFF" : statusColor}
+                stroke="#FFFFFF"
+                strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1.2"}
+                className="pointer-events-auto cursor-pointer"
+                onClick={() => onSelectHotspot("pelvis")}
+              />
+
+              {/* Legs / Foundation Alignment */}
+              <line
+                x1={currentPelvisX}
+                y1="340"
+                x2="158"
+                y2="410"
+                stroke={statusColor}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <circle cx="158" cy="410" r="4" fill={statusColor} />
+              <line
+                x1="158"
+                y1="410"
+                x2="160"
+                y2="455"
+                stroke={statusColor}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <circle cx="160" cy="455" r="4.5" fill="#FFFFFF" stroke={statusColor} strokeWidth="1.5" />
+            </g>
+          </svg>
+        )}
+
+        {/* Floating Bottom Status Pill */}
+        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 text-[11px] font-mono text-stone-300 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 truncate">
+            <span
+              className="w-2.5 h-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: statusColor }}
+            />
+            <span className="font-bold truncate">{statusLabel}</span>
+          </div>
+
+          <span className="text-[10px] text-stone-400 font-bold shrink-0">
+            {activeMilestoneDay === 0
+              ? "Khởi Điểm"
+              : activeMilestoneDay === 7
+              ? "Tuần 1"
+              : activeMilestoneDay === 14
+              ? "Tuần 2"
+              : "Tuần 4"}
+          </span>
         </div>
       </div>
     </div>

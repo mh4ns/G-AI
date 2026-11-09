@@ -170,13 +170,13 @@ export default function PredictionPage() {
           {/* Left Column (Sticky Pinned Visualizer with Plumb Line) */}
           <div className="lg:col-span-6 lg:sticky lg:top-24 flex flex-col items-center">
             {/* Header info */}
-            <div className="w-full flex items-center justify-between mb-4">
+            <div className="w-full flex items-center justify-between mb-3 px-1">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-stone-300 text-xs font-mono">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Trục Trọng Tâm & Dáng Đứng</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
+                <span>Trục Trọng Tâm & Dáng Đứng 28 Ngày</span>
               </div>
-              <span className="text-xs font-mono text-stone-500">
-                Góc nhìn: {viewMode === "profile" ? "Góc Nghiêng (Profile)" : "Chính Diện (Front)"}
+              <span className="text-xs font-mono text-stone-400">
+                {archetype === "male_strength" ? "Nam • Calisthenics" : "Nữ • Pilates"}
               </span>
             </div>
 
@@ -185,6 +185,7 @@ export default function PredictionPage() {
               <MorphingAvatar
                 progress={progress}
                 viewMode={viewMode}
+                onViewModeChange={setViewMode}
                 activeHotspot={activeHotspot}
                 onSelectHotspot={(hotspot) => setActiveHotspot(hotspot)}
                 archetype={archetype}
