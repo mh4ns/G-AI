@@ -39,7 +39,9 @@ redeploy after changing them.
 | Variable | Required | Value |
 |---|---|---|
 | `PREDICTION_SIGNING_SECRET` | yes | Random string, at least 32 characters: `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
-| `GEMINI_API_KEY` | for predictions | Key from <https://aistudio.google.com/app/apikey> |
+| `GEMINI_API_KEY` | optional | Best-quality predictions (needs paid image quota). Key from <https://aistudio.google.com/app/apikey> |
+| `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN` | optional | Free fallback via Workers AI when there is no Gemini key. Token permission: *Workers AI: Read* |
+| `IMAGE_PROVIDER` | no | Force `gemini`, `cloudflare` or `none` |
 | `BACKEND_URL` | for login and Today sync | Public HTTPS URL of the FastAPI backend, e.g. `https://g-ai-api.onrender.com` |
 | `IMAGE_MODEL`, `VISION_MODEL` | no | Override the default Gemini models |
 
@@ -47,6 +49,9 @@ redeploy after changing them.
 
 Without `BACKEND_URL`, guests can still use the quiz, the prediction page and a local-only Today page,
 but login and server sync return errors.
+
+With no image provider configured, the prediction page still works: it shows illustrative preset
+images labelled "ẢNH MINH HỌA" instead of calling an AI model.
 
 ## 3. Known limitation: photo predictions
 

@@ -44,6 +44,8 @@ export default function PredictionPage() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number; stageMessage: string } | undefined>(undefined);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  // null = unknown yet; false = no AI image provider configured (show illustrative presets).
+  const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
   const [genderMismatchWarning, setGenderMismatchWarning] = useState<string | null>(null);
 
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
@@ -142,6 +144,13 @@ export default function PredictionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPhoto]);
 
+  useEffect(() => {
+    fetch("/api/prediction/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setAiAvailable(d ? Boolean(d.enabled) : null))
+      .catch(() => setAiAvailable(null));
+  }, []);
+
   // Cleanup polling interval on unmount
   useEffect(() => {
     return () => {
@@ -175,6 +184,10 @@ export default function PredictionPage() {
     plan: PlanConfig
   ) => {
     if (!photo) return;
+    if (aiAvailable === false) {
+      // No AI backend: keep the illustrative presets, nothing to upload.
+      return;
+    }
     if (!consentRef.current) {
       setGenerationError("Vui lòng mở “Hiệu chỉnh thể trạng” và xác nhận đồng ý để AI xử lý ảnh của bạn.");
       setIsModalOpen(true);
@@ -210,6 +223,12 @@ export default function PredictionPage() {
       });
 
       const data = await res.json();
+
+      if (!res.ok && data.code === "AI_GENERATION_DISABLED") {
+        setIsGenerating(false);
+        setAiAvailable(false);
+        return;
+      }
 
       if (!res.ok) {
         setIsGenerating(false);
@@ -512,6 +531,7 @@ export default function PredictionPage() {
                 generationError={generationError}
                 onRetryGeneration={() => startGeneration(userPhoto, archetype, userStats, planConfig)}
                 isMock={!userPhoto}
+                isIllustrative={aiAvailable === false}
                 hasSidePhoto={false}
                 onOpenUploadModal={() => setIsModalOpen(true)}
               />

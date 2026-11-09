@@ -35,3 +35,10 @@ Proposed: move generation to the backend.
 3. A worker (arq or RQ on Redis, or a managed queue) runs the Gemini calls.
 4. Rate limits per user instead of per IP; require sign-in to generate.
 5. Next.js `/api/prediction/*` routes become thin proxies or are removed.
+
+## Addendum (2026-11-09): pluggable image providers
+
+`src/lib/image-providers.ts` picks the backend: Gemini (best identity preservation) → Cloudflare
+Workers AI img2img (free daily allowance, lower fidelity, no vision pre-check) → none (illustrative
+presets, nothing leaves the device). The cache key includes the provider and model, so outputs from
+different backends never mix. The same consent, private storage and signed-link rules apply to every provider.

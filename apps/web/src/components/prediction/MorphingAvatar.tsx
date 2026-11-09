@@ -35,6 +35,8 @@ export interface MorphingAvatarProps {
   generationError?: string | null;
   onRetryGeneration?: () => void;
   isMock?: boolean;
+  /** Photo-based AI predictions are off: milestones after Day 0 are illustrative presets. */
+  isIllustrative?: boolean;
   hasSidePhoto?: boolean;
   completedMilestones?: Record<number, string>;
 }
@@ -55,6 +57,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   generationError = null,
   onRetryGeneration,
   isMock = false,
+  isIllustrative = false,
   hasSidePhoto = false,
   completedMilestones,
 }) => {
@@ -308,6 +311,11 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         {isMock && (
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-[11px] font-bold text-amber-300 shadow-md pointer-events-none">
             ẢNH MẪU · CHƯA PHẢI ẢNH THẬT
+          </div>
+        )}
+        {!isMock && isIllustrative && activeMilestoneDay > 0 && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-[11px] font-bold text-amber-300 shadow-md pointer-events-none whitespace-nowrap">
+            ẢNH MINH HỌA · CHƯA DỰ ĐOÁN TỪ ẢNH CỦA BẠN
           </div>
         )}
 

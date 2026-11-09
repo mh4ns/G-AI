@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import {
   calculateMilestoneDeltas,
-  buildImageEditPrompt,
   computePredictionHash,
-  assessPhotoQualityAndGender,
-  callGeminiImageToImage,
   checkRateLimit,
   createPredictionJob,
   GenerationError,
@@ -13,6 +10,13 @@ import {
   updatePredictionJob,
 } from "@/lib/prediction-jobs";
 import { MILESTONE_DAYS, MilestoneDay, hasMilestone, saveMilestone } from "@/lib/prediction-storage";
+import {
+  assessPhoto,
+  buildPromptFor,
+  generateMilestoneImage,
+  providerModelLabel,
+  resolveImageProvider,
+} from "@/lib/image-providers";
 
 // Three image generations can take a few minutes.
 export const maxDuration = 300;
@@ -100,31 +104,25 @@ export async function POST(req: NextRequest) {
     const planSummary =
       typeof body.planSummary === "string" ? body.planSummary.slice(0, 200) : "Standard 4-week kinetic adaptation";
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
-    if (!apiKey || apiKey === "your_gemini_api_key_here") {
-      console.error("[Prediction API] GEMINI_API_KEY is not configured.");
+    const provider = resolveImageProvider();
+    if (!provider) {
+      // No AI backend configured (e.g. no paid image quota): the client keeps
+      // showing the illustrative preset images. Not an error for the user.
       return NextResponse.json(
         {
           success: false,
-          code: "SERVICE_UNAVAILABLE",
-          error:
-            process.env.NODE_ENV === "production"
-              ? "Tính năng dự đoán ảnh tạm thời chưa sẵn sàng."
-              : "Chưa có GEMINI_API_KEY. Thêm vào apps/web/.env.local rồi khởi động lại `npm run dev`.",
+          code: "AI_GENERATION_DISABLED",
+          error: "Dự đoán từ ảnh của bạn tạm thời chưa bật. Đang hiển thị ảnh minh họa.",
         },
         { status: 503 }
       );
     }
 
-    const imageModel = process.env.IMAGE_MODEL || "gemini-2.5-flash-image";
-    const visionModel = process.env.VISION_MODEL || "gemini-3-flash-preview";
-
-    // Compute rule-based prompts
     const milestoneSpecs = calculateMilestoneDeltas(weight, targetWeight, isMale);
     const promptRecord: Record<number, string> = {
-      7: buildImageEditPrompt(milestoneSpecs[7]),
-      14: buildImageEditPrompt(milestoneSpecs[14]),
-      28: buildImageEditPrompt(milestoneSpecs[28]),
+      7: buildPromptFor(provider, milestoneSpecs[7]),
+      14: buildPromptFor(provider, milestoneSpecs[14]),
+      28: buildPromptFor(provider, milestoneSpecs[28]),
     };
 
     // 3. Step 6: Cache Verification via SHA-256
@@ -134,7 +132,7 @@ export async function POST(req: NextRequest) {
       weight,
       targetWeight,
       planSummary,
-      imageModel
+      providerModelLabel(provider)
     );
 
     if (MILESTONE_DAYS.every((day) => hasMilestone(cacheKey, day))) {
@@ -155,13 +153,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Step 4: Photo Validation & Gender Consistency Check (Vision Intake)
-    const assessment = await assessPhotoQualityAndGender(
-      apiKey,
-      visionModel,
-      rawBase64,
-      mimeType,
-      archetype
-    );
+    const assessment = await assessPhoto(provider, rawBase64, mimeType, archetype);
 
     if (!assessment.isValid) {
       return NextResponse.json(
@@ -213,14 +205,7 @@ export async function POST(req: NextRequest) {
           });
 
           if (!hasMilestone(cacheKey, day)) {
-            const dataUrl = await callGeminiImageToImage(
-              apiKey,
-              imageModel,
-              rawBase64,
-              mimeType,
-              promptRecord[day],
-              2 // Max 2 retries
-            );
+            const dataUrl = await generateMilestoneImage(provider, rawBase64, mimeType, promptRecord[day]);
             saveMilestone(cacheKey, day, dataUrl);
           }
 
