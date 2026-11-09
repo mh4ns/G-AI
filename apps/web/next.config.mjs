@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const backendUrl = (process.env.BACKEND_URL || "http://localhost:8000").replace(/\/$/, "");
 
+if (process.env.VERCEL && !process.env.BACKEND_URL) {
+  console.warn(
+    "[g-ai] BACKEND_URL is not set: /api/v1 (login, Today sync) will not work on this deployment. " +
+      "Set it in Vercel → Settings → Environment Variables and redeploy."
+  );
+}
+
 const nextConfig = {
   reactStrictMode: true,
   images: {

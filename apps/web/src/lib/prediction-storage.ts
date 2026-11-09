@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 /**
@@ -17,7 +18,10 @@ const CACHE_KEY_PATTERN = /^[a-f0-9]{64}$/;
 const DEFAULT_URL_TTL_SECONDS = 24 * 60 * 60;
 
 export function storageDir(): string {
-  return process.env.PREDICTION_STORAGE_DIR || path.join(process.cwd(), ".data", "predictions");
+  if (process.env.PREDICTION_STORAGE_DIR) return process.env.PREDICTION_STORAGE_DIR;
+  // Serverless deployments only allow writes under the temp dir (ephemeral, per instance).
+  if (process.env.VERCEL) return path.join(os.tmpdir(), "g-ai-predictions");
+  return path.join(process.cwd(), ".data", "predictions");
 }
 
 export function isValidCacheKey(cacheKey: string): boolean {

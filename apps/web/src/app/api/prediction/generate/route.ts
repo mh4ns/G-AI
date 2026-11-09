@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   calculateMilestoneDeltas,
   buildImageEditPrompt,
@@ -13,6 +13,10 @@ import {
   updatePredictionJob,
 } from "@/lib/prediction-jobs";
 import { MILESTONE_DAYS, MilestoneDay, hasMilestone, saveMilestone } from "@/lib/prediction-storage";
+
+// Three image generations can take a few minutes.
+export const maxDuration = 300;
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -178,9 +182,10 @@ export async function POST(req: NextRequest) {
     );
     const jobId = job.jobId;
 
-    // Background worker. Runs after the response on a long-lived Node server
-    // (`next start`); see docs/adr/0002 for the durable-queue follow-up.
-    (async () => {
+    // Background worker, run after the response is sent. `after()` keeps the
+    // function alive on serverless platforms (Vercel) until it finishes.
+    // Job state is still in-memory per instance: see docs/adr/0002.
+    after(async () => {
       updatePredictionJob(jobId, {
         status: "running",
         progress: {
@@ -248,7 +253,7 @@ export async function POST(req: NextRequest) {
           },
         });
       }
-    })();
+    });
 
     // Return job_id immediately (Step 3 Async Requirement)
     return NextResponse.json({ success: true, jobToken: job.accessToken, ...serializeJob(job) });
