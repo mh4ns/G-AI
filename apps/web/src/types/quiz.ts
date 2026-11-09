@@ -56,6 +56,7 @@ export interface QuizResponses {
   obstacles: FitnessObstacle[];
   equipmentAccess: EquipmentAccess;
   injuries: JointInjury[];
+  userPhotoBase64?: string;
 }
 
 export interface MacroSplit {
@@ -90,4 +91,6 @@ export interface PersonalizedPlanResult {
   safetyNotes: string[];
   excludedExercises: string[];
   weeklyRoutine: PlannedWorkoutDay[];
+  userPhotoBase64?: string;
+  customTwinMilestones?: string[];
 }

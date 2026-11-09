@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Eye, EyeOff, Sparkles, User, Activity } from "lucide-react";
+import { Eye, EyeOff, Sparkles, User, Activity, Camera, Upload } from "lucide-react";
 
 export interface MorphingAvatarProps {
   progress: number; // 0.0 to 1.0 (from currentDay / 28)
@@ -11,6 +11,9 @@ export interface MorphingAvatarProps {
   onSelectHotspot: (hotspot: string) => void;
   archetype?: "female_pilates" | "male_strength";
   currentDay?: number;
+  customMilestones?: string[];
+  userPhoto?: string | null;
+  onOpenUploadModal?: () => void;
 }
 
 export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
@@ -20,115 +23,96 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   onSelectHotspot,
   archetype = "female_pilates",
   currentDay = 0,
+  customMilestones,
+  userPhoto,
+  onOpenUploadModal,
 }) => {
   const [showPlumbLine, setShowPlumbLine] = useState(true);
-  const [displayMode, setDisplayMode] = useState<"model" | "cutout">("model");
+  const [displayMode, setDisplayMode] = useState<"model" | "cutout">("cutout");
   const isMale = archetype === "male_strength";
 
-  // Map currentDay (0, 7, 14, 28) to the single sharp milestone index
-  const getMilestoneIndex = (day: number) => {
-    if (day <= 3) return 0; // Day 0
-    if (day <= 10) return 1; // Day 7
-    if (day <= 20) return 2; // Day 14
-    return 3; // Day 28
-  };
-
-  const milestoneIndex = getMilestoneIndex(currentDay);
-
-  // Pristine transparent PNGs (100% background-removed cutouts - zero photo background)
-  const femaleCutouts = [
-    "/twins/female-day-0.png",
+  // 5 Calibrated Milestone Cutouts for 28-day kinetic protocol (0, 7, 14, 21, 28)
+  const defaultFemaleCutouts = [
+    userPhoto || "/twins/female-day-0.png",
     "/twins/female-day-7.png",
     "/twins/female-day-14.png",
+    "/twins/female-day-21.png",
     "/twins/female-day-28.png",
   ];
 
-  const maleCutouts = [
-    "/twins/male-day-0.png",
+  const defaultMaleCutouts = [
+    userPhoto || "/twins/male-day-0.png",
     "/twins/male-day-7.png",
     "/twins/male-day-14.png",
+    "/twins/male-day-21.png",
     "/twins/male-day-28.png",
   ];
 
-  const activeCutout = isMale ? maleCutouts[milestoneIndex] : femaleCutouts[milestoneIndex];
+  const activeMilestones = (customMilestones && customMilestones.length >= 5)
+    ? customMilestones
+    : (isMale ? defaultMaleCutouts : defaultFemaleCutouts);
 
-  // Anatomical Plumb Line offsets across the 4 milestones (measured in degrees °)
-  const milestonePlumbData = [
-    {
-      stage: "Ngày 0",
-      headOffset: 24,
-      kyphosisOffset: 22,
-      pelvicOffset: 16,
-      angleDeg: 18,
-      statusText: "Độ đổ thân trên: Cần cải thiện (18° lệch)",
-      color: "#FF5A36", // Coral/Amber alert
-      isOptimal: false,
-    },
-    {
-      stage: "Tuần 1",
-      headOffset: 18,
-      kyphosisOffset: 16,
-      pelvicOffset: 11,
-      angleDeg: 13,
-      statusText: "Đang mở khớp vai & giảm phù (13° lệch)",
-      color: "#F59E0B", // Amber
-      isOptimal: false,
-    },
-    {
-      stage: "Tuần 2",
-      headOffset: 10,
-      kyphosisOffset: 9,
-      pelvicOffset: 6,
-      angleDeg: 7,
-      statusText: "Cơ dựng sống thẳng tự nhiên (7° lệch)",
-      color: "#10B981", // Emerald
-      isOptimal: false,
-    },
-    {
-      stage: "Tuần 4",
-      headOffset: 2,
-      kyphosisOffset: 3,
-      pelvicOffset: 1,
-      angleDeg: 0,
-      statusText: "Trục cơ thể: Cân bằng vững vàng (0° lệch)",
-      color: "#10B981", // Emerald optimum
-      isOptimal: true,
-    },
-  ];
+  // Continuous interpolation between milestones across 28 days
+  // Milestones: Day 0 (idx 0), Day 7 (idx 1), Day 14 (idx 2), Day 21 (idx 3), Day 28 (idx 4)
+  const clampedDay = Math.max(0, Math.min(28, currentDay));
+  const segmentDuration = 7;
+  const baseSegment = Math.min(3, Math.floor(clampedDay / segmentDuration));
+  const nextSegment = Math.min(4, baseSegment + 1);
+  const segmentAlpha = (clampedDay - baseSegment * segmentDuration) / segmentDuration; // 0.0 -> 1.0
 
-  const currentPlumb = milestonePlumbData[milestoneIndex] || milestonePlumbData[0];
+  const primaryImage = activeMilestones[baseSegment] || activeMilestones[0];
+  const secondaryImage = activeMilestones[nextSegment] || activeMilestones[baseSegment];
 
-  // Dynamic Biomechanical Model Coordinates (Zero background image, pure biometric digital twin)
-  const headX = 160 + currentPlumb.headOffset * 0.7;
+  // Continuous Plumb Line Offsets interpolation
+  // Day 0: 22° / 18° deviation -> Day 28: 0° optimal plumb line
+  const headOffset = 24 * (1 - progress) + 2 * progress;
+  const kyphosisOffset = 22 * (1 - progress) + 3 * progress;
+  const pelvicOffset = 16 * (1 - progress) + 1 * progress;
+  const currentAngleDeg = Math.round(18 * (1 - progress));
+
+  const statusColor = progress > 0.75 
+    ? "#10B981" 
+    : progress > 0.35 
+    ? "#F59E0B" 
+    : "#FF5A36";
+
+  const statusText = progress > 0.75
+    ? "Trục cơ thể: Cân bằng vững vàng (0° lệch)"
+    : progress > 0.35
+    ? `Cơ dựng sống đang nâng thẳng (${currentAngleDeg}° lệch)`
+    : `Độ đổ thân trên & gù lưng (${currentAngleDeg}° lệch)`;
+
+  // Dynamic Biomechanical Model Coordinates
+  const headX = 160 + headOffset * 0.7;
   const headY = 76;
-  const kyphosisX = 160 - currentPlumb.kyphosisOffset * 0.7;
+  const kyphosisX = 160 - kyphosisOffset * 0.7;
   const thoracicY = 175;
-  const coreX = 160 + currentPlumb.headOffset * 0.4;
+  const coreX = 160 + headOffset * 0.4;
   const coreY = 255;
-  const pelvicX = 160 - currentPlumb.pelvicOffset * 0.4;
+  const pelvicX = 160 - pelvicOffset * 0.4;
   const pelvicY = 340;
 
   // Front view dynamic metrics
-  const waistHalf = (isMale ? 36 : 30) - milestoneIndex * (isMale ? 2.5 : 3.5);
-  const chestHalf = (isMale ? 48 : 42) + milestoneIndex * 1.5;
+  const waistHalf = (isMale ? 36 : 30) - progress * (isMale ? 6 : 8);
+  const chestHalf = (isMale ? 48 : 42) + progress * 2.5;
   const hipHalf = isMale ? 38 : 44;
 
   return (
     <div className="relative w-full h-[480px] sm:h-[560px] flex items-center justify-center select-none overflow-hidden rounded-3xl bg-gradient-to-b from-[#141210] to-[#0A0908] border border-stone-800 shadow-2xl">
       {/* Subtle Studio Floor Radial Ambient Glow */}
       <div
-        className="absolute w-80 h-80 sm:w-96 sm:h-96 rounded-full blur-3xl pointer-events-none transition-all duration-700 opacity-20"
+        className="absolute w-80 h-80 sm:w-96 sm:h-96 rounded-full blur-3xl pointer-events-none transition-all duration-300 opacity-20"
         style={{
-          background: `radial-gradient(circle, ${currentPlumb.color} 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${statusColor} 0%, transparent 70%)`,
         }}
       />
 
-      {/* Holographic Ground Light Ellipse (Directly Under Model Feet) */}
+      {/* Holographic Ground Light Ellipse (Under Model Feet) */}
       <div className="absolute bottom-6 w-64 h-12 rounded-[100%] bg-stone-900/80 blur-md pointer-events-none border border-stone-800/40" />
       <div
-        className="absolute bottom-6 w-44 h-7 rounded-[100%] blur-sm pointer-events-none transition-all duration-500 opacity-70"
+        className="absolute bottom-6 w-44 h-7 rounded-[100%] blur-sm pointer-events-none transition-all duration-300 opacity-70"
         style={{
-          background: `radial-gradient(ellipse at center, ${currentPlumb.color} 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse at center, ${statusColor} 0%, transparent 70%)`,
         }}
       />
 
@@ -136,11 +120,28 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
       <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-stone-200">
           <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
-          <span>MÔ HÌNH VÓC DÁNG 28 NGÀY</span>
+          <span>BẢN SAO SỐ • NGÀY {clampedDay}/28</span>
+          {userPhoto && (
+            <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/30">
+              ẢNH THẬT
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Mode Switcher: 3D Biomechanical Model vs Clean Cutout Model (Both with ZERO background photo) */}
+          {/* Photo Re-upload Trigger */}
+          {onOpenUploadModal && (
+            <button
+              onClick={onOpenUploadModal}
+              className="px-3 py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-800 border border-stone-700 text-stone-200 hover:text-white backdrop-blur-md transition-all flex items-center gap-1.5 active:scale-95"
+              title="Cập nhật hoặc chụp ảnh thể trạng mới"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <span className="hidden sm:inline">Đổi Ảnh Thật</span>
+            </button>
+          )}
+
+          {/* Mode Switcher: Wireframe vs Cutout */}
           <button
             onClick={() => setDisplayMode(displayMode === "model" ? "cutout" : "model")}
             className="px-3 py-1.5 rounded-full bg-black/60 hover:bg-stone-800 border border-white/10 text-stone-300 hover:text-white backdrop-blur-md transition-all flex items-center gap-1.5"
@@ -149,7 +150,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             {displayMode === "model" ? (
               <>
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Mô hình Giải Phẫu</span>
+                <span className="hidden sm:inline">Mô hình 3D</span>
               </>
             ) : (
               <>
@@ -175,29 +176,51 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         </div>
       </div>
 
-      {/* Mode A: Transparent Cutout Model (Zero Background Photo, Only Character Model) */}
+      {/* Mode A: Transparent Cutout Model with Fluid Continuous Crossfade */}
       {displayMode === "cutout" && (
         <div className="absolute inset-0 flex items-center justify-center p-6 pb-12 pointer-events-none">
           <div className="relative w-full max-w-[360px] h-full max-h-[460px] flex items-end justify-center">
-            <Image
-              src={activeCutout}
-              alt={`Hình thể mô phỏng ${currentPlumb.stage}`}
-              fill
-              sizes="(max-width: 768px) 100vw, 360px"
-              className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] filter contrast-[1.08] brightness-105 transition-all duration-300"
-              priority
-            />
+            {/* Primary Base Milestone Image */}
+            <div
+              className="absolute inset-0 transition-opacity duration-150"
+              style={{ opacity: 1 - segmentAlpha * 0.95 }}
+            >
+              <Image
+                src={primaryImage}
+                alt={`Mốc ${baseSegment * 7}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 360px"
+                className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] filter contrast-[1.06] brightness-105"
+                priority
+              />
+            </div>
+
+            {/* Secondary Next Milestone Image for Smooth Interpolation */}
+            {baseSegment !== nextSegment && (
+              <div
+                className="absolute inset-0 transition-opacity duration-150"
+                style={{ opacity: segmentAlpha * 0.95 }}
+              >
+                <Image
+                  src={secondaryImage}
+                  alt={`Mốc ${nextSegment * 7}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 360px"
+                  className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] filter contrast-[1.06] brightness-105"
+                  priority
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* SVG Canvas for Biomechanical Model & Plumb Line Overlay (Zero Photo Background) */}
+      {/* SVG Canvas for Biomechanical Model & Plumb Line Overlay */}
       <svg
         viewBox="0 0 320 500"
         className="absolute inset-0 w-full h-full z-10 pointer-events-none overflow-visible"
       >
         <defs>
-          {/* Subtle Anatomical Gradient for Humanoid Model */}
           <linearGradient id="humanoidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#383533" />
             <stop offset="45%" stopColor="#242120" />
@@ -206,7 +229,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
 
           <linearGradient id="spineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#FF5A36" />
-            <stop offset="50%" stopColor={currentPlumb.color} />
+            <stop offset="50%" stopColor={statusColor} />
             <stop offset="100%" stopColor="#10B981" />
           </linearGradient>
 
@@ -216,13 +239,12 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
           </filter>
         </defs>
 
-        {/* 1. Mode B: Pure Biomechanical 3D Model Silhouette (Default: No Background Photo) */}
+        {/* Mode B: Biomechanical 3D Model Wireframe Silhouette */}
         {displayMode === "model" && (
-          <g className="transition-all duration-500">
+          <g className="transition-all duration-300">
             {viewMode === "profile" ? (
               /* PROFILE VIEW SILHOUETTE */
               <g>
-                {/* Athletic Head */}
                 <circle
                   cx={headX}
                   cy={headY}
@@ -232,7 +254,6 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                   strokeWidth="1.5"
                 />
 
-                {/* Neck & Cervical */}
                 <path
                   d={`M ${headX - 6} ${headY + 18} 
                       Q ${kyphosisX + 10} 115, ${kyphosisX} 145
@@ -241,22 +262,20 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                   fill="url(#humanoidGradient)"
                 />
 
-                {/* Torso & Spine Structure (Morphs based on week) */}
                 <path
                   d={`M ${kyphosisX} 145
                       C ${kyphosisX - 10} 185, ${kyphosisX + 6} 230, ${pelvicX} 270
                       C ${pelvicX - 18} 300, ${pelvicX - 12} 335, ${pelvicX} 345
                       L ${coreX + 12} 335
-                      C ${coreX + 18} 280, ${coreX + (currentPlumb.headOffset * 0.4 + 10)} 240, ${coreX + 14} 200
+                      C ${coreX + 18} 280, ${coreX + (headOffset * 0.4 + 10)} 240, ${coreX + 14} 200
                       C ${coreX + 22} 175, ${headX + 18} 150, ${kyphosisX + 28} 145
                       Z`}
                   fill="url(#humanoidGradient)"
-                  stroke={currentPlumb.color}
+                  stroke={statusColor}
                   strokeWidth="1.5"
                   strokeOpacity="0.4"
                 />
 
-                {/* Chest & Muscle Definition Arc */}
                 <path
                   d={`M ${headX + 14} 150 Q ${coreX + 18} 185, ${coreX + 10} 220`}
                   fill="none"
@@ -264,17 +283,15 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                   strokeWidth="1.5"
                 />
 
-                {/* Abdominal Toning Indicator Line */}
                 <path
                   d={`M ${coreX + 10} 220 Q ${coreX + 8} 265, ${coreX + 4} 310`}
                   fill="none"
-                  stroke={currentPlumb.color}
+                  stroke={statusColor}
                   strokeWidth="1.2"
                   strokeOpacity="0.6"
-                  strokeDasharray={milestoneIndex === 3 ? "none" : "3 3"}
+                  strokeDasharray={progress > 0.8 ? "none" : "3 3"}
                 />
 
-                {/* Legs (Hip to Knee to Ankle) */}
                 <path
                   d={`M ${pelvicX} 345 
                       C ${pelvicX + 6} 380, 162 410, 160 460
@@ -286,7 +303,6 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                   strokeWidth="1.2"
                 />
 
-                {/* Foot on Studio Floor Line */}
                 <path
                   d="M 148 460 L 178 460"
                   stroke="#78716C"
@@ -297,10 +313,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             ) : (
               /* FRONTAL VIEW SILHOUETTE */
               <g>
-                {/* Head */}
                 <circle cx="160" cy="72" r="23" fill="url(#humanoidGradient)" stroke="#57534E" strokeWidth="1.5" />
-                
-                {/* Torso V-Taper / Hourglass */}
                 <path
                   d={`M ${160 - chestHalf} 125 
                       C ${160 - chestHalf + 4} 165, ${160 - waistHalf} 215, ${160 - waistHalf} 240 
@@ -310,18 +323,11 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                       C ${160 + waistHalf} 215, ${160 + chestHalf - 4} 165, ${160 + chestHalf} 125
                       Z`}
                   fill="url(#humanoidGradient)"
-                  stroke={currentPlumb.color}
+                  stroke={statusColor}
                   strokeWidth="1.5"
                   strokeOpacity="0.5"
                 />
-
-                {/* Abdominal Definition Lines */}
-                <line x1="160" y1="145" x2="160" y2="255" stroke={currentPlumb.color} strokeWidth="1.5" strokeOpacity="0.7" />
-                <line x1="148" y1="180" x2="172" y2="180" stroke="#57534E" strokeWidth="1.2" />
-                <line x1="150" y1="210" x2="170" y2="210" stroke="#57534E" strokeWidth="1.2" />
-                <line x1="152" y1="235" x2="168" y2="235" stroke="#57534E" strokeWidth="1.2" />
-
-                {/* Legs */}
+                <line x1="160" y1="145" x2="160" y2="255" stroke={statusColor} strokeWidth="1.5" strokeOpacity="0.7" />
                 <path d="M 132 320 L 138 460" stroke="url(#humanoidGradient)" strokeWidth="20" strokeLinecap="round" />
                 <path d="M 188 320 L 182 460" stroke="url(#humanoidGradient)" strokeWidth="20" strokeLinecap="round" />
                 <line x1="126" y1="462" x2="148" y2="462" stroke="#78716C" strokeWidth="3" strokeLinecap="round" />
@@ -331,10 +337,10 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
           </g>
         )}
 
-        {/* 2. Anatomical Vector Plumb Line Overlay (Trục Dóng Trọng Tâm) */}
+        {/* Anatomical Vector Plumb Line Overlay */}
         {showPlumbLine && (
           <g>
-            {/* Vertical Datum Baseline (Zero Alignment Plumb Line) */}
+            {/* Vertical Reference Axis */}
             <line
               x1="160"
               y1="40"
@@ -347,166 +353,117 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             />
 
             {viewMode === "profile" ? (
-              /* LATERAL VIEW: Ear -> Shoulder -> Hip -> Ankle Plumb Alignment */
-              <g className="transition-all duration-300">
-                {/* Dynamic Plumb Line Deviation Curve */}
+              <g className="transition-all duration-150">
                 <path
                   d={`M ${headX} ${headY + 6} 
                       Q ${kyphosisX} ${thoracicY}, ${coreX} ${coreY} 
                       T ${pelvicX} ${pelvicY}`}
                   fill="none"
-                  stroke={currentPlumb.color}
+                  stroke={statusColor}
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   filter="url(#plumbGlow)"
                 />
 
-                {/* 1. Ear / Cervical Node */}
+                {/* Ear / Cervical Node */}
                 <circle
                   cx={headX}
                   cy={headY + 6}
                   r="7"
-                  fill={activeHotspot === "cervical" ? "#FFFFFF" : currentPlumb.color}
+                  fill={activeHotspot === "cervical" ? "#FFFFFF" : statusColor}
                   stroke="#FFFFFF"
                   strokeWidth={activeHotspot === "cervical" ? "2.5" : "1"}
                   className="pointer-events-auto cursor-pointer"
                   onClick={() => onSelectHotspot("cervical")}
                 />
 
-                {/* 2. Shoulder Girdle / Thoracic Node */}
+                {/* Thoracic Node */}
                 <circle
                   cx={kyphosisX + 8}
                   cy={thoracicY}
                   r="7"
-                  fill={activeHotspot === "thoracic" ? "#FFFFFF" : currentPlumb.color}
+                  fill={activeHotspot === "thoracic" ? "#FFFFFF" : statusColor}
                   stroke="#FFFFFF"
                   strokeWidth={activeHotspot === "thoracic" ? "2.5" : "1"}
                   className="pointer-events-auto cursor-pointer"
                   onClick={() => onSelectHotspot("thoracic")}
                 />
 
-                {/* 3. Lumbar / Core Node */}
+                {/* Core Node */}
                 <circle
                   cx={coreX}
                   cy={coreY}
                   r="7"
-                  fill={activeHotspot === "core" ? "#FFFFFF" : currentPlumb.color}
+                  fill={activeHotspot === "core" ? "#FFFFFF" : statusColor}
                   stroke="#FFFFFF"
                   strokeWidth={activeHotspot === "core" ? "2.5" : "1"}
                   className="pointer-events-auto cursor-pointer"
                   onClick={() => onSelectHotspot("core")}
                 />
 
-                {/* 4. Hip / Pelvis Node */}
+                {/* Pelvis Node */}
                 <circle
                   cx={pelvicX}
                   cy={pelvicY}
                   r="7"
-                  fill={activeHotspot === "pelvis" ? "#FFFFFF" : currentPlumb.color}
+                  fill={activeHotspot === "pelvis" ? "#FFFFFF" : statusColor}
                   stroke="#FFFFFF"
                   strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1"}
                   className="pointer-events-auto cursor-pointer"
                   onClick={() => onSelectHotspot("pelvis")}
                 />
 
-                {/* Knee to Ankle Plumb Foundation */}
-                <line
-                  x1={pelvicX}
-                  y1={pelvicY}
-                  x2="158"
-                  y2="410"
-                  stroke={currentPlumb.color}
-                  strokeWidth="2.5"
-                />
-                <circle cx="158" cy="410" r="4.5" fill={currentPlumb.color} />
-
-                <line x1="158" y1="410" x2="160" y2="460" stroke={currentPlumb.color} strokeWidth="2.5" />
-                <circle cx="160" cy="460" r="5" fill="#FFFFFF" stroke={currentPlumb.color} strokeWidth="2" />
+                {/* Legs alignment */}
+                <line x1={pelvicX} y1={pelvicY} x2="158" y2="410" stroke={statusColor} strokeWidth="2.5" />
+                <circle cx="158" cy="410" r="4.5" fill={statusColor} />
+                <line x1="158" y1="410" x2="160" y2="460" stroke={statusColor} strokeWidth="2.5" />
+                <circle cx="160" cy="460" r="5" fill="#FFFFFF" stroke={statusColor} strokeWidth="2" />
               </g>
             ) : (
-              /* FRONTAL VIEW: Symmetrical Center Axis & Transverse Alignment */
-              <g className="transition-all duration-300">
-                <line
-                  x1="160"
-                  y1="85"
-                  x2="160"
-                  y2="340"
-                  stroke={currentPlumb.color}
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  filter="url(#plumbGlow)"
-                />
-
-                {/* Shoulder Level Line */}
+              <g className="transition-all duration-150">
+                <line x1="160" y1="85" x2="160" y2="340" stroke={statusColor} strokeWidth="3.2" strokeLinecap="round" filter="url(#plumbGlow)" />
                 <line
                   x1={115}
-                  y1={135 - currentPlumb.headOffset * 0.15}
+                  y1={135 - headOffset * 0.15}
                   x2={205}
-                  y2={135 + currentPlumb.headOffset * 0.15}
-                  stroke={currentPlumb.color}
+                  y2={135 + headOffset * 0.15}
+                  stroke={statusColor}
                   strokeWidth="2.5"
                   strokeLinecap="round"
                 />
-                <circle
-                  cx={115}
-                  cy={135 - currentPlumb.headOffset * 0.15}
-                  r="6"
-                  fill={currentPlumb.color}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("cervical")}
-                />
-                <circle
-                  cx={205}
-                  cy={135 + currentPlumb.headOffset * 0.15}
-                  r="6"
-                  fill={currentPlumb.color}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("cervical")}
-                />
-
-                {/* Core Transverse Ring */}
+                <circle cx={115} cy={135 - headOffset * 0.15} r="6" fill={statusColor} className="pointer-events-auto cursor-pointer" onClick={() => onSelectHotspot("cervical")} />
+                <circle cx={205} cy={135 + headOffset * 0.15} r="6" fill={statusColor} className="pointer-events-auto cursor-pointer" onClick={() => onSelectHotspot("cervical")} />
                 <ellipse
                   cx="160"
                   cy="240"
-                  rx={45 - (3 - milestoneIndex) * 3}
+                  rx={45 - (1 - progress) * 8}
                   ry="14"
                   fill="none"
-                  stroke={currentPlumb.color}
+                  stroke={statusColor}
                   strokeWidth="2"
                   strokeDasharray="3 3"
                   className="pointer-events-auto cursor-pointer"
                   onClick={() => onSelectHotspot("core")}
                 />
-
-                {/* Pelvis Level Line */}
-                <line x1="125" y1="340" x2="195" y2="340" stroke={currentPlumb.color} strokeWidth="3" strokeLinecap="round" />
-                <circle
-                  cx="160"
-                  cy="340"
-                  r="7"
-                  fill={activeHotspot === "pelvis" ? "#FFFFFF" : currentPlumb.color}
-                  stroke="#FFFFFF"
-                  strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1"}
-                  className="pointer-events-auto cursor-pointer"
-                  onClick={() => onSelectHotspot("pelvis")}
-                />
+                <line x1="125" y1="340" x2="195" y2="340" stroke={statusColor} strokeWidth="3" strokeLinecap="round" />
+                <circle cx="160" cy="340" r="7" fill={activeHotspot === "pelvis" ? "#FFFFFF" : statusColor} stroke="#FFFFFF" strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1"} className="pointer-events-auto cursor-pointer" onClick={() => onSelectHotspot("pelvis")} />
               </g>
             )}
           </g>
         )}
       </svg>
 
-      {/* Bottom Medical / Anatomical Alignment Note */}
+      {/* Bottom Medical Alignment Status Note */}
       <div className="absolute bottom-4 left-4 right-4 z-20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] font-mono text-stone-300 bg-black/70 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
         <div className="flex items-center gap-2">
           <div
             className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: currentPlumb.color }}
+            style={{ backgroundColor: statusColor }}
           />
-          <span className="font-bold">{currentPlumb.statusText}</span>
+          <span className="font-bold">{statusText}</span>
         </div>
         <div className="text-stone-400">
-          Trọng tâm: <span className="text-white font-bold">{currentPlumb.isOptimal ? "Tối ưu hóa" : "Đang căn chỉnh"}</span>
+          Trọng tâm: <span className="text-white font-bold">{progress >= 0.8 ? "Tối ưu hóa" : "Đang căn chỉnh"}</span>
         </div>
       </div>
     </div>

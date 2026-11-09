@@ -22,8 +22,10 @@ export default function PredictionPage() {
   const [activeHotspot, setActiveHotspot] = useState<string | null>("cervical");
   const [archetype, setArchetype] = useState<"female_pilates" | "male_strength">("female_pilates");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [customMilestones, setCustomMilestones] = useState<string[] | null>(null);
 
-  // Read archetype from localStorage if exists
+  // Read archetype, photo, and milestones from localStorage if exists
   useEffect(() => {
     try {
       const savedPlan = localStorage.getItem("g_ai_user_plan");
@@ -32,6 +34,19 @@ export default function PredictionPage() {
         if (parsed.archetype) {
           setArchetype(parsed.archetype);
         }
+        if (parsed.userPhotoBase64) {
+          setUserPhoto(parsed.userPhotoBase64);
+        }
+      }
+
+      const savedPhoto = localStorage.getItem("g_ai_user_twin_photo");
+      if (savedPhoto) {
+        setUserPhoto(savedPhoto);
+      }
+
+      const savedMilestones = localStorage.getItem("g_ai_twin_milestones");
+      if (savedMilestones) {
+        setCustomMilestones(JSON.parse(savedMilestones));
       }
     } catch (e) {
       // LocalStorage safety fallback
@@ -40,7 +55,7 @@ export default function PredictionPage() {
 
   const progress = currentDay / 28.0;
 
-  const handleCalibrationSave = (updated: {
+  const handleCalibrationSave = async (updated: {
     archetype: "female_pilates" | "male_strength";
     height: number;
     weight: number;
@@ -48,6 +63,40 @@ export default function PredictionPage() {
     postureIssue: string;
   }) => {
     setArchetype(updated.archetype);
+
+    // Regenerate twin milestones if needed
+    try {
+      const res = await fetch("/api/generate-twin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          archetype: updated.archetype,
+          height: updated.height,
+          weight: updated.weight,
+          targetWeight: updated.targetWeight,
+          postureIssue: updated.postureIssue,
+          userPhotoBase64: userPhoto,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.milestoneImages) {
+          setCustomMilestones(data.milestoneImages);
+          localStorage.setItem("g_ai_twin_milestones", JSON.stringify(data.milestoneImages));
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const handlePhotoUpdate = (newPhoto: string) => {
+    setUserPhoto(newPhoto);
+    try {
+      localStorage.setItem("g_ai_user_twin_photo", newPhoto);
+    } catch (e) {
+      // ignore
+    }
   };
 
   return (
@@ -113,7 +162,7 @@ export default function PredictionPage() {
               </span>
             </div>
 
-            {/* Visualizer Container with Single Sharp Image (Zero Blurring Ghosting) */}
+            {/* Visualizer Container with Fluid Morphing Avatar */}
             <div className="w-full rounded-3xl bg-stone-950/80 border border-stone-800/80 p-2 sm:p-4 shadow-2xl relative overflow-hidden backdrop-blur-xl">
               <MorphingAvatar
                 progress={progress}
@@ -122,6 +171,9 @@ export default function PredictionPage() {
                 onSelectHotspot={(hotspot) => setActiveHotspot(hotspot)}
                 archetype={archetype}
                 currentDay={currentDay}
+                customMilestones={customMilestones || undefined}
+                userPhoto={userPhoto}
+                onOpenUploadModal={() => setIsModalOpen(true)}
               />
             </div>
 
@@ -308,6 +360,8 @@ export default function PredictionPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         archetype={archetype}
+        currentPhoto={userPhoto}
+        onPhotoChange={handlePhotoUpdate}
         onSave={handleCalibrationSave}
       />
     </div>

@@ -16,6 +16,7 @@ import { AgeGoalStep } from "./AgeGoalStep";
 import { FocusAreaStep } from "./FocusAreaStep";
 import { BodyStatsStep } from "./BodyStatsStep";
 import { ObstaclesStep } from "./ObstaclesStep";
+import { PhotoUploadStep } from "./PhotoUploadStep";
 import { AnalyzingLoader } from "./AnalyzingLoader";
 import { PlanResultView } from "./PlanResultView";
 import { useRouter } from "next/navigation";
@@ -24,7 +25,7 @@ import { ArrowRight } from "lucide-react";
 export const AssessmentQuizWizard: React.FC = () => {
   const router = useRouter();
 
-  // Step 1: Archetype, 2: Age & Goal, 3: Focus & Equipment, 4: Body Stats, 5: Lifestyle & Injuries, 6: Analyzing, 7: Result
+  // Step 1: Archetype, 2: Age & Goal, 3: Focus & Equipment, 4: Body Stats, 5: Lifestyle & Injuries, 6: Photo Scan, 7: Analyzing, 8: Result
   const [step, setStep] = useState<number>(1);
 
   // Form State
@@ -94,7 +95,7 @@ export const AssessmentQuizWizard: React.FC = () => {
   };
 
   const handleNext = () => {
-    setStep((prev) => Math.min(prev + 1, 7));
+    setStep((prev) => Math.min(prev + 1, 8));
   };
 
   const handleBack = () => {
@@ -105,18 +106,65 @@ export const AssessmentQuizWizard: React.FC = () => {
     setStep(6);
   };
 
-  const handleAnalysisComplete = () => {
+  const handlePhotoSubmit = (photoBase64: string | null) => {
+    setResponses((prev) => ({
+      ...prev,
+      userPhotoBase64: photoBase64 || undefined,
+    }));
+    setStep(7);
+  };
+
+  const handlePhotoSkip = () => {
+    setResponses((prev) => ({
+      ...prev,
+      userPhotoBase64: undefined,
+    }));
+    setStep(7);
+  };
+
+  const handleAnalysisComplete = async () => {
     const result = calculatePersonalizedPlan(responses);
+    if (responses.userPhotoBase64) {
+      result.userPhotoBase64 = responses.userPhotoBase64;
+    }
     setPlanResult(result);
 
     try {
       localStorage.setItem("g_ai_user_quiz", JSON.stringify(responses));
       localStorage.setItem("g_ai_user_plan", JSON.stringify(result));
+      if (responses.userPhotoBase64) {
+        localStorage.setItem("g_ai_user_twin_photo", responses.userPhotoBase64);
+      }
     } catch (e) {
       console.error("Local storage error", e);
     }
 
-    setStep(7);
+    // Trigger /api/generate-twin in background
+    try {
+      const twinRes = await fetch("/api/generate-twin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          archetype: responses.archetype,
+          age: responses.age,
+          height: responses.heightCm,
+          weight: responses.currentWeightKg,
+          targetWeight: responses.targetWeightKg,
+          postureIssue: responses.injuries.length > 0 ? "Bảo vệ khớp và cân chỉnh tư thế" : "Gù lưng & siết eo",
+          userPhotoBase64: responses.userPhotoBase64,
+        }),
+      });
+      if (twinRes.ok) {
+        const twinData = await twinRes.json();
+        if (twinData.milestoneImages) {
+          localStorage.setItem("g_ai_twin_milestones", JSON.stringify(twinData.milestoneImages));
+        }
+      }
+    } catch (e) {
+      // fallback silently
+    }
+
+    setStep(8);
   };
 
   const isMaleTheme = responses.archetype === "male_strength";
@@ -129,11 +177,11 @@ export const AssessmentQuizWizard: React.FC = () => {
           : "bg-[#FFFDF9] text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
       }`}
     >
-      {/* Header with progress line (shown for steps 2 to 5) */}
-      {step >= 2 && step <= 5 && (
+      {/* Header with progress line (shown for steps 2 to 6) */}
+      {step >= 2 && step <= 6 && (
         <StepHeader
           currentStep={step}
-          totalSteps={5}
+          totalSteps={6}
           onBack={handleBack}
           canGoBack={true}
           archetype={responses.archetype}
@@ -218,13 +266,21 @@ export const AssessmentQuizWizard: React.FC = () => {
         )}
 
         {step === 6 && (
+          <PhotoUploadStep
+            archetype={responses.archetype}
+            onPhotoSubmit={handlePhotoSubmit}
+            onSkip={handlePhotoSkip}
+          />
+        )}
+
+        {step === 7 && (
           <AnalyzingLoader
             archetype={responses.archetype}
             onComplete={handleAnalysisComplete}
           />
         )}
 
-        {step === 7 && planResult && (
+        {step === 8 && planResult && (
           <PlanResultView
             responses={responses}
             result={planResult}
