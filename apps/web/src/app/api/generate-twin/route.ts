@@ -14,6 +14,45 @@ interface BiometricVisionAnalysis {
   recommendedKineticFocus: string[];
 }
 
+interface MilestonePrompt {
+  day: number;
+  stage: string;
+  title: string;
+  kyphosisAngle: number;
+  waistDeltaCm: number;
+  prompt: string;
+}
+
+// Helper to call Gemini Imagen 3 API for image generation
+async function generateImagen3Image(apiKey: string, promptText: string): Promise<string | null> {
+  try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        instances: [{ prompt: promptText }],
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "3:4",
+          personGeneration: "ALLOW_ADULT",
+        },
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const base64Bytes = data.predictions?.[0]?.bytesBase64Encoded;
+      if (base64Bytes) {
+        return `data:image/jpeg;base64,${base64Bytes}`;
+      }
+    }
+  } catch (err) {
+    console.warn("Imagen 3 generation fallback:", err);
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -25,9 +64,9 @@ export async function POST(req: NextRequest) {
     const targetWeight = body.targetWeight || (isMale ? 72 : 50);
     const postureIssue = body.postureIssue || "Võng lưng & gù vai cổ nhẹ";
     const userPhotoBase64 = body.userPhotoBase64 || null;
+    const shouldGenerateAIImages = body.generateAIImages !== false;
 
-    // Step 1: Multimodal Vision Analysis (Simulated & Gemini Vision ready)
-    // Extracts facial identity consistency cues & biomechanical baseline
+    // Read Gemini API Key from environment variables
     const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     let visionAnalysis: BiometricVisionAnalysis = {
@@ -48,9 +87,9 @@ export async function POST(req: NextRequest) {
       ],
     };
 
+    // Step 1: Gemini 1.5/2.5 Flash Vision Analysis (if photo & key available)
     if (geminiKey && userPhotoBase64) {
       try {
-        // Prepare clean base64
         const cleanBase64 = userPhotoBase64.replace(/^data:image\/\w+;base64,/, "");
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
@@ -96,13 +135,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 2: ChatGPT / Gemini Biomechanical Prompt Synthesizer
-    // Tailors 5 milestone prompts referencing the user's unique traits for identity preservation
+    // Step 2: Auto-Generate Prompts for 5 Milestones (Day 0, Day 7, Day 14, Day 21, Day 28)
     const identityAnchor = userPhotoBase64
       ? `preserving the exact facial structure, eye shape, skin tone (${visionAnalysis.skinToneDescription}), and hair style (${visionAnalysis.hairStyleDescription}) of the reference user photo`
       : `photorealistic athletic character with ${visionAnalysis.skinToneDescription} and ${visionAnalysis.hairStyleDescription}`;
 
-    const prompts = [
+    let prompts: MilestonePrompt[] = [
       {
         day: 0,
         stage: "Day 0 - Baseline",
@@ -145,9 +183,50 @@ export async function POST(req: NextRequest) {
       },
     ];
 
-    // Step 3: Milestone Images Composition
-    // If the user uploaded a photo, Day 0 uses their photo directly (with client background removal)
-    // while Days 7-28 transition smoothly along calibrated biometric models
+    // Optional: Gemini Prompt Optimization (if key available)
+    if (geminiKey) {
+      try {
+        const promptRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: `You are an AI Diffusion prompt engineer for medical and fitness transformations. Optimize these image generation prompts for Imagen 3/Midjourney to generate photorealistic body adaptation across 28 days for an athlete: ${genderDescription(isMale)}, starting weight ${weight}kg -> goal ${targetWeight}kg, issue: ${postureIssue}. Respond with JSON array of 5 prompt strings for Day 0, Day 7, Day 14, Day 21, Day 28. Respond ONLY with JSON.`,
+                    },
+                  ],
+                },
+              ],
+            }),
+          }
+        );
+
+        if (promptRes.ok) {
+          const promptData = await promptRes.json();
+          const pText = promptData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (pText) {
+            const arrMatch = pText.match(/\[[\s\S]*\]/);
+            if (arrMatch) {
+              const customPrompts: string[] = JSON.parse(arrMatch[0]);
+              if (Array.isArray(customPrompts) && customPrompts.length === 5) {
+                prompts = prompts.map((p, idx) => ({
+                  ...p,
+                  prompt: customPrompts[idx] || p.prompt,
+                }));
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to handcrafted prompts
+      }
+    }
+
+    // Step 3: Default Calibrated Milestones
     const defaultMilestones = isMale
       ? [
           userPhotoBase64 || "/twins/male-day-0.png",
@@ -164,6 +243,24 @@ export async function POST(req: NextRequest) {
           "/twins/female-day-28.png",
         ];
 
+    const finalMilestoneImages = [...defaultMilestones];
+
+    // Step 4: If Gemini API Key exists and AI generation requested, attempt Imagen 3 for Day 28 target
+    if (geminiKey && shouldGenerateAIImages) {
+      try {
+        // Generate Day 28 goal image via Imagen 3
+        const targetPrompt = prompts[4]?.prompt;
+        if (targetPrompt) {
+          const generatedImg = await generateImagen3Image(geminiKey, targetPrompt);
+          if (generatedImg) {
+            finalMilestoneImages[4] = generatedImg;
+          }
+        }
+      } catch (genErr) {
+        console.warn("Imagen 3 generation fallback:", genErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       archetype,
@@ -177,10 +274,11 @@ export async function POST(req: NextRequest) {
       },
       visionAnalysis,
       prompts,
-      milestoneImages: defaultMilestones,
+      milestoneImages: finalMilestoneImages,
       engine: {
+        geminiKeyConfigured: Boolean(geminiKey),
         visionEngine: geminiKey && userPhotoBase64 ? "Gemini 1.5/2.5 Flash Multimodal Vision" : "Calibrated Biomechanical Heuristics",
-        promptSynthesizer: "ChatGPT-4o Biomechanical Scripting",
+        promptSynthesizer: geminiKey ? "Gemini Prompt Engine" : "Heuristic Scripting",
         imageEngine: geminiKey ? "Gemini Imagen 3 Realtime" : "Studio Calibrated Silhouette Suite",
       },
       generatedAt: new Date().toISOString(),
@@ -192,4 +290,8 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function genderDescription(isMale: boolean): string {
+  return isMale ? "Athletic male, Calisthenics build" : "Athletic female, Pilates lean silhouette";
 }
