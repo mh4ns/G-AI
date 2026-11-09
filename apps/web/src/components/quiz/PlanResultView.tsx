@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { QuizResponses, PersonalizedPlanResult } from "@/types/quiz";
 import { 
   Trophy, 
@@ -18,6 +18,7 @@ import {
   Activity
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { syncQuizForSignedInUser } from "@/lib/api-client";
 import Link from "next/link";
 
 interface PlanResultViewProps {
@@ -33,6 +34,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
 }) => {
   const isMale = responses.archetype === "male_strength";
   const [previewDay, setPreviewDay] = useState<number>(28);
+  const syncedRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -48,19 +50,15 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
       // fallback
     }
 
-    // Silent background sync to backend
-    try {
-      fetch("/api/quiz/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responses, result }),
-      }).catch(() => {
-        // Graceful silent fallback if backend is offline
+    // Persist to the user's account when signed in (guests keep data on-device only).
+    // The ref keeps React Strict Mode's double effect from saving the quiz twice.
+    if (!syncedRef.current) {
+      syncedRef.current = true;
+      syncQuizForSignedInUser(responses).catch(() => {
+        // Backend offline: the plan is still saved locally.
       });
-    } catch (e) {
-      // ignore
     }
-  }, [isMale, responses, result]);
+  }, [isMale, responses]);
 
   const weightDiff = responses.currentWeightKg - responses.targetWeightKg;
   const isLosing = weightDiff > 0;

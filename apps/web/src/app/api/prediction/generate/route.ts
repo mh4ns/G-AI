@@ -1,25 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   calculateMilestoneDeltas,
   buildImageEditPrompt,
   computePredictionHash,
-  saveMilestoneToDisk,
-  checkDiskCache,
   assessPhotoQualityAndGender,
   callGeminiImageToImage,
   checkRateLimit,
   createPredictionJob,
-  getPredictionJob,
+  GenerationError,
+  getClientId,
+  serializeJob,
   updatePredictionJob,
 } from "@/lib/prediction-jobs";
+import { MILESTONE_DAYS, MilestoneDay, hasMilestone, saveMilestone } from "@/lib/prediction-storage";
+
+// Three image generations can take a few minutes.
+export const maxDuration = 300;
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
 
     // 1. Step 6: Verify User Consent
-    if (!body.consentAccepted) {
+    if (body.consentAccepted !== true) {
       return NextResponse.json(
         {
           success: false,
@@ -31,8 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Step 6: Rate Limiting (max 5 calls per 10 mins)
-    const clientIp = req.headers.get("x-forwarded-for") || "local-client";
-    const rateCheck = checkRateLimit(clientIp);
+    const rateCheck = checkRateLimit(getClientId(req.headers));
     if (!rateCheck.allowed) {
       return NextResponse.json(
         {
@@ -84,21 +87,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const archetype = body.archetype || "female_pilates";
+    const archetype: "female_pilates" | "male_strength" =
+      body.archetype === "male_strength" ? "male_strength" : "female_pilates";
     const isMale = archetype === "male_strength";
-    const weight = Number(body.weight) || (isMale ? 76 : 56);
-    const targetWeight = Number(body.targetWeight) || (isMale ? 72 : 50);
-    const planSummary = body.planSummary || "Standard 4-week kinetic adaptation";
+    const clampKg = (v: unknown, fallback: number) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n >= 30 && n <= 250 ? n : fallback;
+    };
+    const weight = clampKg(body.weight, isMale ? 76 : 56);
+    const targetWeight = clampKg(body.targetWeight, isMale ? 72 : 50);
+    // Free text is only used in the cache key, never in prompts; cap its size.
+    const planSummary =
+      typeof body.planSummary === "string" ? body.planSummary.slice(0, 200) : "Standard 4-week kinetic adaptation";
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
     if (!apiKey || apiKey === "your_gemini_api_key_here") {
+      console.error("[Prediction API] GEMINI_API_KEY is not configured.");
       return NextResponse.json(
         {
           success: false,
-          code: "MISSING_API_KEY",
-          error: "Chưa nhận diện được GEMINI_API_KEY. Vui lòng kiểm tra file apps/web/.env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev) để hệ thống nhận key.",
+          code: "SERVICE_UNAVAILABLE",
+          error:
+            process.env.NODE_ENV === "production"
+              ? "Tính năng dự đoán ảnh tạm thời chưa sẵn sàng."
+              : "Chưa có GEMINI_API_KEY. Thêm vào apps/web/.env.local rồi khởi động lại `npm run dev`.",
         },
-        { status: 400 }
+        { status: 503 }
       );
     }
 
@@ -123,36 +137,21 @@ export async function POST(req: NextRequest) {
       imageModel
     );
 
-    const cachedDay7 = checkDiskCache(cacheKey, 7);
-    const cachedDay14 = checkDiskCache(cacheKey, 14);
-    const cachedDay28 = checkDiskCache(cacheKey, 28);
-
-    const jobId = `job_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
-
-    if (cachedDay7 && cachedDay14 && cachedDay28) {
-      const existingJob = createPredictionJob(jobId, cacheKey, isMale ? "male" : "female", undefined, promptRecord);
-      updatePredictionJob(jobId, {
+    if (MILESTONE_DAYS.every((day) => hasMilestone(cacheKey, day))) {
+      const job = createPredictionJob(cacheKey, isMale ? "male" : "female", undefined, promptRecord);
+      const done = updatePredictionJob(job.jobId, {
         status: "done",
         cached: true,
+        completedDays: [...MILESTONE_DAYS],
         progress: {
           current: 3,
           total: 3,
           percent: 100,
           stageMessage: "Kết quả đã sẵn sàng từ bộ nhớ đệm.",
         },
-        completedMilestones: {
-          7: cachedDay7,
-          14: cachedDay14,
-          28: cachedDay28,
-        },
-      });
+      })!;
 
-      return NextResponse.json({
-        success: true,
-        jobId,
-        status: "done",
-        cached: true,
-      });
+      return NextResponse.json({ success: true, jobToken: job.accessToken, ...serializeJob(done) });
     }
 
     // 4. Step 4: Photo Validation & Gender Consistency Check (Vision Intake)
@@ -175,18 +174,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create queued job
     const job = createPredictionJob(
-      jobId,
       cacheKey,
       assessment.detectedGender,
       assessment.genderMismatchWarning,
       promptRecord
     );
+    const jobId = job.jobId;
 
-    // 5. Launch Background Worker (Async Execution)
-    // Run asynchronously without blocking response
-    (async () => {
+    // Background worker, run after the response is sent. `after()` keeps the
+    // function alive on serverless platforms (Vercel) until it finishes.
+    // Job state is still in-memory per instance: see docs/adr/0002.
+    after(async () => {
       updatePredictionJob(jobId, {
         status: "running",
         progress: {
@@ -197,12 +196,11 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const targetDays = [7, 14, 28];
-      const completedUrls: Record<number, string> = {};
+      const completedDays: MilestoneDay[] = [];
 
       try {
-        for (let i = 0; i < targetDays.length; i++) {
-          const day = targetDays[i];
+        for (let i = 0; i < MILESTONE_DAYS.length; i++) {
+          const day = MILESTONE_DAYS[i];
           const weekNum = day === 7 ? 1 : day === 14 ? 2 : 4;
 
           updatePredictionJob(jobId, {
@@ -214,31 +212,23 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          // Check if single milestone in cache
-          const existingCached = checkDiskCache(cacheKey, day);
-          if (existingCached) {
-            completedUrls[day] = existingCached;
-          } else {
-            const promptText = promptRecord[day];
+          if (!hasMilestone(cacheKey, day)) {
             const dataUrl = await callGeminiImageToImage(
               apiKey,
               imageModel,
               rawBase64,
               mimeType,
-              promptText,
+              promptRecord[day],
               2 // Max 2 retries
             );
-            const savedUrl = saveMilestoneToDisk(cacheKey, day, dataUrl);
-            completedUrls[day] = savedUrl;
+            saveMilestone(cacheKey, day, dataUrl);
           }
 
-          // Update job progress incrementally so frontend polling sees each photo as it finishes
-          updatePredictionJob(jobId, {
-            completedMilestones: { ...completedUrls },
-          });
+          completedDays.push(day);
+          // Incremental update so polling clients see each image as soon as it exists.
+          updatePredictionJob(jobId, { completedDays: [...completedDays] });
         }
 
-        // Job completed successfully
         updatePredictionJob(jobId, {
           status: "done",
           progress: {
@@ -247,38 +237,33 @@ export async function POST(req: NextRequest) {
             percent: 100,
             stageMessage: "Đã hoàn thành toàn bộ 3 mốc dự đoán.",
           },
-          completedMilestones: completedUrls,
         });
-      } catch (err: any) {
-        console.error(`[Prediction Job ${jobId}] Failed:`, err);
+      } catch (err: unknown) {
+        // Log without the request body or model output: both may contain the user's photo.
+        console.error(`[Prediction Job ${jobId}] Failed:`, err instanceof Error ? err.message : "unknown error");
+        const genErr = err instanceof GenerationError ? err : null;
         updatePredictionJob(jobId, {
           status: "failed",
           error: {
-            code: err?.isSafetyFilter ? "CONTENT_SAFETY_VIOLATION" : "GENERATION_ERROR",
+            code: genErr?.isSafetyFilter ? "CONTENT_SAFETY_VIOLATION" : "GENERATION_ERROR",
             message:
-              err?.message ||
+              genErr?.userMessage ??
               "Không thể sinh ảnh dự đoán. Vui lòng kiểm tra lại ảnh chụp và thử lại.",
-            isSafetyFilter: Boolean(err?.isSafetyFilter),
+            isSafetyFilter: Boolean(genErr?.isSafetyFilter),
           },
         });
       }
-    })();
+    });
 
     // Return job_id immediately (Step 3 Async Requirement)
-    return NextResponse.json({
-      success: true,
-      jobId,
-      status: "queued",
-      cached: false,
-      genderMismatchWarning: assessment.genderMismatchWarning,
-    });
-  } catch (error: any) {
-    console.error("[Prediction API] Generate error:", error);
+    return NextResponse.json({ success: true, jobToken: job.accessToken, ...serializeJob(job) });
+  } catch (error: unknown) {
+    console.error("[Prediction API] Generate error:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json(
       {
         success: false,
         code: "SERVER_ERROR",
-        error: error?.message || "Lỗi xử lý yêu cầu sinh ảnh.",
+        error: "Lỗi xử lý yêu cầu sinh ảnh.",
       },
       { status: 500 }
     );

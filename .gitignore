@@ -45,3 +45,7 @@ apps/web/public/generated/
 
 
 graphify-out/
+
+# Private runtime data (generated prediction images)
+.data/
+.pytest_cache/

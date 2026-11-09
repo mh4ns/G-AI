@@ -4,6 +4,29 @@
 
 ---
 
+## HIỆN TRẠNG TRIỂN KHAI (cập nhật 2026-11-09)
+
+> Phần còn lại của tài liệu này mô tả **tầm nhìn đầy đủ**. Bảng dưới đây cho biết phần nào đã chạy thật trong code.
+
+| Hạng mục | Trạng thái |
+|---|---|
+| Khảo sát thể trạng & tính kế hoạch (BMI/BMR/TDEE) | ✅ Web + lưu vào backend khi đăng nhập |
+| Đăng ký / đăng nhập (JWT, cookie httpOnly) | ✅ |
+| Trang Today: nước, thói quen, buổi tập | ✅ Đồng bộ backend khi đăng nhập; khách chỉ lưu trên trình duyệt |
+| Dự đoán ảnh cơ thể (Digital Twin, Gemini) | ✅ Lưu ảnh riêng tư, link có chữ ký, cần đồng ý · ⚠️ chưa chạy được trên serverless (ADR-0002) |
+| AI Live PT (chấm tư thế bằng MediaPipe) | 🚧 Giao diện có sẵn, điểm tư thế đang mô phỏng |
+| Cửa hàng | 🚧 API đặt hàng an toàn đã có; giao diện web vẫn dùng dữ liệu mẫu, chưa có cổng thanh toán |
+| Dinh dưỡng, IoT/BLE, CBT Journal, Premium, App mobile | 📝 Chưa bắt đầu |
+
+**Hai website, một nền thiết kế:** `apps/site` (trang thương hiệu + cửa hàng, cổng 3001) và `apps/web`
+(ứng dụng huấn luyện, cổng 3000) dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
+`npm run dev:site` và `npm run dev:app`. Deploy: `docs/deploy-vercel.md`.
+
+**Chạy nhanh:** `docker compose up --build` (sao chép `.env.example` thành `.env` trước), hoặc chạy riêng
+từng app theo `apps/backend/README.md` và `apps/web/README.md`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
+
+---
+
 ## CẤU TRÚC THƯ MỤC DỰ ÁN (MONOREPO REPOSITORY LAYOUT)
 
 Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho nền tảng **Thuần Web & Mobile App (100% Software-Only)**:
@@ -11,11 +34,13 @@ Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho n�
 ```text
 G-ai/
 ├── apps/
-│   ├── web/                     # Ứng dụng Web (Next.js 15, React 19, Tailwind CSS, MediaPipe Pose)
+│   ├── site/                    # Web 1: trang thương hiệu + cửa hàng (Next.js 15)
+│   ├── web/                     # Web 2: ứng dụng huấn luyện — quiz, dự đoán ảnh, Today (Next.js 15)
 │   ├── mobile/                  # Ứng dụng Di động (React Native / Flutter)
 │   └── backend/                 # API Server & AI Core (Python FastAPI, Uvicorn, SQLAlchemy)
 │
 ├── packages/
+│   ├── ui/                      # Nền thiết kế chung cho 2 web: màu nền canvas, token, CSS gốc, logo
 │   └── shared-types/            # Kiểu dữ liệu & Schemas dùng chung giữa Web, Mobile và Backend
 │
 ├── docs/                        # Toàn bộ tài liệu kỹ thuật, slide, sơ đồ và use case

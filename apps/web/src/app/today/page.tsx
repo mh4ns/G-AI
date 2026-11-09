@@ -19,8 +19,16 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
-import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandLogo, siteUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
+import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
+
+// Checklist keys persisted as habit keys on the backend.
+const CHECKLIST_KEYS = ["water", "workout", "mindfulness", "fasting"] as const;
+
+function checklistFromMetric(metric: ApiDailyMetric): Record<string, boolean> {
+  return Object.fromEntries(CHECKLIST_KEYS.map((k) => [k, metric.habits_completed.includes(k)]));
+}
 
 export default function TodayDashboardPage() {
   const [plan, setPlan] = useState<PersonalizedPlanResult>({
@@ -85,6 +93,8 @@ export default function TodayDashboardPage() {
     fasting: false,
   });
 
+  const [sessionUser, setSessionUser] = useState<ApiUser | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [hasCustomPlan, setHasCustomPlan] = useState<boolean>(true);
   const [isStudioOpen, setIsStudioOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -118,9 +128,63 @@ export default function TodayDashboardPage() {
     }
   };
 
-  const handleFinishWorkout = (summary: WorkoutSummaryData) => {
-    setCaloriesBurned((prev) => prev + summary.caloriesBurned);
-    setChecklist((prev) => ({ ...prev, workout: true }));
+  // Signed-in users get real, persisted numbers; guests keep the local demo values.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const user = await getSessionUser();
+      if (cancelled || !user) return;
+      setSessionUser(user);
+      try {
+        applyMetric(await api.today.get());
+      } catch {
+        if (!cancelled) setSyncError("Không tải được số liệu hôm nay từ máy chủ.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const applyMetric = (metric: ApiDailyMetric) => {
+    setWaterDrunkMl(metric.water_intake_ml);
+    setCaloriesBurned(metric.calories_burned);
+    setCaloriesEaten(metric.calories_consumed);
+    setChecklist(checklistFromMetric(metric));
+    setSyncError(null);
+  };
+
+  /** Runs a backend update for signed-in users; reports (but does not undo) failures. */
+  const syncToBackend = async (call: () => Promise<ApiDailyMetric>) => {
+    if (!sessionUser) return;
+    try {
+      applyMetric(await call());
+    } catch {
+      setSyncError("Chưa lưu được thay đổi lên máy chủ. Vui lòng thử lại.");
+    }
+  };
+
+  const handleFinishWorkout = async (summary: WorkoutSummaryData) => {
+    if (!sessionUser) {
+      setCaloriesBurned((prev) => prev + summary.caloriesBurned);
+      setChecklist((prev) => ({ ...prev, workout: true }));
+      return;
+    }
+    try {
+      await api.workouts.log({
+        duration_sec: Math.max(1, Math.round(summary.durationMinutes * 60)),
+        calories_burned: Math.max(0, Math.round(summary.caloriesBurned)),
+        reps_completed: Math.max(0, Math.round(summary.repsCompleted)),
+        form_accuracy_pct: Math.min(100, Math.max(0, summary.averageFormScore)),
+      });
+      let metric = await api.today.get();
+      if (!metric.habits_completed.includes("workout")) {
+        metric = await api.today.toggleHabit("workout");
+      }
+      applyMetric(metric);
+    } catch {
+      setSyncError("Chưa lưu được buổi tập lên máy chủ.");
+    }
   };
 
   const isLight = theme === "light";
@@ -129,6 +193,16 @@ export default function TodayDashboardPage() {
   const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
 
   const addWater = () => {
+    if (sessionUser) {
+      void syncToBackend(async () => {
+        const metric = await api.today.addWater(250);
+        const reachedGoal = metric.water_intake_ml >= plan.recommendedWaterMl;
+        return reachedGoal && !metric.habits_completed.includes("water")
+          ? api.today.toggleHabit("water")
+          : metric;
+      });
+      return;
+    }
     setWaterDrunkMl((prev) => {
       const next = prev + 250;
       if (next >= plan.recommendedWaterMl) {
@@ -139,12 +213,18 @@ export default function TodayDashboardPage() {
   };
 
   const toggleChecklist = (key: string) => {
+    if (sessionUser) {
+      void syncToBackend(() => api.today.toggleHabit(key));
+      return;
+    }
     setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const todayLabel = new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
+
   return (
     <div className={`min-h-screen transition-colors duration-300 pb-16 ${
-      isLight ? "bg-[#FAF8F5] text-stone-800" : "bg-[#0A0908] text-stone-100"
+      isLight ? "bg-canvas text-stone-800" : "bg-canvas-dark text-stone-100"
     }`}>
       {/* Top Navbar */}
       <header className={`backdrop-blur-md sticky top-0 z-30 border-b transition-colors duration-300 ${
@@ -152,14 +232,14 @@ export default function TodayDashboardPage() {
       }`}>
         <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+            <Link href={siteUrl("/")} className="hover:opacity-80 transition-opacity flex items-center">
               <BrandLogo variant="horizontal" isLight={isLight} size="sm" />
             </Link>
             <div className={`border-l pl-3 ${isLight ? "border-stone-200" : "border-stone-800"}`}>
               <h1 className={`font-bold text-sm sm:text-base leading-tight ${
                 isLight ? "text-stone-800" : "text-white"
               }`}>
-                Hôm nay, 2 Tháng 11
+                Hôm nay, {todayLabel}
               </h1>
               <p className="text-[11px] text-stone-400 font-medium">Lộ trình 28 ngày • Tuần 1, Ngày 3</p>
             </div>
@@ -167,7 +247,7 @@ export default function TodayDashboardPage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/#movement-goods"
+              href={siteUrl("/#movement-goods")}
               className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
                 isLight
                   ? "text-stone-600 hover:text-[#FF5A36] bg-stone-100 hover:bg-stone-200"
@@ -231,6 +311,26 @@ export default function TodayDashboardPage() {
               <span>Làm Khảo Sát Ngay</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Account sync status */}
+      {(!sessionUser || syncError) && (
+        <div className={`border-b px-4 py-2.5 text-xs ${
+          syncError
+            ? "bg-rose-50 border-rose-200 text-rose-700"
+            : isLight ? "bg-white border-stone-200 text-stone-600" : "bg-[#11100F] border-stone-800 text-stone-300"
+        }`}>
+          <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-3">
+            <span role={syncError ? "alert" : undefined}>
+              {syncError ?? "Số liệu bên dưới chỉ lưu trên trình duyệt này."}
+            </span>
+            {!sessionUser && (
+              <Link href="/login?next=/today" className="font-bold text-[#FF5A36] hover:underline shrink-0">
+                Đăng nhập để lưu tiến trình
+              </Link>
+            )}
           </div>
         </div>
       )}

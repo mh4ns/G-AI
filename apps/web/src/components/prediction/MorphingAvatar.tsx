@@ -12,6 +12,11 @@ import {
   Loader2,
   Lock,
 } from "lucide-react";
+
+/** User photos and generated predictions must not be copied into Next's shared image-optimizer cache. */
+function isPrivateImage(src: string | undefined): boolean {
+  return !!src && (src.startsWith("data:") || src.startsWith("/api/prediction/image/"));
+}
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 export interface MorphingAvatarProps {
@@ -385,6 +390,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 >
                   <Image
                     src={imgSrc}
+                    unoptimized={isPrivateImage(imgSrc)}
                     alt={`Hình thể dự đoán mốc ngày ${day}`}
                     fill
                     sizes="(max-width: 768px) 100vw, 420px"
@@ -405,6 +411,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             <div className="absolute inset-0 p-4 pb-10">
               <Image
                 src={milestoneImages[0]}
+                unoptimized={isPrivateImage(milestoneImages[0])}
                 alt="Trước - Ngày 0"
                 fill
                 sizes="(max-width: 768px) 100vw, 420px"
@@ -421,6 +428,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             >
               <Image
                 src={milestoneImages[compareTargetDay as keyof typeof milestoneImages]}
+                unoptimized={isPrivateImage(milestoneImages[compareTargetDay as keyof typeof milestoneImages])}
                 alt={`Sau - ${compareTargetTitle}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 420px"

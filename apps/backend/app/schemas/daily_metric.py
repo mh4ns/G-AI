@@ -1,10 +1,13 @@
 from datetime import date, datetime
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import List, Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class DailyMetricResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
-    user_id: int
     date: date
     calories_consumed: int
     calories_burned: int
@@ -16,18 +19,19 @@ class DailyMetricResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
 
 class WaterUpdateRequest(BaseModel):
-    user_id: int
-    amount_ml: int = Field(250, description="Amount in ml to add (e.g. 250ml or -250ml)")
+    amount_ml: int = Field(250, ge=-2000, le=2000, description="Amount in ml to add (negative to undo)")
+
+
+class CaloriesUpdateRequest(BaseModel):
+    amount_kcal: int = Field(..., ge=-5000, le=5000, description="Calories eaten to add (negative to undo)")
+
 
 class FastingUpdateRequest(BaseModel):
-    user_id: int
-    fasting_state: str = Field(..., pattern="^(idle|fasting|eating_window)$")
-    fasting_minutes: Optional[int] = None
+    fasting_state: Literal["idle", "fasting", "eating_window"]
+    fasting_minutes: Optional[int] = Field(None, ge=0, le=24 * 60)
+
 
 class HabitToggleRequest(BaseModel):
-    user_id: int
-    habit_key: str = Field(..., description="e.g. morning_stretch, posture_check, water_goal")
+    habit_key: str = Field(..., pattern=r"^[a-z][a-z0-9_]{1,49}$", description="e.g. morning_stretch, water, workout")

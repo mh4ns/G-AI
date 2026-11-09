@@ -142,7 +142,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
       {/* Main Interactive Stage */}
       <div className="w-full max-w-xl flex flex-col items-center">
         {/* Visual Box / Camera Preview */}
-        <div className="w-full relative aspect-[3/4] sm:aspect-[4/5] rounded-3xl overflow-hidden border border-stone-800 bg-[#0A0908] shadow-2xl flex flex-col items-center justify-center text-white">
+        <div className="w-full relative aspect-[3/4] sm:aspect-[4/5] rounded-3xl overflow-hidden border border-stone-800 bg-canvas-dark shadow-2xl flex flex-col items-center justify-center text-white">
           {/* Subtle Grid Calibration Overlay */}
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
@@ -192,7 +192,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
 
           {/* Photo Preview Mode */}
           {photoPreview && !isCameraActive && (
-            <div className="relative w-full h-full flex items-center justify-center bg-[#0A0908] overflow-hidden">
+            <div className="relative w-full h-full flex items-center justify-center bg-canvas-dark overflow-hidden">
               <Image
                 src={photoPreview}
                 alt="User Body Photo Preview"

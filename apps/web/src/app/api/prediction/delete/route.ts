@@ -1,47 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteUserPredictionCache, getPredictionJob } from "@/lib/prediction-jobs";
+import { deletePredictionJob, getPredictionJob } from "@/lib/prediction-jobs";
+import { deleteMilestones, tokensMatch } from "@/lib/prediction-storage";
 
+/**
+ * Deletes a user's generated images and job. Requires the job token that was
+ * returned when the job was created, so nobody else can delete (or confirm the
+ * existence of) someone's images.
+ */
 export async function DELETE(request: NextRequest) {
-  try {
-    const body = await request.json().catch(() => ({}));
-    const { cacheKey, jobId } = body;
+  const body = await request.json().catch(() => ({}));
+  const jobId = typeof body.jobId === "string" ? body.jobId : "";
+  const jobToken = typeof body.jobToken === "string" ? body.jobToken : "";
 
-    let targetCacheKey = cacheKey;
-
-    if (!targetCacheKey && jobId) {
-      const job = getPredictionJob(jobId);
-      if (job) {
-        // extract cacheKey from milestone URLs if available (e.g. /generated/{hash}_day_7.jpg)
-        const urls = Object.values(job.completedMilestones);
-        for (const url of urls) {
-          const match = url.match(/\/generated\/([a-f0-9]+)_day_/);
-          if (match && match[1]) {
-            targetCacheKey = match[1];
-            break;
-          }
-        }
-      }
-    }
-
-    if (targetCacheKey) {
-      deleteUserPredictionCache(targetCacheKey);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Toàn bộ dữ liệu ảnh và phiên tạo sinh đã được xóa sạch hoàn toàn khỏi máy chủ.",
-    });
-  } catch (err: any) {
-    console.error("[API prediction/delete] Error:", err);
+  const job = jobId ? getPredictionJob(jobId) : null;
+  if (!job || !tokensMatch(job.accessToken, jobToken)) {
     return NextResponse.json(
       {
         success: false,
-        code: "SERVER_ERROR",
-        error: "Không thể xóa dữ liệu ảnh do lỗi máy chủ.",
+        code: "JOB_NOT_FOUND",
+        error: "Không tìm thấy phiên tạo sinh để xóa (có thể đã hết hạn).",
       },
-      { status: 500 }
+      { status: 404 }
     );
   }
+
+  deleteMilestones(job.cacheKey);
+  deletePredictionJob(job.jobId);
+
+  return NextResponse.json({
+    success: true,
+    message: "Ảnh dự đoán và phiên tạo sinh đã được xóa khỏi máy chủ.",
+  });
 }
 
 export async function POST(request: NextRequest) {

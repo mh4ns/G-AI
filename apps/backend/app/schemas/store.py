@@ -1,8 +1,12 @@
 from datetime import datetime
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, EmailStr, Field
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 
 class ProductResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     subtitle: str
@@ -22,27 +26,26 @@ class ProductResponse(BaseModel):
     stock_quantity: int
     is_active: bool
 
-    class Config:
-        from_attributes = True
 
-class OrderItemSchema(BaseModel):
-    product_id: str
-    name: str
-    size: str
-    price: float
-    quantity: int = Field(1, ge=1)
-    image: str
+class OrderItemRequest(BaseModel):
+    """What the client may choose. Name, price and image are always read from the catalog."""
+
+    product_id: str = Field(..., min_length=1, max_length=50)
+    size: str = Field(..., min_length=1, max_length=20)
+    quantity: int = Field(1, ge=1, le=20)
+
 
 class OrderCreateRequest(BaseModel):
-    user_id: Optional[int] = None
     customer_email: EmailStr
-    customer_name: str = Field(..., min_length=2)
-    shipping_address: str = Field(..., min_length=5)
-    items: List[OrderItemSchema] = Field(..., min_items=1)
+    customer_name: str = Field(..., min_length=2, max_length=100)
+    shipping_address: str = Field(..., min_length=5, max_length=500)
+    items: List[OrderItemRequest] = Field(..., min_length=1, max_length=50)
+
 
 class OrderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
-    user_id: Optional[int]
     customer_email: str
     customer_name: str
     total_amount: float
@@ -51,6 +54,3 @@ class OrderResponse(BaseModel):
     order_status: str
     items: List[Dict[str, Any]]
     created_at: datetime
-
-    class Config:
-        from_attributes = True

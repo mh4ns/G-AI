@@ -1,0 +1,105 @@
+{
+  "$comment": "Shared parity vectors for plan maths. Asserted by apps/web (quiz-calculations.ts) and apps/backend (plan_calculator.py). Expected values were generated from the web implementation.",
+  "vectors": [
+    {
+      "input": {
+        "gender": "female",
+        "archetype": "female_pilates",
+        "age": 32,
+        "heightCm": 162,
+        "currentWeightKg": 62.5,
+        "targetWeightKg": 54,
+        "activityLevel": "lightly_active"
+      },
+      "expected": {
+        "bmi": 23.8,
+        "bmr": 1317,
+        "tdee": 1811,
+        "dailyCalorieTarget": 1411,
+        "calorieDeficitDaily": 400,
+        "estimatedWeeks": 23,
+        "recommendedWaterMl": 2200
+      }
+    },
+    {
+      "input": {
+        "gender": "male",
+        "archetype": "male_strength",
+        "age": 27,
+        "heightCm": 178,
+        "currentWeightKg": 76,
+        "targetWeightKg": 72,
+        "activityLevel": "moderately_active"
+      },
+      "expected": {
+        "bmi": 24,
+        "bmr": 1743,
+        "tdee": 2702,
+        "dailyCalorieTarget": 2202,
+        "calorieDeficitDaily": 500,
+        "estimatedWeeks": 9,
+        "recommendedWaterMl": 2700
+      }
+    },
+    {
+      "input": {
+        "gender": "male",
+        "archetype": "male_strength",
+        "age": 45,
+        "heightCm": 170,
+        "currentWeightKg": 60,
+        "targetWeightKg": 66,
+        "activityLevel": "very_active"
+      },
+      "expected": {
+        "bmi": 20.8,
+        "bmr": 1443,
+        "tdee": 2489,
+        "dailyCalorieTarget": 2839,
+        "calorieDeficitDaily": -350,
+        "estimatedWeeks": 13,
+        "recommendedWaterMl": 2100
+      }
+    },
+    {
+      "input": {
+        "gender": "female",
+        "archetype": "female_pilates",
+        "age": 55,
+        "heightCm": 155,
+        "currentWeightKg": 50,
+        "targetWeightKg": 50,
+        "activityLevel": "sedentary"
+      },
+      "expected": {
+        "bmi": 20.8,
+        "bmr": 1033,
+        "tdee": 1240,
+        "dailyCalorieTarget": 1240,
+        "calorieDeficitDaily": 0,
+        "estimatedWeeks": 4,
+        "recommendedWaterMl": 1800
+      }
+    },
+    {
+      "input": {
+        "gender": "female",
+        "archetype": "female_pilates",
+        "age": 21,
+        "heightCm": 150,
+        "currentWeightKg": 45,
+        "targetWeightKg": 42,
+        "activityLevel": "sedentary"
+      },
+      "expected": {
+        "bmi": 20,
+        "bmr": 1122,
+        "tdee": 1346,
+        "dailyCalorieTarget": 1200,
+        "calorieDeficitDaily": 400,
+        "estimatedWeeks": 8,
+        "recommendedWaterMl": 1600
+      }
+    }
+  ]
+}

@@ -83,6 +83,7 @@ def main():
         sys.exit(1)
 
     job_id = resp_body.get("jobId")
+    job_token = resp_body.get("jobToken", "")
     cached = resp_body.get("cached", False)
     warning = resp_body.get("genderMismatchWarning")
     if warning:
@@ -105,7 +106,8 @@ def main():
     while True:
         time.sleep(1.5)
         try:
-            with urllib.request.urlopen(poll_endpoint, timeout=10) as poll_resp:
+            poll_req = urllib.request.Request(poll_endpoint, headers={"x-job-token": job_token})
+            with urllib.request.urlopen(poll_req, timeout=10) as poll_resp:
                 poll_data = json.loads(poll_resp.read().decode("utf-8"))
         except Exception as e:
             print(f"[!] Polling warning: {e}")
