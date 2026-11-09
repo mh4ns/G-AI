@@ -22,16 +22,12 @@ const STEP_DAYS = [0, 7, 14, 28];
 interface TimelineScrubberProps {
   currentDay: number; // 0, 7, 14, 28
   onDayChange: (day: number) => void;
-  viewMode: "profile" | "front" | "threeQuarter";
-  onViewModeChange: (mode: "profile" | "front" | "threeQuarter") => void;
   archetype?: "female_pilates" | "male_strength";
 }
 
 export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
   currentDay,
   onDayChange,
-  viewMode,
-  onViewModeChange,
   archetype = "female_pilates",
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -43,7 +39,9 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
   }, 0);
 
   // Check user preference for reduced motion
-  const isReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // Auto-play cycling through the 4 milestone weeks every ~1.2s
   useEffect(() => {
@@ -84,7 +82,6 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
   };
 
   // Convert current day (0 -> 28) into track percentage (0% -> 100%)
-  // Day 0 = 0%, Day 7 = 25%, Day 14 = 50%, Day 28 = 100%
   const getProgressPercent = (day: number): number => {
     if (day <= 0) return 0;
     if (day <= 7) return (day / 7) * 25;
@@ -102,50 +99,22 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
     <div
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="w-full bg-[#11100F] border border-stone-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl select-none shadow-2xl focus:outline-none focus:border-[#FF5A36]/60 transition-colors"
+      className="w-full bg-[#11100F] border border-stone-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 backdrop-blur-xl select-none shadow-xl focus:outline-none focus:border-[#FF5A36]/60 transition-colors font-sans"
       role="region"
       aria-label="Thanh điều khiển dòng thời gian chuyển hóa 28 ngày"
     >
-      {/* Top Meta Bar: View Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-        <div>
-          <span className="text-[11px] font-mono tracking-widest text-[#FF5A36] uppercase font-bold">
-            DÒNG THỜI GIAN 4 TUẦN
-          </span>
-          <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
-            Xem Sự Biến Đổi Vóc Dáng Theo Từng Tuần
-          </h3>
-        </div>
-
-        {/* Perspective Angle Switcher */}
-        <div className="inline-flex rounded-xl bg-stone-900 p-1 border border-stone-800 text-xs font-mono self-start sm:self-auto">
-          <button
-            onClick={() => onViewModeChange("profile")}
-            className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
-              viewMode === "profile"
-                ? "bg-[#FF5A36] text-white shadow-sm"
-                : "text-stone-400 hover:text-white"
-            }`}
-            aria-label="Xem góc nghiêng kiểm tra cột sống"
-          >
-            Góc Nghiêng (Cột Sống)
-          </button>
-          <button
-            onClick={() => onViewModeChange("front")}
-            className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
-              viewMode === "front"
-                ? "bg-[#FF5A36] text-white shadow-sm"
-                : "text-stone-400 hover:text-white"
-            }`}
-            aria-label="Xem góc chính diện kiểm tra vòng eo"
-          >
-            Chính Diện (Vòng Eo)
-          </button>
-        </div>
+      {/* Scrubber Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-bold text-[#FF5A36] uppercase tracking-normal">
+          Dòng thời gian chuyển hóa 28 ngày
+        </span>
+        <span className="text-xs text-stone-300 font-medium">
+          Mốc: <strong className="text-white font-mono">{activeMilestone.label}</strong> ({activeMilestone.stageTitle})
+        </span>
       </div>
 
       {/* Main Unified Scrubber: Play Button + Thick Track with Nodes & Labels */}
-      <div className="flex items-center gap-3.5 sm:gap-5 pt-2 pb-6">
+      <div className="flex items-center gap-3 sm:gap-4 pt-1 pb-4">
         {/* Play/Pause Cycle Button placed directly beside the slider track */}
         <button
           onClick={() => {
@@ -154,16 +123,16 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
             }
             setIsPlaying(!isPlaying);
           }}
-          className="w-12 h-12 rounded-2xl bg-[#FF5A36] hover:bg-[#e04825] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#FF5A36]/30 transition-all active:scale-95"
+          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#FF5A36] hover:bg-[#e04825] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#FF5A36]/30 transition-all active:scale-95"
           title={isPlaying ? "Tạm dừng" : "Tự động phát qua các tuần (1.2s/tuần)"}
           aria-label={isPlaying ? "Tạm dừng phát" : "Tự động phát qua 4 mốc tuần"}
         >
           {isPlaying ? (
-            <Pause className="w-5 h-5 fill-white" />
+            <Pause className="w-4 h-4 fill-white" />
           ) : currentDay >= 28 ? (
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4" />
           ) : (
-            <Play className="w-5 h-5 fill-white ml-0.5" />
+            <Play className="w-4 h-4 fill-white ml-0.5" />
           )}
         </button>
 
@@ -191,7 +160,6 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
                   className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1 group focus:outline-none"
                   aria-label={`Chuyển tới ${m.label}: ${m.stageTitle}`}
                 >
-                  {/* Milestone dot directly on track */}
                   <div
                     className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
                       isSelected
@@ -233,7 +201,7 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
           </div>
 
           {/* 4 Milestone Labels directly aligned below the track */}
-          <div className="relative w-full mt-3 h-8">
+          <div className="relative w-full mt-3 h-7">
             {MILESTONES_4_STEPS.map((m, idx) => {
               const isSelected = activeIndex === idx;
 
@@ -247,10 +215,10 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
                     isSelected ? "text-white" : "text-stone-400 hover:text-stone-200"
                   }`}
                 >
-                  <span className={`font-mono text-xs ${isSelected ? "font-bold text-[#FF5A36]" : "font-medium"}`}>
+                  <span className={`text-xs ${isSelected ? "font-bold text-[#FF5A36]" : "font-medium"}`}>
                     {m.label}
                   </span>
-                  <span className="text-[10px] font-mono text-stone-500 hidden sm:inline whitespace-nowrap">
+                  <span className="text-[11px] text-stone-400 hidden sm:inline whitespace-nowrap">
                     {m.stageTitle}
                   </span>
                 </button>

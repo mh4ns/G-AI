@@ -8,12 +8,9 @@ import {
   RotateCcw,
   AlertCircle,
   Columns,
-  Eye,
-  EyeOff,
   Activity,
-  Maximize2,
-  Check,
 } from "lucide-react";
+import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 export interface MorphingAvatarProps {
   progress: number; // 0.0 to 1.0 (from currentDay / 28)
@@ -44,7 +41,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const [isComparing, setIsComparing] = useState<boolean>(false);
   const [comparePos, setComparePos] = useState<number>(50); // 0 to 100%
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [showSkeleton, setShowSkeleton] = useState<boolean>(false); // Step 3: Default OFF
+  const [showSkeleton, setShowSkeleton] = useState<boolean>(false); // Step 3 & 6: Default OFF
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
 
@@ -160,7 +157,11 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const currentPelvisX = 160 - pelvicOffset * 0.4;
 
   const statusColor =
-    progress > 0.75 ? "#10B981" : progress > 0.35 ? "#F59E0B" : "#FF5A36";
+    progress > 0.75
+      ? SEMANTIC_COLORS.success
+      : progress > 0.35
+      ? SEMANTIC_COLORS.warning
+      : SEMANTIC_COLORS.primary;
 
   const statusLabel =
     progress > 0.75
@@ -188,10 +189,10 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               className={`px-3 py-1 rounded-full text-xs transition-all duration-200 ${
                 viewMode === "profile"
                   ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
-                  : "text-stone-400 hover:text-stone-200 font-medium"
+                  : "text-stone-300 hover:text-white font-medium"
               }`}
             >
-              Góc Nghiêng
+              Góc nghiêng
             </button>
             <button
               type="button"
@@ -201,10 +202,10 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               className={`px-3 py-1 rounded-full text-xs transition-all duration-200 ${
                 viewMode === "front"
                   ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
-                  : "text-stone-400 hover:text-stone-200 font-medium"
+                  : "text-stone-300 hover:text-white font-medium"
               }`}
             >
-              Chính Diện
+              Chính diện
             </button>
           </div>
         )}
@@ -216,15 +217,15 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             type="button"
             onClick={() => setShowSkeleton((prev) => !prev)}
             aria-pressed={showSkeleton}
-            className={`px-3 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95 ${
+            className={`px-3 py-1.5 rounded-full border text-xs font-sans transition-all flex items-center gap-1.5 active:scale-95 ${
               showSkeleton
                 ? "bg-[#FF5A36]/20 border-[#FF5A36] text-white font-bold shadow-sm shadow-[#FF5A36]/20"
-                : "bg-stone-900/90 border-stone-800 text-stone-400 hover:text-stone-200"
+                : "bg-stone-900/90 border-stone-800 text-stone-300 hover:text-white"
             }`}
             title="Bật/tắt lớp phủ khung xương và trục dóng giải phẫu"
           >
             <Activity className="w-3.5 h-3.5 text-[#FF5A36]" />
-            <span>Khung Xương</span>
+            <span>Khung xương</span>
             {showSkeleton && <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36]" />}
           </button>
 
@@ -233,15 +234,15 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             type="button"
             onClick={() => setIsComparing((prev) => !prev)}
             aria-pressed={isComparing}
-            className={`px-3 py-1.5 rounded-full border text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95 ${
+            className={`px-3 py-1.5 rounded-full border text-xs font-sans transition-all flex items-center gap-1.5 active:scale-95 ${
               isComparing
                 ? "bg-white text-stone-900 font-bold border-white shadow-md"
-                : "bg-stone-900/90 border-stone-800 text-stone-400 hover:text-stone-200"
+                : "bg-stone-900/90 border-stone-800 text-stone-300 hover:text-white"
             }`}
             title="Bật thanh kéo so sánh trước/sau trực quan"
           >
             <Columns className="w-3.5 h-3.5 text-[#FF5A36]" />
-            <span>So Sánh</span>
+            <span>So sánh</span>
           </button>
 
           {/* Photo Upload / Change Trigger */}
@@ -249,7 +250,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             <button
               type="button"
               onClick={onOpenUploadModal}
-              className="px-2.5 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition-colors"
+              className="px-2.5 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition-colors"
               title="Cập nhật ảnh thật thể trạng"
               aria-label="Cập nhật ảnh thật"
             >
@@ -287,7 +288,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             <div className="w-24 h-48 rounded-2xl bg-stone-900 border border-stone-800 mb-4" />
             <div className="w-40 h-3 bg-stone-800 rounded-full mb-2" />
             <div className="w-28 h-2 bg-stone-900 rounded-full" />
-            <p className="mt-4 text-xs font-mono text-stone-400">Đang tổng hợp dữ liệu vóc dáng...</p>
+            <p className="mt-4 text-xs font-sans text-stone-300">Đang tổng hợp dữ liệu vóc dáng...</p>
           </div>
         )}
 
@@ -296,7 +297,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/90 backdrop-blur-md p-6 text-center">
             <AlertCircle className="w-8 h-8 text-[#FF5A36] mb-3" />
             <h5 className="text-sm font-bold text-white mb-1">Không thể tải ảnh mô phỏng</h5>
-            <p className="text-xs text-stone-400 mb-4 max-w-xs">
+            <p className="text-xs text-stone-300 mb-4 max-w-xs">
               Đã xảy ra sự cố khi tải dữ liệu ảnh thể trạng. Bạn có thể thử tải lại hoặc dùng ảnh mô phỏng mặc định.
             </p>
             <button
@@ -305,10 +306,10 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 setIsLoading(true);
                 setTimeout(() => setIsLoading(false), 500);
               }}
-              className="px-4 py-2 rounded-full bg-stone-900 border border-stone-700 text-xs font-mono text-white flex items-center gap-2 hover:bg-stone-800 transition-colors shadow-sm"
+              className="px-4 py-2 rounded-full bg-stone-900 border border-stone-700 text-xs font-sans text-white flex items-center gap-2 hover:bg-stone-800 transition-colors shadow-sm"
             >
               <RotateCcw className="w-3.5 h-3.5 text-[#FF5A36]" />
-              <span>Thử Lại</span>
+              <span>Thử lại</span>
             </button>
           </div>
         )}
@@ -385,16 +386,16 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
 
               {/* Centered Draggable Thumb Button */}
               <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#FF5A36] text-white flex items-center justify-center border-2 border-white shadow-xl shadow-black/80 ring-4 ring-[#FF5A36]/40">
-                <span className="text-[12px] font-mono font-bold tracking-tighter">↔</span>
+                <span className="text-xs font-mono font-bold">↔</span>
               </div>
             </div>
 
-            {/* Dynamic Comparison Badges */}
-            <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-mono font-bold text-stone-300">
-              TRƯỚC • NGÀY 0
+            {/* Dynamic Comparison Badges (Sentence case, clean typography) */}
+            <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-xs font-medium text-stone-200">
+              Trước · Ngày 0
             </div>
-            <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-[#FF5A36]/90 backdrop-blur-md border border-white/20 text-[10px] font-mono font-bold text-white shadow-md">
-              SAU • {compareTargetTitle.toUpperCase()}
+            <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-[#FF5A36]/90 backdrop-blur-md border border-white/20 text-xs font-bold text-white shadow-md">
+              Sau · {compareTargetTitle}
             </div>
           </div>
         )}
@@ -448,16 +449,16 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                   x={day0HeadX + 10}
                   y="80"
                   fill="#A8A29E"
-                  fontSize="9"
-                  fontFamily="monospace"
-                  opacity="0.8"
+                  fontSize="10"
+                  fontFamily="system-ui, sans-serif"
+                  opacity="0.85"
                 >
-                  Day 0 (18° lệch)
+                  Day 0 (lệch 18°)
                 </text>
               </g>
             )}
 
-            {/* B. Active Current Milestone Skeleton (Adaptive with progress) */}
+            {/* B. Active Current Milestone Skeleton with Step 6 Matching Hotspot Colors */}
             <g className="transition-all duration-300">
               {/* Active Spine Dynamic Curve */}
               <path
@@ -471,50 +472,50 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 filter="url(#skeletonGlow)"
               />
 
-              {/* Cervical Node (Cổ & Vai) */}
+              {/* Cervical Node (Cổ & Vai) -> Cam #FF5A36 */}
               <circle
                 cx={currentHeadX}
                 cy="76"
                 r="7"
-                fill={activeHotspot === "cervical" ? "#FFFFFF" : statusColor}
-                stroke="#FFFFFF"
-                strokeWidth={activeHotspot === "cervical" ? "2.5" : "1.2"}
+                fill={activeHotspot === "cervical" ? "#FFFFFF" : SEMANTIC_COLORS.hotspots.cervical.color}
+                stroke={SEMANTIC_COLORS.hotspots.cervical.color}
+                strokeWidth={activeHotspot === "cervical" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("cervical")}
               />
 
-              {/* Thoracic Node (Lưng Trên) */}
+              {/* Thoracic Node (Lưng Trên) -> Xanh dương #38BDF8 */}
               <circle
                 cx={currentThoracicX}
                 cy="175"
                 r="6.5"
-                fill={activeHotspot === "thoracic" ? "#FFFFFF" : statusColor}
-                stroke="#FFFFFF"
-                strokeWidth={activeHotspot === "thoracic" ? "2.5" : "1.2"}
+                fill={activeHotspot === "thoracic" ? "#FFFFFF" : SEMANTIC_COLORS.hotspots.thoracic.color}
+                stroke={SEMANTIC_COLORS.hotspots.thoracic.color}
+                strokeWidth={activeHotspot === "thoracic" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("thoracic")}
               />
 
-              {/* Core & Lumbar Node (Cơ Bụng Sâu) */}
+              {/* Core & Lumbar Node (Cơ Bụng Sâu) -> Xanh lá #10B981 */}
               <circle
                 cx={currentCoreX}
                 cy="255"
                 r="6.5"
-                fill={activeHotspot === "core" ? "#FFFFFF" : statusColor}
-                stroke="#FFFFFF"
-                strokeWidth={activeHotspot === "core" ? "2.5" : "1.2"}
+                fill={activeHotspot === "core" ? "#FFFFFF" : SEMANTIC_COLORS.hotspots.core.color}
+                stroke={SEMANTIC_COLORS.hotspots.core.color}
+                strokeWidth={activeHotspot === "core" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("core")}
               />
 
-              {/* Pelvis Node (Khung Chậu) */}
+              {/* Pelvis Node (Khung Chậu) -> Vàng #F59E0B */}
               <circle
                 cx={currentPelvisX}
                 cy="340"
                 r="7"
-                fill={activeHotspot === "pelvis" ? "#FFFFFF" : statusColor}
-                stroke="#FFFFFF"
-                strokeWidth={activeHotspot === "pelvis" ? "2.5" : "1.2"}
+                fill={activeHotspot === "pelvis" ? "#FFFFFF" : SEMANTIC_COLORS.hotspots.pelvis.color}
+                stroke={SEMANTIC_COLORS.hotspots.pelvis.color}
+                strokeWidth={activeHotspot === "pelvis" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("pelvis")}
               />
@@ -545,18 +546,18 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         )}
 
         {/* Floating Bottom Status Pill */}
-        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 text-[11px] font-mono text-stone-300 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
+        <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 text-xs font-sans text-stone-200 bg-black/75 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
           <div className="flex items-center gap-2 truncate">
             <span
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: statusColor }}
             />
-            <span className="font-bold truncate">{statusLabel}</span>
+            <span className="font-medium truncate">{statusLabel}</span>
           </div>
 
-          <span className="text-[10px] text-stone-400 font-bold shrink-0">
+          <span className="text-xs text-stone-300 font-bold shrink-0">
             {activeMilestoneDay === 0
-              ? "Khởi Điểm"
+              ? "Khởi điểm"
               : activeMilestoneDay === 7
               ? "Tuần 1"
               : activeMilestoneDay === 14
