@@ -260,6 +260,9 @@ export default function PredictionPage() {
               progress={progress}
               currentDay={currentDay}
               activeHotspot={activeHotspot}
+              userWeight={userStats?.weight}
+              targetWeight={userStats?.targetWeight}
+              onJumpToTarget={() => setCurrentDay(28)}
             />
 
             {/* 3. 4-Week Physiological Adaptation Chapters */}

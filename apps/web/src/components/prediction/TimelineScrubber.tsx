@@ -1,61 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
 
 export interface TimelineMilestone {
   day: number;
-  weekLabel: string;
+  label: string;
   stageTitle: string;
-  focusDesc: string;
-  weightDelta: string;
-  waistDelta: string;
-  postureScore: number;
-  postureState: string;
+  percent: number; // 0, 25, 50, 100
 }
 
 export const MILESTONES_4_STEPS: TimelineMilestone[] = [
-  {
-    day: 0,
-    weekLabel: "Ngày 0",
-    stageTitle: "Khởi điểm",
-    focusDesc: "Xác định trục cơ thể, nhận biết thói quen gù lưng & võng eo",
-    weightDelta: "0.0 kg",
-    waistDelta: "0.0 cm",
-    postureScore: 55,
-    postureState: "Cần cải thiện (Đổ thân trước)",
-  },
-  {
-    day: 7,
-    weekLabel: "Tuần 1",
-    stageTitle: "Kích hoạt",
-    focusDesc: "Đánh thức cơ hoành, giảm tích nước & giảm 40% mỏi gáy",
-    weightDelta: "-0.6 kg",
-    waistDelta: "-1.0 cm",
-    postureScore: 66,
-    postureState: "Đang thích nghi (Cổ vươn nhẹ)",
-  },
-  {
-    day: 14,
-    weekLabel: "Tuần 2",
-    stageTitle: "Tái căn chỉnh",
-    focusDesc: "Kích hoạt cơ dựng sống, siết cơ bụng sâu & phẳng bụng dưới",
-    weightDelta: "-1.4 kg",
-    waistDelta: "-1.8 cm",
-    postureScore: 76,
-    postureState: "Tiến triển tốt (Lưng thẳng tự nhiên)",
-  },
-  {
-    day: 28,
-    weekLabel: "Tuần 4",
-    stageTitle: "Vóc dáng mới",
-    focusDesc: "Trục cơ thể cân bằng vững vàng, vai mở mềm mại & eo thon gọn",
-    weightDelta: "-2.1 kg",
-    waistDelta: "-3.0 cm",
-    postureScore: 88,
-    postureState: "Cân bằng vững vàng (Chuẩn dáng)",
-  },
+  { day: 0, label: "Ngày 0", stageTitle: "Khởi điểm", percent: 0 },
+  { day: 7, label: "Tuần 1", stageTitle: "Kích hoạt", percent: 25 },
+  { day: 14, label: "Tuần 2", stageTitle: "Tái căn chỉnh", percent: 50 },
+  { day: 28, label: "Tuần 4", stageTitle: "Vóc dáng mới", percent: 100 },
 ];
+
+const STEP_DAYS = [0, 7, 14, 28];
 
 interface TimelineScrubberProps {
   currentDay: number; // 0, 7, 14, 28
@@ -72,159 +34,228 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
   onViewModeChange,
   archetype = "female_pilates",
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const trackRef = useRef<HTMLDivElement | null>(null);
 
-  // Find active step index (0, 1, 2, 3)
-  const stepDays = [0, 7, 14, 28];
-  const activeIndex = stepDays.reduce((closestIdx, day, idx) => {
-    return Math.abs(day - currentDay) < Math.abs(stepDays[closestIdx] - currentDay) ? idx : closestIdx;
+  // Find nearest step index (0, 1, 2, 3)
+  const activeIndex = STEP_DAYS.reduce((closestIdx, day, idx) => {
+    return Math.abs(day - currentDay) < Math.abs(STEP_DAYS[closestIdx] - currentDay) ? idx : closestIdx;
   }, 0);
 
-  const activeMilestone = MILESTONES_4_STEPS[activeIndex] || MILESTONES_4_STEPS[0];
+  // Check user preference for reduced motion
+  const isReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Auto-play cycling through the 4 milestone weeks
+  // Auto-play cycling through the 4 milestone weeks every ~1.2s
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
-      onDayChange(stepDays[(activeIndex + 1) % stepDays.length]);
-      if (activeIndex === stepDays.length - 1) {
+      onDayChange(STEP_DAYS[(activeIndex + 1) % STEP_DAYS.length]);
+      if (activeIndex === STEP_DAYS.length - 1) {
         setIsPlaying(false);
       }
-    }, 2400);
+    }, isReducedMotion ? 2000 : 1200);
 
     return () => clearInterval(interval);
-  }, [isPlaying, activeIndex, onDayChange]);
+  }, [isPlaying, activeIndex, onDayChange, isReducedMotion]);
 
-  const handleSliderStep = (stepIdx: number) => {
-    const targetDay = stepDays[stepIdx] ?? 0;
-    onDayChange(targetDay);
+  // Snap to nearest milestone function
+  const snapToNearest = useCallback((rawDay: number) => {
+    const nearest = STEP_DAYS.reduce((prev, curr) => {
+      return Math.abs(curr - rawDay) < Math.abs(prev - rawDay) ? curr : prev;
+    }, 0);
+    onDayChange(nearest);
+  }, [onDayChange]);
+
+  // Keyboard navigation (ArrowLeft, ArrowRight, Space for Play)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prevIdx = Math.max(0, activeIndex - 1);
+      onDayChange(STEP_DAYS[prevIdx]);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const nextIdx = Math.min(STEP_DAYS.length - 1, activeIndex + 1);
+      onDayChange(STEP_DAYS[nextIdx]);
+    } else if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      setIsPlaying((prev) => !prev);
+    }
   };
 
+  // Convert current day (0 -> 28) into track percentage (0% -> 100%)
+  // Day 0 = 0%, Day 7 = 25%, Day 14 = 50%, Day 28 = 100%
+  const getProgressPercent = (day: number): number => {
+    if (day <= 0) return 0;
+    if (day <= 7) return (day / 7) * 25;
+    if (day <= 14) return 25 + ((day - 7) / 7) * 25;
+    return 50 + ((day - 14) / 14) * 50;
+  };
+
+  const progressPercent = Math.min(100, Math.max(0, getProgressPercent(currentDay)));
+
+  // Aria text in Vietnamese
+  const activeMilestone = MILESTONES_4_STEPS[activeIndex] || MILESTONES_4_STEPS[0];
+  const ariaValueText = `${activeMilestone.label}: ${activeMilestone.stageTitle} (Ngày ${currentDay} trên 28)`;
+
   return (
-    <div className="w-full bg-[#11100F] border border-stone-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl select-none shadow-2xl">
-      {/* Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="w-full bg-[#11100F] border border-stone-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl select-none shadow-2xl focus:outline-none focus:border-[#FF5A36]/60 transition-colors"
+      role="region"
+      aria-label="Thanh điều khiển dòng thời gian chuyển hóa 28 ngày"
+    >
+      {/* Top Meta Bar: View Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
           <span className="text-[11px] font-mono tracking-widest text-[#FF5A36] uppercase font-bold">
-            Tiến Trình Chuyển Hóa 4 Tuần
+            DÒNG THỜI GIAN 4 TUẦN
           </span>
-          <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
-            Kéo để xem thay đổi qua 4 tuần
+          <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+            Xem Sự Biến Đổi Vóc Dáng Theo Từng Tuần
           </h3>
         </div>
 
-        {/* View Angle & Play Controls */}
-        <div className="flex items-center gap-2.5">
-          {/* Angle buttons */}
-          <div className="inline-flex rounded-xl bg-stone-900 p-1 border border-stone-800 text-xs font-mono">
-            <button
-              onClick={() => onViewModeChange("profile")}
-              className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                viewMode === "profile"
-                  ? "bg-[#FF5A36] text-white shadow-sm"
-                  : "text-stone-400 hover:text-white"
-              }`}
-            >
-              Góc Nghiêng (Cột Sống)
-            </button>
-            <button
-              onClick={() => onViewModeChange("front")}
-              className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                viewMode === "front"
-                  ? "bg-[#FF5A36] text-white shadow-sm"
-                  : "text-stone-400 hover:text-white"
-              }`}
-            >
-              Chính Diện (Vòng Eo)
-            </button>
-          </div>
-
-          {/* Play/Pause Cycle Button */}
+        {/* Perspective Angle Switcher */}
+        <div className="inline-flex rounded-xl bg-stone-900 p-1 border border-stone-800 text-xs font-mono self-start sm:self-auto">
           <button
-            onClick={() => {
-              if (currentDay >= 28 && !isPlaying) {
-                onDayChange(0);
-              }
-              setIsPlaying(!isPlaying);
-            }}
-            className="p-2.5 rounded-xl bg-white text-stone-900 hover:bg-stone-200 transition-colors flex items-center justify-center shrink-0 active:scale-95 shadow-md"
-            title={isPlaying ? "Tạm dừng" : "Tự động tua qua các tuần"}
-            aria-label="Tự động chuyển tuần"
+            onClick={() => onViewModeChange("profile")}
+            className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
+              viewMode === "profile"
+                ? "bg-[#FF5A36] text-white shadow-sm"
+                : "text-stone-400 hover:text-white"
+            }`}
+            aria-label="Xem góc nghiêng kiểm tra cột sống"
           >
-            {isPlaying ? (
-              <Pause className="w-4 h-4 text-stone-900 fill-stone-900" />
-            ) : currentDay >= 28 ? (
-              <RotateCcw className="w-4 h-4 text-stone-900" />
-            ) : (
-              <Play className="w-4 h-4 text-stone-900 fill-stone-900 ml-0.5" />
-            )}
+            Góc Nghiêng (Cột Sống)
+          </button>
+          <button
+            onClick={() => onViewModeChange("front")}
+            className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
+              viewMode === "front"
+                ? "bg-[#FF5A36] text-white shadow-sm"
+                : "text-stone-400 hover:text-white"
+            }`}
+            aria-label="Xem góc chính diện kiểm tra vòng eo"
+          >
+            Chính Diện (Vòng Eo)
           </button>
         </div>
       </div>
 
-      {/* Snap-to-Step Interactive Track */}
-      <div className="relative py-4">
-        {/* Step Range Input */}
-        <input
-          type="range"
-          min="0"
-          max="3"
-          step="1"
-          value={activeIndex}
-          onChange={(e) => handleSliderStep(parseInt(e.target.value, 10))}
-          className="w-full h-3 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-[#FF5A36] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/40"
-        />
+      {/* Main Unified Scrubber: Play Button + Thick Track with Nodes & Labels */}
+      <div className="flex items-center gap-3.5 sm:gap-5 pt-2 pb-6">
+        {/* Play/Pause Cycle Button placed directly beside the slider track */}
+        <button
+          onClick={() => {
+            if (currentDay >= 28 && !isPlaying) {
+              onDayChange(0);
+            }
+            setIsPlaying(!isPlaying);
+          }}
+          className="w-12 h-12 rounded-2xl bg-[#FF5A36] hover:bg-[#e04825] text-white flex items-center justify-center shrink-0 shadow-lg shadow-[#FF5A36]/30 transition-all active:scale-95"
+          title={isPlaying ? "Tạm dừng" : "Tự động phát qua các tuần (1.2s/tuần)"}
+          aria-label={isPlaying ? "Tạm dừng phát" : "Tự động phát qua 4 mốc tuần"}
+        >
+          {isPlaying ? (
+            <Pause className="w-5 h-5 fill-white" />
+          ) : currentDay >= 28 ? (
+            <RotateCcw className="w-5 h-5" />
+          ) : (
+            <Play className="w-5 h-5 fill-white ml-0.5" />
+          )}
+        </button>
 
-        {/* 4 Discrete Milestone Nodes */}
-        <div className="grid grid-cols-4 gap-2 mt-4 text-center">
-          {MILESTONES_4_STEPS.map((m, idx) => {
-            const isSelected = activeIndex === idx;
-            const isPassed = activeIndex >= idx;
+        {/* Thick Interactive Track (>= 8px, orange progress, >= 28px thumb, snap to milestone) */}
+        <div className="flex-1 relative" ref={trackRef}>
+          {/* Base Track (Thick >= 10px) */}
+          <div className="relative h-2.5 sm:h-3 w-full bg-stone-800 rounded-full overflow-visible">
+            {/* Active Orange Passed Fill */}
+            <div
+              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#FF5A36] to-[#FF6B4A] rounded-full transition-all duration-150"
+              style={{ width: `${progressPercent}%` }}
+            />
 
-            return (
-              <button
-                key={m.day}
-                onClick={() => handleSliderStep(idx)}
-                className={`flex flex-col items-center group transition-all p-2 rounded-2xl ${
-                  isSelected
-                    ? "bg-stone-900/90 border border-stone-700 shadow-lg text-white"
-                    : "hover:bg-stone-900/40 text-stone-400"
-                }`}
-              >
-                {/* Milestone Node Dot */}
-                <div
-                  className={`w-3.5 h-3.5 rounded-full mb-2 transition-all duration-300 ${
-                    isSelected
-                      ? "bg-[#FF5A36] ring-4 ring-[#FF5A36]/30 scale-125"
-                      : isPassed
-                      ? "bg-emerald-400"
-                      : "bg-stone-700 group-hover:bg-stone-500"
-                  }`}
-                />
+            {/* 4 Discrete Milestone Nodes directly ON the track */}
+            {MILESTONES_4_STEPS.map((m, idx) => {
+              const isSelected = activeIndex === idx;
+              const isPassed = currentDay >= m.day;
 
-                <span className={`font-mono text-xs ${isSelected ? "text-white font-bold" : "text-stone-300"}`}>
-                  {m.weekLabel}
-                </span>
+              return (
+                <button
+                  key={m.day}
+                  type="button"
+                  onClick={() => onDayChange(m.day)}
+                  style={{ left: `${m.percent}%` }}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1 group focus:outline-none"
+                  aria-label={`Chuyển tới ${m.label}: ${m.stageTitle}`}
+                >
+                  {/* Milestone dot directly on track */}
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
+                      isSelected
+                        ? "bg-white border-[#FF5A36] scale-125 ring-4 ring-[#FF5A36]/40"
+                        : isPassed
+                        ? "bg-[#FF5A36] border-white/80"
+                        : "bg-stone-700 border-stone-900 group-hover:bg-stone-500"
+                    }`}
+                  />
+                </button>
+              );
+            })}
 
-                <span className={`text-[11px] font-medium mt-0.5 ${isSelected ? "text-[#FF5A36]" : "text-stone-400"}`}>
-                  {m.stageTitle}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+            {/* Hidden native accessible range input over the track */}
+            <input
+              type="range"
+              min="0"
+              max="28"
+              step="1"
+              value={currentDay}
+              onChange={(e) => onDayChange(Number(e.target.value))}
+              onMouseUp={() => snapToNearest(currentDay)}
+              onTouchEnd={() => snapToNearest(currentDay)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              aria-label="Thanh trượt dòng thời gian 28 ngày"
+              aria-valuemin={0}
+              aria-valuemax={28}
+              aria-valuenow={currentDay}
+              aria-valuetext={ariaValueText}
+            />
 
-        {/* Milestone Detail Banner */}
-        <div className="mt-4 p-3.5 rounded-2xl bg-stone-900/70 border border-stone-800/80 flex items-center justify-between text-xs font-mono">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-stone-300 font-bold">{activeMilestone.weekLabel} • {activeMilestone.stageTitle}</span>
+            {/* Large Thumb (>= 28px) with radiant halo ring */}
+            <div
+              style={{ left: `${progressPercent}%` }}
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FF5A36] border-2 border-white shadow-lg shadow-[#FF5A36]/50 ring-4 ring-[#FF5A36]/30 flex items-center justify-center pointer-events-none transition-all duration-150 z-10"
+            >
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            </div>
           </div>
-          <div className="flex items-center gap-3 text-stone-400">
-            <span>Cân nặng: <strong className="text-emerald-400">{activeMilestone.weightDelta}</strong></span>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">Vòng eo: <strong className="text-sky-400">{activeMilestone.waistDelta}</strong></span>
+
+          {/* 4 Milestone Labels directly aligned below the track */}
+          <div className="relative w-full mt-3 h-8">
+            {MILESTONES_4_STEPS.map((m, idx) => {
+              const isSelected = activeIndex === idx;
+
+              return (
+                <button
+                  key={m.day}
+                  type="button"
+                  onClick={() => onDayChange(m.day)}
+                  style={{ left: `${m.percent}%` }}
+                  className={`absolute -translate-x-1/2 flex flex-col items-center transition-colors text-center ${
+                    isSelected ? "text-white" : "text-stone-400 hover:text-stone-200"
+                  }`}
+                >
+                  <span className={`font-mono text-xs ${isSelected ? "font-bold text-[#FF5A36]" : "font-medium"}`}>
+                    {m.label}
+                  </span>
+                  <span className="text-[10px] font-mono text-stone-500 hidden sm:inline whitespace-nowrap">
+                    {m.stageTitle}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
