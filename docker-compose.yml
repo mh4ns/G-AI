@@ -1,43 +1,46 @@
-version: '3.8'
-
+# Local full stack: PostgreSQL + FastAPI + Next.js.
+# Secrets are read from a root .env file (copy .env.example). Compose refuses to start without them.
 services:
   backend:
     build:
       context: ./apps/backend
-      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/g_ai_db
-      - SECRET_KEY=dev-secret-key-super-secure
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-g_ai_db}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      AUTO_CREATE_SCHEMA: "false"
+      BACKEND_CORS_ORIGINS: http://localhost:3000
     depends_on:
-      - db
-    volumes:
-      - ./apps/backend:/app
+      db:
+        condition: service_healthy
 
   web:
     build:
       context: ./apps/web
-      dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://backend:8000
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      PREDICTION_SIGNING_SECRET: ${PREDICTION_SIGNING_SECRET:?set PREDICTION_SIGNING_SECRET in .env}
     depends_on:
       - backend
-    volumes:
-      - ./apps/web:/app
-      - /app/node_modules
 
   db:
     image: postgres:16-alpine
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: g_ai_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-g_ai_db}
+    # Not published to the host; only the backend talks to the database.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

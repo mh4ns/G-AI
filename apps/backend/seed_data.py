@@ -15,7 +15,10 @@ if sys.platform == "win32":
 
 from sqlalchemy import select
 from app.core.database import engine, Base, async_session_maker
+from app.core.config import settings
 from app.core.security import hash_password
+from app.api.v1.endpoints.today import local_today
+from app.services.plan_calculator import PlanInputs, calculate_plan
 from app.models import (
     User,
     QuizAssessment,
@@ -29,6 +32,8 @@ from app.models import (
 )
 
 async def init_and_seed():
+    if settings.ENVIRONMENT == "production":
+        raise SystemExit("Refusing to seed: this script DROPS ALL TABLES and creates a demo account.")
     print("[1/3] Creating all database tables asynchronously...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -146,6 +151,7 @@ async def init_and_seed():
         assessment = QuizAssessment(
             user_id=demo_user.id,
             session_id="session-demo-001",
+            age=32,
             age_group="30-39",
             gender="female",
             height_cm=162.0,
@@ -155,36 +161,39 @@ async def init_and_seed():
             focus_areas=["core", "glutes", "lower_back"],
             obstacles=["lack_time", "desk_job"],
             fitness_level="beginner",
+            activity_level="lightly_active",
         )
         session.add(assessment)
         await session.flush()
 
-        # BMR (Mifflin-St Jeor for female) = 10*62.5 + 6.25*162 - 5*32 - 161 = 625 + 1012.5 - 160 - 161 = 1316.5
-        # TDEE = 1316.5 * 1.375 = 1810 kcal. Deficit: -400 => 1410 kcal
+        metrics = calculate_plan(
+            PlanInputs(
+                is_male=False,
+                age=assessment.age,
+                height_cm=assessment.height_cm,
+                current_weight_kg=assessment.current_weight_kg,
+                target_weight_kg=assessment.target_weight_kg,
+                activity_level=assessment.activity_level,
+            )
+        )
         plan = PersonalizedPlan(
             assessment_id=assessment.id,
             user_id=demo_user.id,
-            bmi=23.8,
-            bmr=1316.5,
-            tdee=1810.0,
-            daily_calorie_target=1410,
-            daily_water_target_ml=2500,
-            estimated_duration_weeks=4,
-            projected_weight_milestones=[
-                {"week": 0, "date": "Tuần 0", "weight": 62.5, "note": "Khởi đầu lộ trình"},
-                {"week": 1, "date": "Tuần 1", "weight": 61.2, "note": "Thanh lọc & giảm tích nước"},
-                {"week": 2, "date": "Tuần 2", "weight": 59.8, "note": "Siết eo & định hình cơ lõi"},
-                {"week": 3, "date": "Tuần 3", "weight": 58.0, "note": "Tăng cường sức bền Pilates"},
-                {"week": 4, "date": "Tuần 4", "weight": 56.5, "note": "Vóc dáng thon gọn rõ rệt"},
-            ],
-            focus_routine="Pilates Thảm Săn Chắc Vùng Lõi & Cải Thiện Dáng Đứng",
-            recommended_diet_type="Thực Đơn Cân Bằng Đủ Đạm & Giàu Chất Xơ Tự Nhiên",
+            bmi=metrics.bmi,
+            bmr=metrics.bmr,
+            tdee=metrics.tdee,
+            daily_calorie_target=metrics.daily_calorie_target,
+            daily_water_target_ml=metrics.daily_water_target_ml,
+            estimated_duration_weeks=metrics.estimated_weeks,
+            projected_weight_milestones=metrics.projected_milestones,
+            focus_routine="Pilates Core & Posture",
+            recommended_diet_type="Balanced, protein-forward whole foods",
             is_active=True,
         )
         session.add(plan)
 
         # 5. Today's Metric for Demo User
-        today = datetime.date.today()
+        today = local_today()
         daily_metric = DailyMetric(
             user_id=demo_user.id,
             date=today,
@@ -331,22 +340,22 @@ async def init_and_seed():
             customer_name="Ngọc Hân",
             total_amount=160.0,
             shipping_address="123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh",
-            payment_status="paid",
-            order_status="processing",
+            payment_status="pending",
+            order_status="awaiting_payment",
             items=[
                 {
-                    "productId": "ga-sculpt-01",
+                    "product_id": "ga-sculpt-01",
                     "name": "Sculpt-Fit Compression Bodysuit",
                     "size": "S",
-                    "price": 88.0,
+                    "unit_price": 88.0,
                     "quantity": 1,
                     "image": "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80",
                 },
                 {
-                    "productId": "ga-sculpt-02",
+                    "product_id": "ga-sculpt-02",
                     "name": "Ribbed High-Waist Movement Legging",
                     "size": "M",
-                    "price": 72.0,
+                    "unit_price": 72.0,
                     "quantity": 1,
                     "image": "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?auto=format&fit=crop&w=800&q=80",
                 }

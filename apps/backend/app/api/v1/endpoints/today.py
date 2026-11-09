@@ -1,141 +1,109 @@
 import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from zoneinfo import ZoneInfo
 
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import get_current_user
+from app.core.config import settings
 from app.core.database import get_db
-from app.models import DailyMetric, User, PersonalizedPlan
+from app.models import DailyMetric, User
 from app.schemas.daily_metric import (
+    CaloriesUpdateRequest,
     DailyMetricResponse,
-    WaterUpdateRequest,
     FastingUpdateRequest,
-    HabitToggleRequest
+    HabitToggleRequest,
+    WaterUpdateRequest,
 )
 
 router = APIRouter(prefix="/today", tags=["Today Dashboard"])
 
-@router.get("/{user_id}", response_model=DailyMetricResponse)
-async def get_today_metric(
-    user_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Retrieves or lazily initializes today's biometric and habit tracking metric for the specified user.
-    """
-    today = datetime.date.today()
+MAX_HABITS_PER_DAY = 30
+
+
+def local_today() -> datetime.date:
+    return datetime.datetime.now(ZoneInfo(settings.DEFAULT_TIMEZONE)).date()
+
+
+async def get_or_create_today(db: AsyncSession, user_id: int) -> DailyMetric:
+    today = local_today()
     stmt = select(DailyMetric).where(DailyMetric.user_id == user_id, DailyMetric.date == today)
-    result = await db.execute(stmt)
-    metric = result.scalar_one_or_none()
+    metric = await db.scalar(stmt)
+    if metric is not None:
+        return metric
 
-    if not metric:
-        # Check if user exists
-        user = await db.get(User, user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Initialize fresh metric for today
-        metric = DailyMetric(
-            user_id=user_id,
-            date=today,
-            calories_consumed=0,
-            calories_burned=0,
-            water_intake_ml=0,
-            fasting_minutes=0,
-            fasting_state="idle",
-            habits_completed=[],
-        )
-        db.add(metric)
-        await db.commit()
-        await db.refresh(metric)
-
+    metric = DailyMetric(
+        user_id=user_id,
+        date=today,
+        calories_consumed=0,
+        calories_burned=0,
+        water_intake_ml=0,
+        fasting_minutes=0,
+        fasting_state="idle",
+        habits_completed=[],
+    )
+    try:
+        # Savepoint: losing the race for the unique (user_id, date) row must not
+        # discard other pending changes in the caller's transaction.
+        async with db.begin_nested():
+            db.add(metric)
+    except IntegrityError:
+        metric = await db.scalar(stmt)
     return metric
+
+
+async def _save(db: AsyncSession, metric: DailyMetric) -> DailyMetric:
+    await db.commit()
+    await db.refresh(metric)
+    return metric
+
+
+@router.get("", response_model=DailyMetricResponse)
+async def get_today(db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+    """Today's metrics for the signed-in user, created on first access."""
+    return await _save(db, await get_or_create_today(db, user.id))
+
 
 @router.post("/water", response_model=DailyMetricResponse)
 async def update_water(
-    payload: WaterUpdateRequest,
-    db: AsyncSession = Depends(get_db)
+    payload: WaterUpdateRequest, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
 ):
-    """
-    Increments or adjusts today's water intake in ml (+250ml per cup).
-    """
-    today = datetime.date.today()
-    stmt = select(DailyMetric).where(DailyMetric.user_id == payload.user_id, DailyMetric.date == today)
-    result = await db.execute(stmt)
-    metric = result.scalar_one_or_none()
+    metric = await get_or_create_today(db, user.id)
+    metric.water_intake_ml = min(20_000, max(0, (metric.water_intake_ml or 0) + payload.amount_ml))
+    return await _save(db, metric)
 
-    if not metric:
-        metric = DailyMetric(
-            user_id=payload.user_id,
-            date=today,
-            water_intake_ml=max(0, payload.amount_ml),
-        )
-        db.add(metric)
-    else:
-        metric.water_intake_ml = max(0, metric.water_intake_ml + payload.amount_ml)
 
-    await db.commit()
-    await db.refresh(metric)
-    return metric
+@router.post("/calories", response_model=DailyMetricResponse)
+async def update_calories(
+    payload: CaloriesUpdateRequest, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
+):
+    metric = await get_or_create_today(db, user.id)
+    metric.calories_consumed = min(20_000, max(0, (metric.calories_consumed or 0) + payload.amount_kcal))
+    return await _save(db, metric)
+
 
 @router.post("/fasting", response_model=DailyMetricResponse)
 async def update_fasting(
-    payload: FastingUpdateRequest,
-    db: AsyncSession = Depends(get_db)
+    payload: FastingUpdateRequest, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
 ):
-    """
-    Updates 16:8 intermittent fasting state and duration in minutes.
-    """
-    today = datetime.date.today()
-    stmt = select(DailyMetric).where(DailyMetric.user_id == payload.user_id, DailyMetric.date == today)
-    result = await db.execute(stmt)
-    metric = result.scalar_one_or_none()
+    metric = await get_or_create_today(db, user.id)
+    metric.fasting_state = payload.fasting_state
+    if payload.fasting_minutes is not None:
+        metric.fasting_minutes = payload.fasting_minutes
+    return await _save(db, metric)
 
-    if not metric:
-        metric = DailyMetric(
-            user_id=payload.user_id,
-            date=today,
-            fasting_state=payload.fasting_state,
-            fasting_minutes=payload.fasting_minutes or 0,
-        )
-        db.add(metric)
-    else:
-        metric.fasting_state = payload.fasting_state
-        if payload.fasting_minutes is not None:
-            metric.fasting_minutes = payload.fasting_minutes
-
-    await db.commit()
-    await db.refresh(metric)
-    return metric
 
 @router.post("/habits/toggle", response_model=DailyMetricResponse)
 async def toggle_habit(
-    payload: HabitToggleRequest,
-    db: AsyncSession = Depends(get_db)
+    payload: HabitToggleRequest, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)
 ):
-    """
-    Toggles completion of a daily wellness habit.
-    """
-    today = datetime.date.today()
-    stmt = select(DailyMetric).where(DailyMetric.user_id == payload.user_id, DailyMetric.date == today)
-    result = await db.execute(stmt)
-    metric = result.scalar_one_or_none()
-
-    if not metric:
-        metric = DailyMetric(
-            user_id=payload.user_id,
-            date=today,
-            habits_completed=[payload.habit_key],
-        )
-        db.add(metric)
-    else:
-        current_habits = list(metric.habits_completed or [])
-        if payload.habit_key in current_habits:
-            current_habits.remove(payload.habit_key)
-        else:
-            current_habits.append(payload.habit_key)
-        metric.habits_completed = current_habits
-
-    await db.commit()
-    await db.refresh(metric)
-    return metric
+    metric = await get_or_create_today(db, user.id)
+    habits = list(metric.habits_completed or [])
+    if payload.habit_key in habits:
+        habits.remove(payload.habit_key)
+    elif len(habits) < MAX_HABITS_PER_DAY:
+        habits.append(payload.habit_key)
+    metric.habits_completed = habits
+    return await _save(db, metric)
