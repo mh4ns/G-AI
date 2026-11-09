@@ -91,8 +91,19 @@ export async function POST(req: NextRequest) {
     const planSummary = body.planSummary || "Standard 4-week kinetic adaptation";
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
-    const imageModel = process.env.IMAGE_MODEL || "gemini-2.5-flash";
-    const visionModel = process.env.VISION_MODEL || "gemini-1.5-flash";
+    if (!apiKey || apiKey === "your_gemini_api_key_here") {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "MISSING_API_KEY",
+          error: "Chưa nhận diện được GEMINI_API_KEY. Vui lòng kiểm tra file apps/web/.env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev) để hệ thống nhận key.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const imageModel = process.env.IMAGE_MODEL || "gemini-2.5-flash-image";
+    const visionModel = process.env.VISION_MODEL || "gemini-3-flash-preview";
 
     // Compute rule-based prompts
     const milestoneSpecs = calculateMilestoneDeltas(weight, targetWeight, isMale);

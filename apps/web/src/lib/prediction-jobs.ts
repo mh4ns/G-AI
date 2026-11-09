@@ -222,7 +222,10 @@ export async function assessPhotoQualityAndGender(
   try {
     const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
       body: JSON.stringify({
         contents: [
           {
@@ -352,7 +355,10 @@ export async function callGeminiImageToImage(
 
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
         signal: controller.signal,
         body: JSON.stringify({
           contents: [
@@ -380,15 +386,47 @@ export async function callGeminiImageToImage(
 
       if (!res.ok) {
         const errText = await res.text().catch(() => "");
-        // Check for content safety blocks
-        if (res.status === 400 && errText.includes("SAFETY")) {
+        let errMsg = errText;
+        try {
+          const parsed = JSON.parse(errText);
+          if (parsed?.error?.message) errMsg = parsed.error.message;
+        } catch {
+          // ignore
+        }
+
+        // 1. Quota exceeded on Free Tier
+        if (res.status === 429 || errMsg.includes("Quota exceeded") || errMsg.includes("free_tier")) {
+          const quotaErr: any = new Error(
+            "Tài khoản Google Gemini của bạn đang ở gói Miễn phí (Free Tier), Google quy định hạn mức tạo sinh ảnh là 0 lượt/ngày. Vui lòng kích hoạt thanh toán (Pay-as-you-go) tại aistudio.google.com/app/plan_information."
+          );
+          quotaErr.isQuotaFilter = true;
+          throw quotaErr;
+        }
+
+        // 2. Unregistered caller / Missing API key
+        if (res.status === 403 && (errMsg.includes("unregistered callers") || errMsg.includes("API Key"))) {
+          throw new Error(
+            "Chưa nhận diện được Gemini API Key (Lỗi 403 unregistered caller). Hãy kiểm tra GEMINI_API_KEY trong .env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev)."
+          );
+        }
+
+        // 3. Model not found or deprecated
+        if (res.status === 404) {
+          throw new Error(
+            `Mô hình ${modelName} không tồn tại hoặc đã ngừng hỗ trợ. Vui lòng kiểm tra biến IMAGE_MODEL trong file .env.local.`
+          );
+        }
+
+        // 4. Content Safety Filter
+        if (res.status === 400 && (errText.includes("SAFETY") || errMsg.includes("safety"))) {
           const safetyErr: any = new Error(
             "Ảnh không đáp ứng tiêu chuẩn an toàn nội dung. Vui lòng chọn ảnh trang phục thể thao kín đáo hơn."
           );
           safetyErr.isSafetyFilter = true;
           throw safetyErr;
         }
-        throw new Error(`Gemini API error [${res.status}]: ${errText.slice(0, 200)}`);
+
+        throw new Error(`Gemini API error [${res.status}]: ${errMsg.slice(0, 200)}`);
       }
 
       const data = await res.json();
