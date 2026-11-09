@@ -4,6 +4,7 @@ import { buildPromptFor, providerModelLabel, resolveImageProvider } from "../ima
 import { calculateMilestoneDeltas } from "../prediction-jobs";
 
 const KEYS = [
+  "HF_TOKEN",
   "IMAGE_PROVIDER",
   "GEMINI_API_KEY",
   "GOOGLE_API_KEY",
@@ -177,4 +178,47 @@ test("Gateway errors map to user-safe messages", async () => {
     );
   }
   assert.strictEqual(extractChatImage({ choices: [{ message: { images: [{ image_url: { url: "https://x" } }] } }] }), null);
+});
+
+// ---- Hugging Face Inference Providers -----------------------------------------
+
+test("Hugging Face is chosen with an hf_ token, after Gemini and AI Gateway keys", () => {
+  withEnv({ HF_TOKEN: "hf_abc" } as Record<string, string>, () => {
+    const p = resolveImageProvider()!;
+    assert.strictEqual(p.name, "huggingface");
+    assert.strictEqual(p.imageModel, "black-forest-labs/FLUX.1-Kontext-dev");
+  });
+  withEnv({ HF_TOKEN: "not-a-token" } as Record<string, string>, () => assert.strictEqual(resolveImageProvider(), null));
+  withEnv({ HF_TOKEN: "hf_abc", GEMINI_API_KEY: "g" } as Record<string, string>, () =>
+    assert.strictEqual(resolveImageProvider()?.name, "gemini")
+  );
+});
+
+test("Hugging Face image-to-image sends the photo and returns a data URL", async () => {
+  const server = http.createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => {
+      assert.strictEqual(req.headers.authorization, "Bearer hf_test");
+      const body = Buffer.concat(chunks).toString();
+      assert.ok(body.includes(Buffer.from("day0-jpeg-bytes").toString("base64")) || body.includes("day0-jpeg-bytes"));
+      assert.ok(body.includes("slimmer"), "prompt is forwarded");
+      res.writeHead(200, { "content-type": "image/jpeg" });
+      res.end(Buffer.from("EDITED-JPEG"));
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  process.env.HF_ENDPOINT_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    const url = await generateMilestoneImage(
+      { name: "huggingface", token: "hf_test", imageModel: "some/model", inferenceProvider: "hf-inference" },
+      PHOTO,
+      "image/jpeg",
+      "make the waist slimmer"
+    );
+    assert.strictEqual(url, `data:image/jpeg;base64,${Buffer.from("EDITED-JPEG").toString("base64")}`);
+  } finally {
+    delete process.env.HF_ENDPOINT_URL;
+    server.close();
+  }
 });

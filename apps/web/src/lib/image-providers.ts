@@ -1,3 +1,4 @@
+import { InferenceClient } from "@huggingface/inference";
 import {
   GenerationError,
   MilestoneSpec,
@@ -15,13 +16,16 @@ import {
  *   2. ai-gateway  AI_GATEWAY_API_KEY, or IMAGE_PROVIDER=ai-gateway on Vercel (OIDC, no key needed).
  *                  Billed to Vercel AI Gateway credits. Model via AI_GATEWAY_IMAGE_MODEL, e.g.
  *                  meta/muse-image-1.0 (Muse Image) or google/gemini-3.1-flash-image-preview.
- *   3. cloudflare  CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_AI_API_TOKEN  (Workers AI free daily allowance)
- *   4. none        no provider: the app shows illustrative preset images instead
+ *   3. huggingface HF_TOKEN  (Hugging Face Inference Providers; free accounts get small monthly credits)
+ *                  Model via HF_IMAGE_MODEL (default black-forest-labs/FLUX.1-Kontext-dev).
+ *   4. cloudflare  CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_AI_API_TOKEN  (Workers AI free daily allowance)
+ *   5. none        no provider: the app shows illustrative preset images instead
  */
 
 export type ImageProvider =
   | { name: "gemini"; apiKey: string; imageModel: string; visionModel: string }
   | { name: "ai-gateway"; apiKey: string | null; imageModel: string }
+  | { name: "huggingface"; token: string; imageModel: string; inferenceProvider: string }
   | { name: "cloudflare"; accountId: string; apiToken: string; imageModel: string };
 
 const PLACEHOLDER_KEYS = new Set(["", "your_gemini_api_key_here"]);
@@ -65,6 +69,18 @@ export function withRequestCredentials(provider: ImageProvider, headers: Headers
   return { ...provider, apiKey: oidc };
 }
 
+function huggingFaceFromEnv(): ImageProvider | null {
+  const token = (process.env.HF_TOKEN || "").trim();
+  if (!token.startsWith("hf_")) return null;
+  return {
+    name: "huggingface",
+    token,
+    imageModel: process.env.HF_IMAGE_MODEL || "black-forest-labs/FLUX.1-Kontext-dev",
+    // "auto" = first provider in the account's Inference Providers preference order.
+    inferenceProvider: process.env.HF_INFERENCE_PROVIDER || "auto",
+  };
+}
+
 function cloudflareFromEnv(): ImageProvider | null {
   const accountId = (process.env.CLOUDFLARE_ACCOUNT_ID || "").trim();
   const apiToken = (process.env.CLOUDFLARE_AI_API_TOKEN || "").trim();
@@ -85,10 +101,12 @@ export function resolveImageProvider(): ImageProvider | null {
       return geminiFromEnv();
     case "ai-gateway":
       return aiGatewayFromEnv(true);
+    case "huggingface":
+      return huggingFaceFromEnv();
     case "cloudflare":
       return cloudflareFromEnv();
     default:
-      return geminiFromEnv() ?? aiGatewayFromEnv(false) ?? cloudflareFromEnv();
+      return geminiFromEnv() ?? aiGatewayFromEnv(false) ?? huggingFaceFromEnv() ?? cloudflareFromEnv();
   }
 }
 
@@ -138,6 +156,9 @@ export async function generateMilestoneImage(
   }
   if (provider.name === "ai-gateway") {
     return callAiGatewayImageEdit(provider, rawBase64, mimeType, prompt);
+  }
+  if (provider.name === "huggingface") {
+    return callHuggingFaceImageToImage(provider, rawBase64, mimeType, prompt);
   }
   return callCloudflareImg2Img(provider, rawBase64, prompt);
 }
@@ -313,4 +334,52 @@ export function extractImagesEndpointImage(json: unknown): string | null {
   const first = (json as ImagesEndpointResponse)?.data?.[0];
   if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
   return null;
+}
+
+/**
+ * Hugging Face Inference Providers through the official SDK, which routes the
+ * request to a serving partner (fal, Replicate, ...) and returns the edited image.
+ */
+async function callHuggingFaceImageToImage(
+  provider: Extract<ImageProvider, { name: "huggingface" }>,
+  rawBase64: string,
+  mimeType: string,
+  prompt: string
+): Promise<string> {
+  const client = new InferenceClient(provider.token);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120_000);
+  try {
+    const out = await client.imageToImage(
+      {
+        model: provider.imageModel,
+        inputs: new Blob([Buffer.from(rawBase64, "base64")], { type: mimeType }),
+        parameters: { prompt },
+        // HF_ENDPOINT_URL is a test-only override; production lets the SDK route
+        // through Hugging Face to the chosen provider (the SDK rejects both at once).
+        ...(process.env.HF_ENDPOINT_URL
+          ? { endpointUrl: process.env.HF_ENDPOINT_URL }
+          : { provider: provider.inferenceProvider as never }),
+      },
+      { signal: controller.signal }
+    );
+    const type = out.type && out.type.startsWith("image/") ? out.type : "image/png";
+    return `data:${type};base64,${Buffer.from(await out.arrayBuffer()).toString("base64")}`;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const status = (err as { httpResponse?: { status?: number } })?.httpResponse?.status;
+    if (status === 401 || status === 403 || /unauthori|forbidden|gated|accept the (license|conditions)/i.test(message)) {
+      throw new GenerationError(`Hugging Face auth/gating error: ${message.slice(0, 300)}`, "CONFIG");
+    }
+    if (status === 402 || status === 429 || /credit|quota|payment|exceeded/i.test(message)) {
+      throw new GenerationError(
+        `Hugging Face credits exhausted: ${message.slice(0, 300)}`,
+        "QUOTA",
+        "Hạn mức tạo ảnh miễn phí tháng này đã hết. Đang hiển thị ảnh minh họa."
+      );
+    }
+    throw new GenerationError(`Hugging Face error (${provider.imageModel}): ${message.slice(0, 300)}`, "UPSTREAM");
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

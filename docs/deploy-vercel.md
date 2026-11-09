@@ -41,7 +41,8 @@ redeploy after changing them.
 | `PREDICTION_SIGNING_SECRET` | yes | Random string, at least 32 characters: `python -c "import secrets; print(secrets.token_urlsafe(48))"` |
 | `GEMINI_API_KEY` | optional | Best-quality predictions (needs paid image quota). Key from <https://aistudio.google.com/app/apikey> |
 | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN` | optional | Free fallback via Workers AI when there is no Gemini key. Token permission: *Workers AI: Read* |
-| `IMAGE_PROVIDER` | no | Force `gemini`, `ai-gateway`, `cloudflare` or `none`. `ai-gateway` on Vercel needs no key (OIDC) and bills AI Gateway credits |
+| `HF_TOKEN`, `HF_IMAGE_MODEL` | optional | Hugging Face Inference Providers (free account, no card; ~$0.10 credits/month). Default model `black-forest-labs/FLUX.1-Kontext-dev` |
+| `IMAGE_PROVIDER` | no | Force `gemini`, `ai-gateway`, `huggingface`, `cloudflare` or `none`. AI Gateway also requires a credit card on the Vercel team. `ai-gateway` on Vercel needs no key (OIDC) and bills AI Gateway credits |
 | `AI_GATEWAY_IMAGE_MODEL` | no | `meta/muse-image-1.0` (default, Muse Image) or `google/gemini-3.1-flash-image-preview` |
 | `BACKEND_URL` | for login and Today sync | Public HTTPS URL of the FastAPI backend, e.g. `https://g-ai-api.onrender.com` |
 | `IMAGE_MODEL`, `VISION_MODEL` | no | Override the default Gemini models |
