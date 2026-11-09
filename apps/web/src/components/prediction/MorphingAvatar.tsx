@@ -72,7 +72,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
     0: userPhoto || defaultCutouts[0],
     7: (customMilestones && customMilestones[1]) || defaultCutouts[7],
     14: (customMilestones && customMilestones[2]) || defaultCutouts[14],
-    28: (customMilestones && (customMilestones[4] || customMilestones[3])) || defaultCutouts[28],
+    28: (customMilestones && (customMilestones.length === 4 ? customMilestones[3] : (customMilestones[4] || customMilestones[3]))) || defaultCutouts[28],
   };
 
   // Determine closest milestone day (0, 7, 14, 28)
