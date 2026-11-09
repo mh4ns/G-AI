@@ -22,12 +22,18 @@ Single-context layout with root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/
 
 ## Architecture & Monorepo Layout
 
-- **`apps/web`**: Next.js 15 (App Router), React 19, Tailwind CSS, MediaPipe Pose, Lucide icons, Canvas Confetti. Deployed to Vercel.
-- **`apps/backend`**: Python FastAPI, Uvicorn, async SQLAlchemy 2.0 (`aiosqlite`/PostgreSQL), Pydantic v2 schemas.
-- **`packages/shared-types`**: Shared types and schema definitions between web, mobile, and backend.
+- **`apps/web`**: Next.js 15 (App Router), React 19, Tailwind CSS, Lucide icons, Canvas Confetti. Proxies `/api/v1/*` to the backend (see ADR-0001). MediaPipe Pose is planned, not yet integrated.
+- **`apps/backend`**: Python FastAPI, Uvicorn, async SQLAlchemy 2.0 (`aiosqlite`/PostgreSQL), Pydantic v2 schemas, Alembic migrations, JWT cookie sessions.
+- **`packages/shared-types`**: Shared types and `fixtures/plan-vectors.json`, the parity fixture both apps' plan maths is tested against.
 - **`docs/`**: Technical specs, use case breakdown (`USECASE_BREAKDOWN.md`), architecture designs, sequence diagrams, and agent configs (`docs/agents/`).
 
 ---
+
+## Commands (run before pushing)
+
+- Backend (`apps/backend`): `pip install -r requirements.txt`, `python -m pytest -q`, `alembic check` after model changes.
+- Web (`apps/web`): `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`.
+- CI (`.github/workflows/ci.yml`) runs all of the above.
 
 ## Engineering Guidelines & Cybersecurity Rules
 

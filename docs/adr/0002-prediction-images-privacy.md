@@ -1,0 +1,37 @@
+# ADR-0002: Privacy of photo predictions, and where the pipeline should run
+
+- Status: Accepted (storage & access) · Proposed (durable job queue)
+- Date: 2026-11-09
+
+## Context
+
+Predictions edit the user's own body photo, which is biometric data. Previously:
+generated images were written to `public/generated/` (world-readable by URL), the cache key hashed
+only the first 500 base64 characters (two different photos could collide and serve one user's images
+to another), deletion was a no-op, consent was hard-coded to `true`, and a second pipeline
+(`/api/generate-twin`) sent photos without consent.
+
+## Decision (implemented)
+
+- Images are stored in a private directory (`PREDICTION_STORAGE_DIR`, default `.data/predictions`)
+  and served only by `/api/prediction/image/[cacheKey]/[day]` with an HMAC signature that expires
+  after 24h (`PREDICTION_SIGNING_SECRET`). Responses are `Cache-Control: private` and bypass
+  Next's shared image optimiser.
+- Each job has a random access token, returned once; polling and deletion require it.
+- The cache key is SHA-256 over the whole photo plus every generation input.
+- Consent is opt-in, stored on the device, and checked before any upload.
+- Only one pipeline remains (`/api/prediction/*`).
+
+## Known limitation → next step (proposed)
+
+Jobs live in process memory and the worker runs after the HTTP response. This works on a single
+long-lived Node process (`next start`, Docker) but **not on serverless (Vercel)**: the job map is
+per-instance, background work can be frozen after the response, and the filesystem is ephemeral.
+
+Proposed: move generation to the backend.
+
+1. `prediction_jobs` table (owner `user_id`, status, progress, error, cache key).
+2. Images in object storage (Supabase Storage / S3) with signed URLs from the storage provider.
+3. A worker (arq or RQ on Redis, or a managed queue) runs the Gemini calls.
+4. Rate limits per user instead of per IP; require sign-in to generate.
+5. Next.js `/api/prediction/*` routes become thin proxies or are removed.

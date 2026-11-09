@@ -4,6 +4,25 @@
 
 ---
 
+## HIỆN TRẠNG TRIỂN KHAI (cập nhật 2026-11-09)
+
+> Phần còn lại của tài liệu này mô tả **tầm nhìn đầy đủ**. Bảng dưới đây cho biết phần nào đã chạy thật trong code.
+
+| Hạng mục | Trạng thái |
+|---|---|
+| Khảo sát thể trạng & tính kế hoạch (BMI/BMR/TDEE) | ✅ Web + lưu vào backend khi đăng nhập |
+| Đăng ký / đăng nhập (JWT, cookie httpOnly) | ✅ |
+| Trang Today: nước, thói quen, buổi tập | ✅ Đồng bộ backend khi đăng nhập; khách chỉ lưu trên trình duyệt |
+| Dự đoán ảnh cơ thể (Digital Twin, Gemini) | ✅ Lưu ảnh riêng tư, link có chữ ký, cần đồng ý · ⚠️ chưa chạy được trên serverless (ADR-0002) |
+| AI Live PT (chấm tư thế bằng MediaPipe) | 🚧 Giao diện có sẵn, điểm tư thế đang mô phỏng |
+| Cửa hàng | 🚧 API đặt hàng an toàn đã có; giao diện web vẫn dùng dữ liệu mẫu, chưa có cổng thanh toán |
+| Dinh dưỡng, IoT/BLE, CBT Journal, Premium, App mobile | 📝 Chưa bắt đầu |
+
+**Chạy nhanh:** `docker compose up --build` (sao chép `.env.example` thành `.env` trước), hoặc chạy riêng
+từng app theo `apps/backend/README.md` và `apps/web/README.md`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
+
+---
+
 ## CẤU TRÚC THƯ MỤC DỰ ÁN (MONOREPO REPOSITORY LAYOUT)
 
 Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho nền tảng **Thuần Web & Mobile App (100% Software-Only)**:
