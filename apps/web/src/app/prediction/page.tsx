@@ -11,6 +11,7 @@ import {
   Info,
   MoreHorizontal,
   Dumbbell,
+  AlertTriangle,
 } from "lucide-react";
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
@@ -22,17 +23,23 @@ import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 export default function PredictionPage() {
   const [currentDay, setCurrentDay] = useState<number>(0);
-  const [viewMode, setViewMode] = useState<"profile" | "front" | "threeQuarter">("profile");
+  const [viewMode, setViewMode] = useState<"profile" | "front" | "threeQuarter">("front");
   const [activeHotspot, setActiveHotspot] = useState<string | null>("cervical");
   const [archetype, setArchetype] = useState<"female_pilates" | "male_strength">("female_pilates");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState<boolean>(false);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [customMilestones, setCustomMilestones] = useState<string[] | null>(null);
+  const [completedMilestones, setCompletedMilestones] = useState<Record<number, string>>({});
   const [userStats, setUserStats] = useState<{ height: number; weight: number; targetWeight: number } | null>(null);
   const [isRecalculatingPlan, setIsRecalculatingPlan] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number; stageMessage: string } | undefined>(undefined);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [genderMismatchWarning, setGenderMismatchWarning] = useState<string | null>(null);
 
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
+  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Default plan configuration
   const [planConfig, setPlanConfig] = useState<PlanConfig>({
@@ -87,7 +94,15 @@ export default function PredictionPage() {
 
       const savedMilestones = localStorage.getItem("g_ai_twin_milestones");
       if (savedMilestones) {
-        setCustomMilestones(JSON.parse(savedMilestones));
+        const parsed = JSON.parse(savedMilestones);
+        setCustomMilestones(parsed);
+        if (Array.isArray(parsed)) {
+          setCompletedMilestones({
+            7: parsed[1] || "",
+            14: parsed[2] || "",
+            28: parsed[3] || parsed[4] || "",
+          });
+        }
       }
 
       const savedCustomPlan = localStorage.getItem("g_ai_prediction_plan");
@@ -97,6 +112,16 @@ export default function PredictionPage() {
     } catch (e) {
       // LocalStorage safety fallback
     }
+  }, []);
+
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
   }, []);
 
   // Close more menu when clicking outside
@@ -114,6 +139,138 @@ export default function PredictionPage() {
 
   const progress = currentDay / 28.0;
 
+  // Real Async Image Generation Trigger & Polling (Steps 2, 3, 4, 5)
+  const startGeneration = async (
+    photo: string | null,
+    arch: "female_pilates" | "male_strength",
+    stats: { height: number; weight: number; targetWeight: number } | null,
+    plan: PlanConfig
+  ) => {
+    if (!photo) return;
+
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+
+    setIsGenerating(true);
+    setGenerationError(null);
+    setGenerationProgress({
+      current: 0,
+      total: 3,
+      stageMessage: "Đang xếp hàng tạo sinh mốc tuần...",
+    });
+
+    try {
+      const res = await fetch("/api/prediction/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userPhotoBase64: photo,
+          archetype: arch,
+          height: stats?.height || (arch === "male_strength" ? 175 : 162),
+          weight: stats?.weight || (arch === "male_strength" ? 76 : 56),
+          targetWeight: stats?.targetWeight || (arch === "male_strength" ? 73.5 : 52),
+          planSummary: `${plan.workoutType} · ${plan.weeklySets}`,
+          consentAccepted: true,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setIsGenerating(false);
+        setGenerationError(data.error || "Không thể khởi tạo phiên dự đoán ảnh.");
+        return;
+      }
+
+      if (data.genderMismatchWarning) {
+        setGenderMismatchWarning(data.genderMismatchWarning);
+      } else {
+        setGenderMismatchWarning(null);
+      }
+
+      // Check if result was served from instant SHA-256 disk cache
+      if (data.cached && data.completedMilestones) {
+        setCompletedMilestones(data.completedMilestones);
+        const arr = [
+          photo,
+          data.completedMilestones[7] || "",
+          data.completedMilestones[14] || "",
+          data.completedMilestones[28] || "",
+        ];
+        setCustomMilestones(arr);
+        localStorage.setItem("g_ai_twin_milestones", JSON.stringify(arr));
+        setIsGenerating(false);
+        return;
+      }
+
+      const jobId = data.jobId;
+      if (!jobId) {
+        setIsGenerating(false);
+        return;
+      }
+
+      // Begin polling every 1500ms
+      pollTimerRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/prediction/${jobId}`);
+          if (!pollRes.ok) return;
+
+          const pollData = await pollRes.json();
+          if (pollData.progress) {
+            setGenerationProgress(pollData.progress);
+          }
+
+          if (pollData.completedMilestones) {
+            setCompletedMilestones((prev) => ({
+              ...prev,
+              ...pollData.completedMilestones,
+            }));
+
+            setCustomMilestones((prev) => {
+              const next = prev ? [...prev] : [photo, "", "", ""];
+              if (pollData.completedMilestones[7]) next[1] = pollData.completedMilestones[7];
+              if (pollData.completedMilestones[14]) next[2] = pollData.completedMilestones[14];
+              if (pollData.completedMilestones[28]) next[3] = pollData.completedMilestones[28];
+              return next;
+            });
+          }
+
+          if (pollData.status === "done") {
+            if (pollTimerRef.current) {
+              clearInterval(pollTimerRef.current);
+              pollTimerRef.current = null;
+            }
+            setIsGenerating(false);
+            if (pollData.completedMilestones) {
+              const finalArr = [
+                photo,
+                pollData.completedMilestones[7] || "",
+                pollData.completedMilestones[14] || "",
+                pollData.completedMilestones[28] || "",
+              ];
+              setCustomMilestones(finalArr);
+              localStorage.setItem("g_ai_twin_milestones", JSON.stringify(finalArr));
+            }
+          } else if (pollData.status === "failed") {
+            if (pollTimerRef.current) {
+              clearInterval(pollTimerRef.current);
+              pollTimerRef.current = null;
+            }
+            setIsGenerating(false);
+            setGenerationError(pollData.error?.message || "Tạo sinh ảnh dự đoán thất bại.");
+          }
+        } catch (err) {
+          // Polling network hiccup; retry next tick
+        }
+      }, 1500);
+    } catch (err: any) {
+      setIsGenerating(false);
+      setGenerationError(err?.message || "Lỗi kết nối máy chủ khi tạo sinh ảnh.");
+    }
+  };
+
   // Step 5: Plan Change Handler (recalculates with API, otherwise uses cache)
   const handleUpdatePlan = async (newPlan: PlanConfig) => {
     setIsRecalculatingPlan(true);
@@ -122,27 +279,8 @@ export default function PredictionPage() {
 
     try {
       localStorage.setItem("g_ai_prediction_plan", JSON.stringify(newPlan));
-
-      // Call API to simulate regeneration under new plan parameters
-      const res = await fetch("/api/generate-twin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          archetype: newPlan.archetype,
-          height: userStats?.height || (newPlan.archetype === "male_strength" ? 175 : 162),
-          weight: userStats?.weight || (newPlan.archetype === "male_strength" ? 76 : 56),
-          targetWeight: userStats?.targetWeight || (newPlan.archetype === "male_strength" ? 73.5 : 52),
-          postureIssue: `Kế hoạch: ${newPlan.workoutType} · ${newPlan.weeklySets}`,
-          userPhotoBase64: userPhoto,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.milestoneImages) {
-          setCustomMilestones(data.milestoneImages);
-          localStorage.setItem("g_ai_twin_milestones", JSON.stringify(data.milestoneImages));
-        }
+      if (userPhoto) {
+        await startGeneration(userPhoto, newPlan.archetype, userStats, newPlan);
       }
     } catch (e) {
       console.error("Plan recalculation error:", e);
@@ -157,45 +295,45 @@ export default function PredictionPage() {
     weight: number;
     targetWeight: number;
     postureIssue: string;
+    consentAccepted: boolean;
   }) => {
     setArchetype(updated.archetype);
-    setUserStats({
+    const nextStats = {
       height: updated.height,
       weight: updated.weight,
       targetWeight: updated.targetWeight,
-    });
+    };
+    setUserStats(nextStats);
 
-    try {
-      const res = await fetch("/api/generate-twin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          archetype: updated.archetype,
-          height: updated.height,
-          weight: updated.weight,
-          targetWeight: updated.targetWeight,
-          postureIssue: updated.postureIssue,
-          userPhotoBase64: userPhoto,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.milestoneImages) {
-          setCustomMilestones(data.milestoneImages);
-          localStorage.setItem("g_ai_twin_milestones", JSON.stringify(data.milestoneImages));
-        }
-      }
-    } catch (e) {
-      // ignore
+    const updatedPlan: PlanConfig = {
+      ...planConfig,
+      archetype: updated.archetype,
+      workoutType:
+        updated.archetype === "male_strength"
+          ? "Calisthenics & Cơ Xô"
+          : "Pilates & Siết Cơ Lõi",
+    };
+    setPlanConfig(updatedPlan);
+
+    if (userPhoto && updated.consentAccepted) {
+      await startGeneration(userPhoto, updated.archetype, nextStats, updatedPlan);
     }
   };
 
-  const handlePhotoUpdate = (newPhoto: string) => {
+  const handlePhotoUpdate = (newPhoto: string | null) => {
     setUserPhoto(newPhoto);
-    try {
-      localStorage.setItem("g_ai_user_twin_photo", newPhoto);
-    } catch (e) {
-      // ignore
+    if (newPhoto) {
+      try {
+        localStorage.setItem("g_ai_user_twin_photo", newPhoto);
+      } catch (e) {
+        // ignore
+      }
+      startGeneration(newPhoto, archetype, userStats, planConfig);
+    } else {
+      localStorage.removeItem("g_ai_user_twin_photo");
+      localStorage.removeItem("g_ai_twin_milestones");
+      setCustomMilestones(null);
+      setCompletedMilestones({});
     }
   };
 
@@ -223,9 +361,9 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className="w-9 h-9 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+                className="w-9 h-9 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
                 title="Tùy chọn khác"
-                aria-label="Menu tùy chọn"
+                aria-label="Menu tùy chọn bổ sung"
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
@@ -239,7 +377,7 @@ export default function PredictionPage() {
                       setIsMoreMenuOpen(false);
                       setIsModalOpen(true);
                     }}
-                    className="w-full px-4 py-2.5 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors"
+                    className="w-full px-4 py-2.5 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer"
                   >
                     <SlidersHorizontal className="w-4 h-4 text-[#FF5A36]" />
                     <span>Hiệu chỉnh chỉ số thể trạng</span>
@@ -270,6 +408,24 @@ export default function PredictionPage() {
 
       {/* 2. Main Visualizer & Telemetry View (Responsive & Sticky Scrubber) */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-36 lg:pb-12">
+        {/* Step 4: Gender Mismatch Warning Banner */}
+        {genderMismatchWarning && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200 animate-in fade-in duration-200">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-1">
+              <p className="font-bold text-amber-300">Thông báo đối soát hình thể</p>
+              <p className="text-stone-300 leading-relaxed">{genderMismatchWarning}</p>
+            </div>
+            <button
+              onClick={() => setGenderMismatchWarning(null)}
+              aria-label="Đóng cảnh báo"
+              className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800/50 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Step 5: Plan Summary Card immediately below the top title */}
         <PlanSummaryCard
           currentPlan={planConfig}
@@ -302,7 +458,14 @@ export default function PredictionPage() {
                 archetype={archetype}
                 currentDay={currentDay}
                 customMilestones={customMilestones || undefined}
+                completedMilestones={completedMilestones}
                 userPhoto={userPhoto}
+                isGenerating={isGenerating}
+                generationProgress={generationProgress}
+                generationError={generationError}
+                onRetryGeneration={() => startGeneration(userPhoto, archetype, userStats, planConfig)}
+                isMock={!userPhoto}
+                hasSidePhoto={false}
                 onOpenUploadModal={() => setIsModalOpen(true)}
               />
             </div>

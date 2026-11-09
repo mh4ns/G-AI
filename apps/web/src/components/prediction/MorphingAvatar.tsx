@@ -9,6 +9,8 @@ import {
   AlertCircle,
   Columns,
   Activity,
+  Loader2,
+  Lock,
 } from "lucide-react";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
@@ -23,6 +25,13 @@ export interface MorphingAvatarProps {
   customMilestones?: string[];
   userPhoto?: string | null;
   onOpenUploadModal?: () => void;
+  isGenerating?: boolean;
+  generationProgress?: { current: number; total: number; stageMessage: string };
+  generationError?: string | null;
+  onRetryGeneration?: () => void;
+  isMock?: boolean;
+  hasSidePhoto?: boolean;
+  completedMilestones?: Record<number, string>;
 }
 
 export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
@@ -36,13 +45,19 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   customMilestones,
   userPhoto,
   onOpenUploadModal,
+  isGenerating = false,
+  generationProgress,
+  generationError = null,
+  onRetryGeneration,
+  isMock = false,
+  hasSidePhoto = false,
+  completedMilestones,
 }) => {
   // Mode States
   const [isComparing, setIsComparing] = useState<boolean>(false);
   const [comparePos, setComparePos] = useState<number>(50); // 0 to 100%
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showSkeleton, setShowSkeleton] = useState<boolean>(false); // Step 3 & 6: Default OFF
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -70,9 +85,9 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
 
   const milestoneImages = {
     0: userPhoto || defaultCutouts[0],
-    7: (customMilestones && customMilestones[1]) || defaultCutouts[7],
-    14: (customMilestones && customMilestones[2]) || defaultCutouts[14],
-    28: (customMilestones && (customMilestones.length === 4 ? customMilestones[3] : (customMilestones[4] || customMilestones[3]))) || defaultCutouts[28],
+    7: completedMilestones?.[7] || (customMilestones && customMilestones[1]) || defaultCutouts[7],
+    14: completedMilestones?.[14] || (customMilestones && customMilestones[2]) || defaultCutouts[14],
+    28: completedMilestones?.[28] || (customMilestones && (customMilestones.length === 4 ? customMilestones[3] : (customMilestones[4] || customMilestones[3]))) || defaultCutouts[28],
   };
 
   // Determine closest milestone day (0, 7, 14, 28)
@@ -80,6 +95,12 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const activeMilestoneDay = milestoneDays.reduce((closest, d) =>
     Math.abs(d - currentDay) < Math.abs(closest - currentDay) ? d : closest
   , 0);
+
+  // Check if current milestone image has finished generating
+  const isCurrentMilestonePending =
+    isGenerating &&
+    activeMilestoneDay > 0 &&
+    !completedMilestones?.[activeMilestoneDay];
 
   // Comparison target image: if Day 0 is selected, compare with Day 28; else compare Day 0 with current milestone
   const compareTargetDay = activeMilestoneDay === 0 ? 28 : activeMilestoneDay;
@@ -185,14 +206,19 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               type="button"
               role="tab"
               aria-selected={viewMode === "profile"}
-              onClick={() => onViewModeChange("profile")}
-              className={`px-3 py-1 rounded-full text-xs transition-all duration-200 ${
-                viewMode === "profile"
+              disabled={!hasSidePhoto}
+              onClick={() => hasSidePhoto && onViewModeChange("profile")}
+              title={hasSidePhoto ? "Xem góc nghiêng" : "Chụp thêm ảnh nghiêng để xem góc này"}
+              className={`px-3 py-1 rounded-full text-xs transition-all duration-200 flex items-center gap-1.5 ${
+                !hasSidePhoto
+                  ? "text-stone-500 cursor-not-allowed opacity-60"
+                  : viewMode === "profile"
                   ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
                   : "text-stone-300 hover:text-white font-medium"
               }`}
             >
-              Góc nghiêng
+              {!hasSidePhoto && <Lock className="w-3 h-3 text-stone-500" />}
+              <span>Góc nghiêng</span>
             </button>
             <button
               type="button"
@@ -217,6 +243,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             type="button"
             onClick={() => setShowSkeleton((prev) => !prev)}
             aria-pressed={showSkeleton}
+            aria-label="Bật hoặc tắt lớp phủ khung xương"
             className={`px-3 py-1.5 rounded-full border text-xs font-sans transition-all flex items-center gap-1.5 active:scale-95 ${
               showSkeleton
                 ? "bg-[#FF5A36]/20 border-[#FF5A36] text-white font-bold shadow-sm shadow-[#FF5A36]/20"
@@ -234,6 +261,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             type="button"
             onClick={() => setIsComparing((prev) => !prev)}
             aria-pressed={isComparing}
+            aria-label="Bật thanh kéo so sánh trước sau"
             className={`px-3 py-1.5 rounded-full border text-xs font-sans transition-all flex items-center gap-1.5 active:scale-95 ${
               isComparing
                 ? "bg-white text-stone-900 font-bold border-white shadow-md"
@@ -252,7 +280,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               onClick={onOpenUploadModal}
               className="px-2.5 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition-colors"
               title="Cập nhật ảnh thật thể trạng"
-              aria-label="Cập nhật ảnh thật"
+              aria-label="Cập nhật ảnh thật thể trạng"
             >
               <Camera className="w-3.5 h-3.5 text-[#FF5A36]" />
             </button>
@@ -271,6 +299,13 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
           isComparing ? "cursor-ew-resize select-none" : ""
         }`}
       >
+        {/* Mock Badge (Displayed ONLY when using placeholder silhouettes) */}
+        {isMock && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-[11px] font-bold text-amber-300 shadow-md pointer-events-none">
+            ẢNH MẪU · CHƯA PHẢI ẢNH THẬT
+          </div>
+        )}
+
         {/* Subtle Radial Floor Glow */}
         <div
           className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-25"
@@ -282,35 +317,52 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         {/* Ambient Ground Pedestal */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-52 h-8 rounded-[100%] bg-stone-900/90 blur-md pointer-events-none border border-stone-800/40" />
 
-        {/* --- STATE 1: LOADING STATE --- */}
-        {isLoading && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/80 backdrop-blur-md p-6 animate-pulse">
-            <div className="w-24 h-48 rounded-2xl bg-stone-900 border border-stone-800 mb-4" />
-            <div className="w-40 h-3 bg-stone-800 rounded-full mb-2" />
-            <div className="w-28 h-2 bg-stone-900 rounded-full" />
-            <p className="mt-4 text-xs font-sans text-stone-300">Đang tổng hợp dữ liệu vóc dáng...</p>
+        {/* --- STATE 1: GENERATING / CALCULATION OVERLAY --- */}
+        {isGenerating && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/85 backdrop-blur-md p-6 text-center">
+            <div className="relative w-14 h-14 rounded-2xl bg-stone-900 border border-stone-700 flex items-center justify-center mb-3 shadow-xl">
+              <Loader2 className="w-7 h-7 text-[#FF5A36] animate-spin" />
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5A36]/15 border border-[#FF5A36]/40 text-xs font-bold text-[#FF5A36] mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>
+                Đang tạo sinh ({generationProgress?.current || 0}/{generationProgress?.total || 3} ảnh)
+              </span>
+            </div>
+            <p className="text-xs font-sans text-stone-300 max-w-xs leading-relaxed">
+              {generationProgress?.stageMessage || "AI đang giữ nguyên nhận diện và điều chỉnh tỉ lệ mỡ cơ..."}
+            </p>
           </div>
         )}
 
-        {/* --- STATE 2: ERROR STATE WITH RETRY --- */}
-        {hasError && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/90 backdrop-blur-md p-6 text-center">
-            <AlertCircle className="w-8 h-8 text-[#FF5A36] mb-3" />
-            <h5 className="text-sm font-bold text-white mb-1">Không thể tải ảnh mô phỏng</h5>
-            <p className="text-xs text-stone-300 mb-4 max-w-xs">
-              Đã xảy ra sự cố khi tải dữ liệu ảnh thể trạng. Bạn có thể thử tải lại hoặc dùng ảnh mô phỏng mặc định.
+        {/* --- STATE 2: ERROR STATE WITH RETRY (No silent mock replacement) --- */}
+        {generationError && !isGenerating && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/92 backdrop-blur-md p-6 text-center">
+            <AlertCircle className="w-10 h-10 text-[#FF5A36] mb-3" />
+            <h5 className="text-sm font-bold text-white mb-1.5">Không thể tạo sinh ảnh dự đoán</h5>
+            <p className="text-xs text-stone-300 mb-4 max-w-xs leading-relaxed">
+              {generationError}
             </p>
-            <button
-              onClick={() => {
-                setHasError(false);
-                setIsLoading(true);
-                setTimeout(() => setIsLoading(false), 500);
-              }}
-              className="px-4 py-2 rounded-full bg-stone-900 border border-stone-700 text-xs font-sans text-white flex items-center gap-2 hover:bg-stone-800 transition-colors shadow-sm"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-[#FF5A36]" />
-              <span>Thử lại</span>
-            </button>
+            {onRetryGeneration && (
+              <button
+                onClick={onRetryGeneration}
+                aria-label="Thử tạo lại ảnh"
+                className="px-5 py-2.5 rounded-full bg-[#FF5A36] hover:bg-[#e04825] text-xs font-bold text-white flex items-center gap-2 shadow-lg shadow-[#FF5A36]/30 transition-all active:scale-95 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-white" />
+                <span>Thử lại</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* --- STATE 3: PENDING MILESTONE SPECIFIC SKELETON --- */}
+        {isCurrentMilestonePending && !generationError && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-stone-950/70 backdrop-blur-sm p-6 text-center animate-pulse">
+            <div className="w-24 h-48 rounded-2xl bg-stone-900 border border-stone-800 mb-3" />
+            <p className="text-xs font-medium text-stone-300">
+              Đang hoàn thiện mốc {activeMilestoneDay === 7 ? "Tuần 1" : activeMilestoneDay === 14 ? "Tuần 2" : "Tuần 4"}...
+            </p>
           </div>
         )}
 
@@ -482,6 +534,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 strokeWidth={activeHotspot === "cervical" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("cervical")}
+                aria-label="Khớp cổ và vai gáy"
               />
 
               {/* Thoracic Node (Lưng Trên) -> Xanh dương #38BDF8 */}
@@ -494,6 +547,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 strokeWidth={activeHotspot === "thoracic" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("thoracic")}
+                aria-label="Khớp cột sống lưng trên"
               />
 
               {/* Core & Lumbar Node (Cơ Bụng Sâu) -> Xanh lá #10B981 */}
@@ -506,6 +560,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 strokeWidth={activeHotspot === "core" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("core")}
+                aria-label="Vùng cơ bụng và eo"
               />
 
               {/* Pelvis Node (Khung Chậu) -> Vàng #F59E0B */}
@@ -518,6 +573,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 strokeWidth={activeHotspot === "pelvis" ? "3" : "1.5"}
                 className="pointer-events-auto cursor-pointer"
                 onClick={() => onSelectHotspot("pelvis")}
+                aria-label="Vùng khung chậu và hông"
               />
 
               {/* Legs / Foundation Alignment */}

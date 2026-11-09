@@ -43,3 +43,5 @@ apps/web/public/generated/
 *.sqlite
 *.sqlite3
 
+
+graphify-out/
