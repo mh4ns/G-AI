@@ -24,10 +24,23 @@ export default function PredictionPage() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [customMilestones, setCustomMilestones] = useState<string[] | null>(null);
+  const [userStats, setUserStats] = useState<{ height: number; weight: number; targetWeight: number } | null>(null);
 
   // Read archetype, photo, and milestones from localStorage if exists
   useEffect(() => {
     try {
+      const savedQuiz = localStorage.getItem("g_ai_user_quiz");
+      if (savedQuiz) {
+        const parsedQuiz = JSON.parse(savedQuiz);
+        if (parsedQuiz.heightCm && parsedQuiz.currentWeightKg && parsedQuiz.targetWeightKg) {
+          setUserStats({
+            height: parsedQuiz.heightCm,
+            weight: parsedQuiz.currentWeightKg,
+            targetWeight: parsedQuiz.targetWeightKg,
+          });
+        }
+      }
+
       const savedPlan = localStorage.getItem("g_ai_user_plan");
       if (savedPlan) {
         const parsed = JSON.parse(savedPlan);
@@ -63,6 +76,11 @@ export default function PredictionPage() {
     postureIssue: string;
   }) => {
     setArchetype(updated.archetype);
+    setUserStats({
+      height: updated.height,
+      weight: updated.weight,
+      targetWeight: updated.targetWeight,
+    });
 
     // Regenerate twin milestones if needed
     try {
@@ -360,6 +378,9 @@ export default function PredictionPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         archetype={archetype}
+        initialHeight={userStats?.height}
+        initialWeight={userStats?.weight}
+        initialTargetWeight={userStats?.targetWeight}
         currentPhoto={userPhoto}
         onPhotoChange={handlePhotoUpdate}
         onSave={handleCalibrationSave}

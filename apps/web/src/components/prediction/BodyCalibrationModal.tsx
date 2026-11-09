@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Sparkles, X, Check, Activity, Heart, ArrowRight, Camera, Upload, ShieldCheck, User } from "lucide-react";
 
@@ -8,6 +8,9 @@ interface BodyCalibrationModalProps {
   isOpen: boolean;
   onClose: () => void;
   archetype: "female_pilates" | "male_strength";
+  initialHeight?: number;
+  initialWeight?: number;
+  initialTargetWeight?: number;
   currentPhoto?: string | null;
   onPhotoChange?: (newPhotoBase64: string) => void;
   onSave: (updated: {
@@ -19,24 +22,73 @@ interface BodyCalibrationModalProps {
   }) => void;
 }
 
+// Utility to clean numeric inputs and completely strip unwanted leading zeros (e.g., "0080" -> "80", "0170" -> "170")
+const cleanNumberInput = (raw: string): string => {
+  if (!raw) return "";
+  // Strip any character that is not a digit or decimal point
+  let cleaned = raw.replace(/[^0-9.]/g, "");
+  // Keep only the first dot
+  const dotIndex = cleaned.indexOf(".");
+  if (dotIndex !== -1) {
+    cleaned = cleaned.slice(0, dotIndex + 1) + cleaned.slice(dotIndex + 1).replace(/\./g, "");
+  }
+  // Remove leading zeros before any digit (e.g. "0080" -> "80", "08" -> "8"), but allow "0." and single "0"
+  if (/^0+[0-9]/.test(cleaned) && !cleaned.startsWith("0.")) {
+    cleaned = cleaned.replace(/^0+/, "");
+    if (cleaned === "") cleaned = "0";
+  }
+  return cleaned;
+};
+
 export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
   isOpen,
   onClose,
   archetype,
+  initialHeight,
+  initialWeight,
+  initialTargetWeight,
   currentPhoto,
   onPhotoChange,
   onSave,
 }) => {
+  const isMale = archetype === "male_strength";
+  const defaultHeight = initialHeight ? String(initialHeight) : (isMale ? "175" : "162");
+  const defaultWeight = initialWeight ? String(initialWeight) : (isMale ? "76" : "56");
+  const defaultTargetWeight = initialTargetWeight ? String(initialTargetWeight) : (isMale ? "73.5" : "52");
+
   const [currentArchetype, setCurrentArchetype] = useState<"female_pilates" | "male_strength">(archetype);
-  const [height, setHeight] = useState<number>(archetype === "male_strength" ? 175 : 162);
-  const [weight, setWeight] = useState<number>(archetype === "male_strength" ? 76 : 56);
-  const [targetWeight, setTargetWeight] = useState<number>(archetype === "male_strength" ? 73.5 : 53.8);
+  const [height, setHeight] = useState<string>(defaultHeight);
+  const [weight, setWeight] = useState<string>(defaultWeight);
+  const [targetWeight, setTargetWeight] = useState<string>(defaultTargetWeight);
   const [selectedIssue, setSelectedIssue] = useState<string>("Võng lưng & Gù vai cổ nhẹ");
   const [photoPreview, setPhotoPreview] = useState<string | null>(currentPhoto || null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Sync when initial values or photo change
+  useEffect(() => {
+    if (isOpen) {
+      if (initialHeight) setHeight(cleanNumberInput(String(initialHeight)));
+      if (initialWeight) setWeight(cleanNumberInput(String(initialWeight)));
+      if (initialTargetWeight) setTargetWeight(cleanNumberInput(String(initialTargetWeight)));
+      if (currentPhoto) setPhotoPreview(currentPhoto);
+    }
+  }, [isOpen, initialHeight, initialWeight, initialTargetWeight, currentPhoto]);
+
   if (!isOpen) return null;
+
+  const handleArchetypeToggle = (next: "female_pilates" | "male_strength") => {
+    setCurrentArchetype(next);
+    if (!initialHeight) {
+      setHeight(next === "male_strength" ? "175" : "162");
+    }
+    if (!initialWeight) {
+      setWeight(next === "male_strength" ? "76" : "56");
+    }
+    if (!initialTargetWeight) {
+      setTargetWeight(next === "male_strength" ? "73.5" : "52");
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,13 +103,33 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleBlur = (field: "height" | "weight" | "targetWeight") => {
+    if (field === "height") {
+      const num = parseFloat(height);
+      if (!isNaN(num) && num > 0) setHeight(String(Math.min(240, Math.max(100, num))));
+      else setHeight(currentArchetype === "male_strength" ? "175" : "162");
+    } else if (field === "weight") {
+      const num = parseFloat(weight);
+      if (!isNaN(num) && num > 0) setWeight(String(Math.min(250, Math.max(30, num))));
+      else setWeight(currentArchetype === "male_strength" ? "76" : "56");
+    } else if (field === "targetWeight") {
+      const num = parseFloat(targetWeight);
+      if (!isNaN(num) && num > 0) setTargetWeight(String(Math.min(250, Math.max(30, num))));
+      else setTargetWeight(currentArchetype === "male_strength" ? "73.5" : "52");
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalHeight = parseFloat(height) || (currentArchetype === "male_strength" ? 175 : 162);
+    const finalWeight = parseFloat(weight) || (currentArchetype === "male_strength" ? 76 : 56);
+    const finalTargetWeight = parseFloat(targetWeight) || (currentArchetype === "male_strength" ? 73.5 : 52);
+
     onSave({
       archetype: currentArchetype,
-      height,
-      weight,
-      targetWeight,
+      height: finalHeight,
+      weight: finalWeight,
+      targetWeight: finalTargetWeight,
       postureIssue: selectedIssue,
     });
     onClose();
@@ -148,7 +220,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
             <div className="grid grid-cols-2 gap-2 text-xs font-mono">
               <button
                 type="button"
-                onClick={() => setCurrentArchetype("female_pilates")}
+                onClick={() => handleArchetypeToggle("female_pilates")}
                 className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   currentArchetype === "female_pilates"
                     ? "bg-[#FF6B4A]/10 border-[#FF6B4A] text-white font-bold"
@@ -161,7 +233,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => setCurrentArchetype("male_strength")}
+                onClick={() => handleArchetypeToggle("male_strength")}
                 className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   currentArchetype === "male_strength"
                     ? "bg-[#FF5A36]/10 border-[#FF5A36] text-white font-bold"
@@ -174,33 +246,42 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
             </div>
           </div>
 
-          {/* Biometric Stats Inputs */}
+          {/* Biometric Stats Inputs (Sanitized without leading zeros) */}
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div>
               <label className="font-mono text-stone-400 uppercase block mb-1">Chiều cao (cm)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={height}
-                onChange={(e) => setHeight(Number(e.target.value))}
+                onChange={(e) => setHeight(cleanNumberInput(e.target.value))}
+                onBlur={() => handleBlur("height")}
                 className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36]"
+                placeholder="165"
               />
             </div>
             <div>
               <label className="font-mono text-stone-400 uppercase block mb-1">Hiện tại (kg)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={weight}
-                onChange={(e) => setWeight(Number(e.target.value))}
+                onChange={(e) => setWeight(cleanNumberInput(e.target.value))}
+                onBlur={() => handleBlur("weight")}
                 className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36]"
+                placeholder="60"
               />
             </div>
             <div>
               <label className="font-mono text-stone-400 uppercase block mb-1">Mục tiêu (kg)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={targetWeight}
-                onChange={(e) => setTargetWeight(Number(e.target.value))}
+                onChange={(e) => setTargetWeight(cleanNumberInput(e.target.value))}
+                onBlur={() => handleBlur("targetWeight")}
                 className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36]"
+                placeholder="52"
               />
             </div>
           </div>
