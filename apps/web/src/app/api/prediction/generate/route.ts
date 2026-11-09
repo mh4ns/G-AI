@@ -16,6 +16,7 @@ import {
   generateMilestoneImage,
   providerModelLabel,
   resolveImageProvider,
+  withRequestCredentials,
 } from "@/lib/image-providers";
 
 // Three image generations can take a few minutes.
@@ -104,7 +105,8 @@ export async function POST(req: NextRequest) {
     const planSummary =
       typeof body.planSummary === "string" ? body.planSummary.slice(0, 200) : "Standard 4-week kinetic adaptation";
 
-    const provider = resolveImageProvider();
+    const configured = resolveImageProvider();
+    const provider = configured ? withRequestCredentials(configured, req.headers) : null;
     if (!provider) {
       // No AI backend configured (e.g. no paid image quota): the client keeps
       // showing the illustrative preset images. Not an error for the user.

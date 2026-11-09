@@ -63,3 +63,118 @@ test("cache labels differ per provider and the SD prompt stays short", () => {
     assert.ok(buildPromptFor(gemini, spec).length > sdPrompt.length);
   });
 });
+
+// ---- AI Gateway (Muse Image / Google image models) ---------------------------
+import http from "node:http";
+import { AddressInfo } from "node:net";
+import { generateMilestoneImage, withRequestCredentials, extractChatImage } from "../image-providers";
+
+test("AI Gateway needs an explicit opt-in or a key, and picks up the Vercel OIDC token", () => {
+  withEnv({}, () => assert.strictEqual(resolveImageProvider(), null));
+  withEnv({ IMAGE_PROVIDER: "ai-gateway" }, () => {
+    const p = resolveImageProvider()!;
+    assert.strictEqual(p.name, "ai-gateway");
+    assert.strictEqual(p.imageModel, "meta/muse-image-1.0");
+    const withToken = withRequestCredentials(p, new Headers({ "x-vercel-oidc-token": "oidc-123" }));
+    assert.strictEqual((withToken as { apiKey: string }).apiKey, "oidc-123");
+  });
+  withEnv({ GEMINI_API_KEY: "g", ...CF }, () => assert.strictEqual(resolveImageProvider()?.name, "gemini"));
+});
+
+async function withMockGateway(
+  handler: (path: string, contentType: string, body: Buffer) => { status: number; json: unknown },
+  fn: () => Promise<void>
+) {
+  const server = http.createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => {
+      assert.strictEqual(req.headers.authorization, "Bearer test-key");
+      const out = handler(req.url || "", req.headers["content-type"] || "", Buffer.concat(chunks));
+      res.writeHead(out.status, { "content-type": "application/json" });
+      res.end(JSON.stringify(out.json));
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const { port } = server.address() as AddressInfo;
+  process.env.AI_GATEWAY_BASE_URL = `http://127.0.0.1:${port}`;
+  try {
+    await fn();
+  } finally {
+    delete process.env.AI_GATEWAY_BASE_URL;
+    server.close();
+  }
+}
+
+const PHOTO = Buffer.from("day0-jpeg-bytes").toString("base64");
+
+test("Muse Image goes through /images/edits with the photo as multipart", async () => {
+  await withMockGateway(
+    (path, contentType, body) => {
+      assert.strictEqual(path, "/images/edits");
+      assert.match(contentType, /^multipart\/form-data/);
+      const text = body.toString("latin1");
+      assert.ok(text.includes("meta/muse-image-1.0"));
+      assert.ok(text.includes("day0-jpeg-bytes"), "original photo is attached");
+      return { status: 200, json: { data: [{ b64_json: "RURJVEVE" }] } };
+    },
+    async () => {
+      const url = await generateMilestoneImage(
+        { name: "ai-gateway", apiKey: "test-key", imageModel: "meta/muse-image-1.0" },
+        PHOTO,
+        "image/jpeg",
+        "make the waist slimmer"
+      );
+      assert.strictEqual(url, "data:image/png;base64,RURJVEVE");
+    }
+  );
+});
+
+test("Google image models go through chat completions with the photo inline", async () => {
+  await withMockGateway(
+    (path, _ct, body) => {
+      assert.strictEqual(path, "/chat/completions");
+      const req = JSON.parse(body.toString());
+      assert.deepStrictEqual(req.modalities, ["text", "image"]);
+      assert.strictEqual(req.messages[0].content[1].image_url.url, `data:image/jpeg;base64,${PHOTO}`);
+      return {
+        status: 200,
+        json: { choices: [{ message: { images: [{ image_url: { url: "data:image/png;base64,T1VU" } }] } }] },
+      };
+    },
+    async () => {
+      const url = await generateMilestoneImage(
+        { name: "ai-gateway", apiKey: "test-key", imageModel: "google/gemini-3.1-flash-image-preview" },
+        PHOTO,
+        "image/jpeg",
+        "prompt"
+      );
+      assert.strictEqual(url, "data:image/png;base64,T1VU");
+    }
+  );
+});
+
+test("Gateway errors map to user-safe messages", async () => {
+  for (const [status, code] of [
+    [402, "QUOTA"],
+    [401, "CONFIG"],
+    [500, "UPSTREAM"],
+  ] as const) {
+    await withMockGateway(
+      () => ({ status, json: { error: { message: "secret upstream detail" } } }),
+      async () => {
+        await assert.rejects(
+          generateMilestoneImage(
+            { name: "ai-gateway", apiKey: "test-key", imageModel: "meta/muse-image-1.0" },
+            PHOTO,
+            "image/jpeg",
+            "p"
+          ),
+          (err: { code: string; userMessage: string }) =>
+            err.code === code && !err.userMessage.includes("secret upstream detail")
+        );
+      }
+    );
+  }
+  assert.strictEqual(extractChatImage({ choices: [{ message: { images: [{ image_url: { url: "https://x" } }] } }] }), null);
+});

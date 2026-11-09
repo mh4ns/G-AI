@@ -38,7 +38,12 @@ Proposed: move generation to the backend.
 
 ## Addendum (2026-11-09): pluggable image providers
 
-`src/lib/image-providers.ts` picks the backend: Gemini (best identity preservation) → Cloudflare
+`src/lib/image-providers.ts` picks the backend: Gemini (Google AI Studio key) → Vercel AI Gateway
+(Muse Image or Google's image model, key-less on Vercel through OIDC, billed to gateway credits) → Cloudflare
 Workers AI img2img (free daily allowance, lower fidelity, no vision pre-check) → none (illustrative
 presets, nothing leaves the device). The cache key includes the provider and model, so outputs from
 different backends never mix. The same consent, private storage and signed-link rules apply to every provider.
+
+Google Flow was considered and rejected: it has no official API, and the unofficial wrappers drive a
+logged-in browser session, which is fragile and likely against Google's terms. Google's image model is
+reachable officially through AI Gateway instead.
