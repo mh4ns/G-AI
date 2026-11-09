@@ -20,6 +20,14 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { BodyCalibrationModal } from "@/components/prediction/BodyCalibrationModal";
 import { PlanSummaryCard, PlanConfig } from "@/components/prediction/PlanSummaryCard";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
+import {
+  clearJobRef,
+  deletePredictionOnServer,
+  hasPhotoConsent,
+  isSignedUrlExpired,
+  saveJobRef,
+  setPhotoConsent,
+} from "@/lib/prediction-client";
 
 export default function PredictionPage() {
   const [currentDay, setCurrentDay] = useState<number>(0);
@@ -40,6 +48,9 @@ export default function PredictionPage() {
 
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Explicit, revocable opt-in before any photo is sent to the AI provider.
+  const consentRef = useRef<boolean>(false);
+  const needsUrlRefreshRef = useRef<boolean>(false);
 
   // Default plan configuration
   const [planConfig, setPlanConfig] = useState<PlanConfig>({
@@ -92,17 +103,25 @@ export default function PredictionPage() {
         setUserPhoto(savedPhoto);
       }
 
+      consentRef.current = hasPhotoConsent();
+
       const savedMilestones = localStorage.getItem("g_ai_twin_milestones");
-      if (savedMilestones) {
-        const parsed = JSON.parse(savedMilestones);
-        setCustomMilestones(parsed);
-        if (Array.isArray(parsed)) {
-          setCompletedMilestones({
-            7: parsed[1] || "",
-            14: parsed[2] || "",
-            28: parsed[3] || parsed[4] || "",
-          });
-        }
+      const parsedMilestones = savedMilestones ? JSON.parse(savedMilestones) : null;
+      // Image links are signed and short-lived. Expired ones are dropped and,
+      // with consent, re-requested below (served from the server cache, no new AI call).
+      const linksExpired =
+        Array.isArray(parsedMilestones) &&
+        parsedMilestones.slice(1).some((u: unknown) => typeof u === "string" && u !== "" && isSignedUrlExpired(u));
+      if (linksExpired) {
+        localStorage.removeItem("g_ai_twin_milestones");
+        needsUrlRefreshRef.current = true;
+      } else if (Array.isArray(parsedMilestones)) {
+        setCustomMilestones(parsedMilestones);
+        setCompletedMilestones({
+          7: parsedMilestones[1] || "",
+          14: parsedMilestones[2] || "",
+          28: parsedMilestones[3] || parsedMilestones[4] || "",
+        });
       }
 
       const savedCustomPlan = localStorage.getItem("g_ai_prediction_plan");
@@ -113,6 +132,15 @@ export default function PredictionPage() {
       // LocalStorage safety fallback
     }
   }, []);
+
+  // Re-issue expired image links once the saved photo/stats are loaded.
+  useEffect(() => {
+    if (needsUrlRefreshRef.current && userPhoto && consentRef.current) {
+      needsUrlRefreshRef.current = false;
+      void startGeneration(userPhoto, archetype, userStats, planConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPhoto]);
 
   // Cleanup polling interval on unmount
   useEffect(() => {
@@ -147,6 +175,11 @@ export default function PredictionPage() {
     plan: PlanConfig
   ) => {
     if (!photo) return;
+    if (!consentRef.current) {
+      setGenerationError("Vui lòng mở “Hiệu chỉnh thể trạng” và xác nhận đồng ý để AI xử lý ảnh của bạn.");
+      setIsModalOpen(true);
+      return;
+    }
 
     if (pollTimerRef.current) {
       clearInterval(pollTimerRef.current);
@@ -172,7 +205,7 @@ export default function PredictionPage() {
           weight: stats?.weight || (arch === "male_strength" ? 76 : 56),
           targetWeight: stats?.targetWeight || (arch === "male_strength" ? 73.5 : 52),
           planSummary: `${plan.workoutType} · ${plan.weeklySets}`,
-          consentAccepted: true,
+          consentAccepted: consentRef.current,
         }),
       });
 
@@ -188,6 +221,10 @@ export default function PredictionPage() {
         setGenderMismatchWarning(data.genderMismatchWarning);
       } else {
         setGenderMismatchWarning(null);
+      }
+
+      if (data.jobId && data.jobToken) {
+        saveJobRef({ jobId: data.jobId, jobToken: data.jobToken });
       }
 
       // Check if result was served from instant SHA-256 disk cache
@@ -214,7 +251,9 @@ export default function PredictionPage() {
       // Begin polling every 1500ms
       pollTimerRef.current = setInterval(async () => {
         try {
-          const pollRes = await fetch(`/api/prediction/${jobId}`);
+          const pollRes = await fetch(`/api/prediction/${encodeURIComponent(jobId)}`, {
+            headers: { "x-job-token": data.jobToken },
+          });
           if (!pollRes.ok) return;
 
           const pollData = await pollRes.json();
@@ -315,6 +354,9 @@ export default function PredictionPage() {
     };
     setPlanConfig(updatedPlan);
 
+    consentRef.current = updated.consentAccepted;
+    setPhotoConsent(updated.consentAccepted);
+
     if (userPhoto && updated.consentAccepted) {
       await startGeneration(userPhoto, updated.archetype, nextStats, updatedPlan);
     }
@@ -328,8 +370,13 @@ export default function PredictionPage() {
       } catch (e) {
         // ignore
       }
-      startGeneration(newPhoto, archetype, userStats, planConfig);
+      // Without consent the photo stays on this device until the user confirms in the modal.
+      if (consentRef.current) {
+        startGeneration(newPhoto, archetype, userStats, planConfig);
+      }
     } else {
+      void deletePredictionOnServer();
+      clearJobRef();
       localStorage.removeItem("g_ai_user_twin_photo");
       localStorage.removeItem("g_ai_twin_milestones");
       setCustomMilestones(null);

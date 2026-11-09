@@ -1,6 +1,9 @@
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
+import {
+  MILESTONE_DAYS,
+  MilestoneDay,
+  signedMilestoneUrl,
+} from "./prediction-storage";
 
 export const PROMPT_VERSION = "v3.0-identity-preserving";
 
@@ -42,7 +45,10 @@ export interface PredictionJob {
   };
   detectedGender: "male" | "female" | "uncertain";
   genderMismatchWarning?: string;
-  completedMilestones: Record<number, string>; // day (7, 14, 28) -> url
+  /** Secret returned once to the creator; required to poll or delete the job. */
+  accessToken: string;
+  cacheKey: string;
+  completedDays: MilestoneDay[];
   prompts: Record<number, string>;
   error?: {
     code: string;
@@ -52,14 +58,44 @@ export interface PredictionJob {
   cached: boolean;
 }
 
-// In-memory job repository with persistence fallback
-const globalJobs = new Map<string, PredictionJob>();
+// In-memory job repository. Jobs live for JOB_TTL_MS; the images themselves stay in
+// private storage until the user deletes them.
+// NOTE: this only works on a single long-lived Node process (`next start`).
+// Serverless deployments need the durable job store planned in docs/adr/0002.
+const JOB_TTL_MS = 60 * 60 * 1000;
+const globalForJobs = globalThis as unknown as { __gAiJobs?: Map<string, PredictionJob> };
+const globalJobs = (globalForJobs.__gAiJobs ??= new Map<string, PredictionJob>());
+
+function pruneExpiredJobs(now: number = Date.now()) {
+  for (const [id, job] of globalJobs) {
+    if (now - job.updatedAt > JOB_TTL_MS) globalJobs.delete(id);
+  }
+}
 
 // Rate limiter: IP/Session tracking (max 5 generation calls per 10 minutes)
 const rateLimiterStore = new Map<string, { count: number; resetAt: number }>();
 
+/**
+ * Best-effort client identifier for rate limiting. On Vercel and behind a
+ * correctly configured reverse proxy, x-real-ip is set by the platform; the
+ * first x-forwarded-for hop is client-controlled and only used as a fallback.
+ * Per-user limits replace this once generation moves behind authentication.
+ */
+export function getClientId(headers: Headers): string {
+  return (
+    headers.get("x-real-ip")?.trim() ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "anonymous"
+  );
+}
+
 export function checkRateLimit(clientId: string): { allowed: boolean; remaining: number } {
   const now = Date.now();
+  if (rateLimiterStore.size > 10_000) {
+    for (const [key, entry] of rateLimiterStore) {
+      if (now > entry.resetAt) rateLimiterStore.delete(key);
+    }
+  }
   const windowMs = 10 * 60 * 1000; // 10 minutes
   const maxRequests = 5;
 
@@ -130,7 +166,9 @@ export function buildImageEditPrompt(spec: MilestoneSpec): string {
   return `Edit this photo of the same person. Keep the face, identity, gender, skin tone, hairstyle, pose, clothing, background, camera angle and lighting EXACTLY the same. Change ONLY the body shape: ${deltas.bodyFatChangePct}% lower body fat, waist about ${deltas.waistChangeCm} cm smaller, ${deltas.muscleChanges}. The result must look realistic and natural for ${week} weeks of training, subtle to moderate, no exaggeration, no airbrushing, no added muscle definition beyond what is described. Do not change the person's age, ethnicity or gender.`;
 }
 
-// Compute Cache Key from inputs
+// Cache key over the FULL photo plus every input that affects the output.
+// (Hashing only a prefix let two different photos with the same JPEG header and
+// length share a key, i.e. one user could be served another user's images.)
 export function computePredictionHash(
   rawBase64: string,
   archetype: string,
@@ -139,61 +177,12 @@ export function computePredictionHash(
   planSummary: string,
   modelName: string
 ): string {
-  const input = `${rawBase64.slice(0, 500)}_${rawBase64.length}_${archetype}_${weight}_${targetWeight}_${planSummary}_${PROMPT_VERSION}_${modelName}`;
-  return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
-}
-
-// Secure local storage save helper
-export function saveMilestoneToDisk(cacheKey: string, day: number, dataUrl: string): string {
-  try {
-    const publicGenDir = path.join(process.cwd(), "public", "generated");
-    if (!fs.existsSync(publicGenDir)) {
-      fs.mkdirSync(publicGenDir, { recursive: true });
-    }
-
-    const filename = `${cacheKey}_day_${day}.jpg`;
-    const filePath = path.join(publicGenDir, filename);
-
-    const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
-    fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
-
-    return `/generated/${filename}`;
-  } catch (err) {
-    console.warn("[Prediction] Failed to save file to disk, returning data URL:", err);
-    return dataUrl;
-  }
-}
-
-export function checkDiskCache(cacheKey: string, day: number): string | null {
-  try {
-    const filename = `${cacheKey}_day_${day}.jpg`;
-    const filePath = path.join(process.cwd(), "public", "generated", filename);
-    if (fs.existsSync(filePath)) {
-      return `/generated/${filename}`;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-// Delete user cached images on demand (Step 6 Privacy)
-export function deleteUserPredictionCache(cacheKey: string): boolean {
-  try {
-    const publicGenDir = path.join(process.cwd(), "public", "generated");
-    if (!fs.existsSync(publicGenDir)) return true;
-
-    const files = fs.readdirSync(publicGenDir);
-    for (const f of files) {
-      if (f.startsWith(cacheKey)) {
-        fs.unlinkSync(path.join(publicGenDir, f));
-      }
-    }
-    return true;
-  } catch (e) {
-    console.error("[Prediction] Error deleting cache:", e);
-    return false;
-  }
+  return crypto
+    .createHash("sha256")
+    .update(rawBase64)
+    .update("\u0000")
+    .update(JSON.stringify([archetype, weight, targetWeight, planSummary, PROMPT_VERSION, modelName]))
+    .digest("hex");
 }
 
 // Step 4: Validate Day 0 Photo (Quality, 1 person, lighting, and gender consistency)
@@ -217,7 +206,7 @@ export async function assessPhotoQualityAndGender(
     };
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent`;
 
   try {
     const res = await fetch(endpoint, {
@@ -341,7 +330,7 @@ export async function callGeminiImageToImage(
   promptText: string,
   maxRetries: number = 2
 ): Promise<string> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
   let lastError: any = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -452,16 +441,19 @@ export async function callGeminiImageToImage(
 
 // Job store management
 export function createPredictionJob(
-  jobId: string,
   cacheKey: string,
   detectedGender: "male" | "female" | "uncertain",
   genderMismatchWarning: string | undefined,
   prompts: Record<number, string>
 ): PredictionJob {
+  pruneExpiredJobs();
+  const now = Date.now();
   const job: PredictionJob = {
-    jobId,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    jobId: `job_${crypto.randomUUID()}`,
+    accessToken: crypto.randomBytes(32).toString("hex"),
+    cacheKey,
+    createdAt: now,
+    updatedAt: now,
     status: "queued",
     progress: {
       current: 0,
@@ -471,17 +463,27 @@ export function createPredictionJob(
     },
     detectedGender,
     genderMismatchWarning,
-    completedMilestones: {},
+    completedDays: [],
     prompts,
     cached: false,
   };
 
-  globalJobs.set(jobId, job);
+  globalJobs.set(job.jobId, job);
   return job;
 }
 
 export function getPredictionJob(jobId: string): PredictionJob | null {
-  return globalJobs.get(jobId) || null;
+  const job = globalJobs.get(jobId);
+  if (!job) return null;
+  if (Date.now() - job.updatedAt > JOB_TTL_MS) {
+    globalJobs.delete(jobId);
+    return null;
+  }
+  return job;
+}
+
+export function deletePredictionJob(jobId: string): void {
+  globalJobs.delete(jobId);
 }
 
 export function updatePredictionJob(jobId: string, patch: Partial<PredictionJob>): PredictionJob | null {
@@ -496,4 +498,28 @@ export function updatePredictionJob(jobId: string, patch: Partial<PredictionJob>
 
   globalJobs.set(jobId, updated);
   return updated;
+}
+
+/** Day -> short-lived signed image URL, for the job's finished milestones. */
+export function signedMilestones(job: Pick<PredictionJob, "cacheKey" | "completedDays">): Record<number, string> {
+  const out: Record<number, string> = {};
+  for (const day of MILESTONE_DAYS) {
+    if (job.completedDays.includes(day)) out[day] = signedMilestoneUrl(job.cacheKey, day);
+  }
+  return out;
+}
+
+/** Public view of a job: never includes the access token, cache key or prompts. */
+export function serializeJob(job: PredictionJob) {
+  return {
+    jobId: job.jobId,
+    status: job.status,
+    progress: job.progress,
+    detectedGender: job.detectedGender,
+    genderMismatchWarning: job.genderMismatchWarning,
+    completedMilestones: signedMilestones(job),
+    error: job.error,
+    cached: job.cached,
+    updatedAt: job.updatedAt,
+  };
 }

@@ -122,7 +122,7 @@ export const AssessmentQuizWizard: React.FC = () => {
     setStep(7);
   };
 
-  const handleAnalysisComplete = async () => {
+  const handleAnalysisComplete = () => {
     const result = calculatePersonalizedPlan(responses);
     if (responses.userPhotoBase64) {
       result.userPhotoBase64 = responses.userPhotoBase64;
@@ -139,30 +139,8 @@ export const AssessmentQuizWizard: React.FC = () => {
       console.error("Local storage error", e);
     }
 
-    // Trigger /api/generate-twin in background
-    try {
-      const twinRes = await fetch("/api/generate-twin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          archetype: responses.archetype,
-          age: responses.age,
-          height: responses.heightCm,
-          weight: responses.currentWeightKg,
-          targetWeight: responses.targetWeightKg,
-          postureIssue: responses.injuries.length > 0 ? "Bảo vệ khớp và cân chỉnh tư thế" : "Gù lưng & siết eo",
-          userPhotoBase64: responses.userPhotoBase64,
-        }),
-      });
-      if (twinRes.ok) {
-        const twinData = await twinRes.json();
-        if (twinData.milestoneImages) {
-          localStorage.setItem("g_ai_twin_milestones", JSON.stringify(twinData.milestoneImages));
-        }
-      }
-    } catch (e) {
-      // fallback silently
-    }
+    // Photo-based predictions are generated on /prediction, after explicit consent.
+    localStorage.removeItem("g_ai_twin_milestones");
 
     setStep(8);
   };
