@@ -41,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [site, web]
+        app: [hub, site, web]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

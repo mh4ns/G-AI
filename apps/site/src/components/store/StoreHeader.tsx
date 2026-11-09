@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Search, ShoppingBag, Menu, X } from "lucide-react";
 import Link from "next/link";
-import { BrandLogo, appUrl } from "@g-ai/ui";
+import { BrandLogo, appUrl, hubUrl } from "@g-ai/ui";
 
 interface StoreHeaderProps {
   cartCount: number;
@@ -30,7 +30,7 @@ export const StoreHeader: React.FC<StoreHeaderProps> = ({ cartCount, onOpenCart 
 
           {/* Architectural Brand Identity */}
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center group">
+            <Link href={hubUrl("/")} className="flex items-center group" aria-label="G-AI – trang chính">
               <BrandLogo isLight={true} size="sm" showSubtitle subtitle="Movement Goods" />
             </Link>
           </div>

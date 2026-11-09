@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Lightbulb, ShoppingBag } from "lucide-react";
 import { FlipTextHover } from "@/components/home/KineticText";
-import { BrandLogo, appUrl } from "@g-ai/ui";
+import { BrandLogo, appUrl, hubUrl } from "@g-ai/ui";
 
 interface HomeNavbarProps {
   isLight?: boolean;
@@ -28,7 +28,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
         {/* Brand Typographic Identity (Pure Geometric G Monogram) */}
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center group">
+          <Link href={hubUrl("/")} className="flex items-center group" aria-label="G-AI – trang chính">
             <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
           </Link>
         </div>

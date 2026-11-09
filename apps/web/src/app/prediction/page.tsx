@@ -16,7 +16,7 @@ import {
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
 import { TimelineScrubber } from "@/components/prediction/TimelineScrubber";
-import { BrandLogo, siteUrl } from "@g-ai/ui";
+import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
 import { BodyCalibrationModal } from "@/components/prediction/BodyCalibrationModal";
 import { PlanSummaryCard, PlanConfig } from "@/components/prediction/PlanSummaryCard";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
@@ -397,7 +397,7 @@ export default function PredictionPage() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <Link href={siteUrl("/")} className="flex items-center group">
+            <Link href={hubUrl("/")} className="flex items-center group">
               <BrandLogo isLight={false} size="sm" showSubtitle subtitle="Dự đoán vóc dáng 28 ngày" />
             </Link>
           </div>

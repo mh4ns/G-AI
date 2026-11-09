@@ -19,7 +19,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
-import { BrandLogo, siteUrl } from "@g-ai/ui";
+import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
 
@@ -232,7 +232,7 @@ export default function TodayDashboardPage() {
       }`}>
         <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href={siteUrl("/")} className="hover:opacity-80 transition-opacity flex items-center">
+            <Link href={hubUrl("/")} className="hover:opacity-80 transition-opacity flex items-center">
               <BrandLogo variant="horizontal" isLight={isLight} size="sm" />
             </Link>
             <div className={`border-l pl-3 ${isLight ? "border-stone-200" : "border-stone-800"}`}>

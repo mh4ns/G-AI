@@ -1,16 +1,17 @@
-# Deploying to Vercel (two projects)
+# Deploying to Vercel (three projects)
 
-The repo ships **two independent websites** that share one design foundation (`packages/ui`):
+The repo ships **three independent websites** that share one design foundation (`packages/ui`):
 
 | Vercel project | Root Directory | What it serves |
 |---|---|---|
-| `g-ai-site` | `apps/site` | Brand landing page and Movement Goods store |
+| `g-ai-hub` | `apps/hub` | Main website: product cards that link to the other two. Every product's logo links back here. |
+| `g-ai-site` | `apps/site` | G-AI Movement: brand landing page and Movement Goods store |
 | `g-ai-app` | `apps/web` | Onboarding quiz, photo prediction, Today dashboard, login, `/api/prediction/*` |
 
 The FastAPI backend is **not** hosted on Vercel. Deploy it separately (see "Backend" below) and point
 the app at it with `BACKEND_URL`.
 
-## 1. Create both projects
+## 1. Create the projects
 
 For each row in the table above:
 
@@ -19,17 +20,18 @@ For each row in the table above:
    the repo root, so `packages/ui` is available. Keep the framework preset (Next.js) and the default commands.
 3. Add that project's environment variables (below), then click **Deploy**.
 
-Pushing to `main` redeploys both projects. To skip builds for unrelated changes, set
+Pushing to `main` redeploys every project whose files changed. To skip builds for unrelated changes, set
 Settings → Git → **Ignored Build Step** to `git diff --quiet HEAD^ HEAD -- . ../../packages/ui`.
 
 ## 2. Environment variables
 
-**Both projects:** set these so the two sites can link to each other. They are read at build time, so
+**All projects:** set these so the sites can link to each other. They are read at build time, so
 redeploy after changing them.
 
 | Variable | Value |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | Public URL of `g-ai-site`, e.g. `https://g-ai.vercel.app` |
+| `NEXT_PUBLIC_HUB_URL` | Public URL of `g-ai-hub`, e.g. `https://g-ai-hub.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | Public URL of `g-ai-site`, e.g. `https://g-ai-site.vercel.app` |
 | `NEXT_PUBLIC_APP_URL` | Public URL of `g-ai-app`, e.g. `https://g-ai-app.vercel.app` |
 
 **`g-ai-app` only:**

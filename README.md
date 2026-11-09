@@ -18,9 +18,10 @@
 | Cửa hàng | 🚧 API đặt hàng an toàn đã có; giao diện web vẫn dùng dữ liệu mẫu, chưa có cổng thanh toán |
 | Dinh dưỡng, IoT/BLE, CBT Journal, Premium, App mobile | 📝 Chưa bắt đầu |
 
-**Hai website, một nền thiết kế:** `apps/site` (trang thương hiệu + cửa hàng, cổng 3001) và `apps/web`
-(ứng dụng huấn luyện, cổng 3000) dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
-`npm run dev:site` và `npm run dev:app`. Deploy: `docs/deploy-vercel.md`.
+**Ba website, một nền thiết kế:** web chính `apps/hub` (cổng 3002) dẫn tới G-AI Movement `apps/site`
+(trang thương hiệu + cửa hàng, cổng 3001) và G-AI Coach `apps/web` (ứng dụng huấn luyện, cổng 3000); logo của
+mỗi sản phẩm quay về web chính. Cả ba dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
+`npm run dev:hub`, `npm run dev:site`, `npm run dev:app`. Deploy: `docs/deploy-vercel.md`.
 
 **Chạy nhanh:** `docker compose up --build` (sao chép `.env.example` thành `.env` trước), hoặc chạy riêng
 từng app theo `apps/backend/README.md` và `apps/web/README.md`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
@@ -34,8 +35,9 @@ Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho n�
 ```text
 G-ai/
 ├── apps/
-│   ├── site/                    # Web 1: trang thương hiệu + cửa hàng (Next.js 15)
-│   ├── web/                     # Web 2: ứng dụng huấn luyện — quiz, dự đoán ảnh, Today (Next.js 15)
+│   ├── hub/                     # Web chính: giới thiệu và dẫn tới từng sản phẩm (Next.js 15)
+│   ├── site/                    # G-AI Movement: trang thương hiệu + cửa hàng (Next.js 15)
+│   ├── web/                     # G-AI Coach: quiz, dự đoán ảnh, Today (Next.js 15)
 │   ├── mobile/                  # Ứng dụng Di động (React Native / Flutter)
 │   └── backend/                 # API Server & AI Core (Python FastAPI, Uvicorn, SQLAlchemy)
 │
