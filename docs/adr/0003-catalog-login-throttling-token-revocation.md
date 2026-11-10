@@ -12,8 +12,9 @@ Postgres (free), behind the Vercel `/api/v1` rewrite.
 
 ## Decision
 
-1. **Catalog.** `apps/backend/app/data/store_catalog.json` is the source of truth, built from the site's
-   catalogue with the same ids, names, prices, sizes and images. Migration `c3f1a9d2b8e4` loads a frozen
+1. **Catalog.** `apps/backend/app/data/store_catalog.json` is the only source of truth, first built from the
+   site's former mock catalogue (same ids, names, prices, sizes and images). The site reads it through
+   `GET /store/products`; its `sampleCatalog.ts` is a browse-only fallback with non-orderable ids. Migration `c3f1a9d2b8e4` loads a frozen
    copy of it; later edits go through `python -m app.services.catalog`. Both are idempotent: they insert or
    update descriptive fields, never reset stock and never delete (products not in the file are deactivated,
    because orders keep snapshots of what was bought). `seed_data.py` stays dev-only.

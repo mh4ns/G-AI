@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source": "apps/site/src/data/mockStoreData.ts (2026-11-10)",
+  "source": "Frozen snapshot of app/data/store_catalog.json loaded by migration c3f1a9d2b8e4 (seeded from the website's former mock catalogue, 2026-11-10). Do not edit.",
   "products": [
     {
       "id": "p1",

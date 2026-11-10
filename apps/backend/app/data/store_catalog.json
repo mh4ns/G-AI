@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "source": "apps/site/src/data/mockStoreData.ts (2026-11-10)",
+  "source": "Canonical store catalog (apps/backend). Seeded from the website's former mock catalogue on 2026-11-10; edit here and run `python -m app.services.catalog`.",
   "products": [
     {
       "id": "p1",

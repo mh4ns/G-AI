@@ -12,7 +12,7 @@ Domain terms as used in code, issues and docs. Prefer these words over synonyms.
 | **Daily metric** | One user's tracked numbers for one local calendar day: water, calories eaten/burned, fasting state, completed habits. | `DailyMetric`, `/today` |
 | **Habit** | A checklist item completed for a day, stored by key (`water`, `workout`, `mindfulness`, `fasting`, …). | `habits_completed`, `habit_key` |
 | **Workout log** | A finished session: duration, calories, reps, form accuracy. | `WorkoutLog` |
-| **Form accuracy** | 0–100 score of how closely joint angles stayed within an exercise's target range. *Currently simulated in the web studio; see ADR-0002 follow-ups.* | `form_accuracy_pct`, `averageFormScore` |
+| **Form accuracy** | 0–100 score of how closely joint angles stayed within an exercise's target range. Measured in the browser with MediaPipe Pose (`apps/web/src/components/workout`, `pose-math.ts`); absent (`null`) when the session runs without the camera. | `form_accuracy_pct`, `averageFormScore` |
 | **Day 0 photo** | The user's own photo used as the base for predictions. Biometric data: stays on-device unless the user gives **photo consent**. | `userPhotoBase64`, `g_ai_user_twin_photo` |
 | **Photo consent** | Explicit, revocable opt-in to send the Day 0 photo to the AI provider. Never pre-checked. | `hasPhotoConsent`, `consentAccepted` |
 | **Prediction** / **Milestone** | AI-edited versions of the Day 0 photo at days 7, 14 and 28. | `MILESTONE_DAYS`, `completedDays` |

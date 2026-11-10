@@ -1126,10 +1126,17 @@
             "type": "integer"
           },
           "form_accuracy_pct": {
-            "maximum": 100.0,
-            "minimum": 0.0,
-            "title": "Form Accuracy Pct",
-            "type": "number"
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Accuracy Pct"
           },
           "reps_completed": {
             "default": 0,
@@ -1152,8 +1159,7 @@
         },
         "required": [
           "duration_sec",
-          "calories_burned",
-          "form_accuracy_pct"
+          "calories_burned"
         ],
         "title": "WorkoutLogCreate",
         "type": "object"
@@ -1174,8 +1180,15 @@
             "type": "integer"
           },
           "form_accuracy_pct": {
-            "title": "Form Accuracy Pct",
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Accuracy Pct"
           },
           "id": {
             "title": "Id",

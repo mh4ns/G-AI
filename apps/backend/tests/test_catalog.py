@@ -12,7 +12,6 @@ from app.models import Product
 from app.services.catalog import CATALOG_PATH, load_catalog, sync_catalog
 
 BACKEND = Path(__file__).resolve().parent.parent
-SITE_CATALOG = BACKEND.parent / "site" / "src" / "data" / "mockStoreData.ts"
 
 
 async def _sync():
@@ -54,17 +53,18 @@ async def test_sync_updates_fields_keeps_stock_and_retires_unknown(client, produ
         assert legacy is not None and legacy.is_active is False
 
 
-async def test_catalog_matches_website_ids_prices_and_sizes():
-    """The site's mock catalogue and the backend catalog must not drift while the site still ships both."""
-    if not SITE_CATALOG.exists():  # e.g. backend-only Docker build context
-        return
-    source = SITE_CATALOG.read_text(encoding="utf-8")
-    site = {
-        m.group(1): (float(m.group(2)), re.findall(r'"([^"]+)"', m.group(3)))
-        for m in re.finditer(r'id: "(p\d+)",.*?price: ([\d.]+),.*?sizes: \[([^\]]*)\]', source, re.S)
-    }
-    backend = {p["id"]: (float(p["price"]), p["sizes_available"]) for p in load_catalog()}
-    assert site == backend
+def test_catalog_file_is_valid():
+    """app/data/store_catalog.json is the only source of truth; check what checkout depends on."""
+    products = load_catalog()
+    assert products, "catalog is empty"
+    for p in products:
+        assert re.fullmatch(r"[a-z0-9-]{1,50}", p["id"]), p["id"]
+        assert p["price"] > 0 and (p["original_price"] is None or p["original_price"] > 0)
+        assert p["sizes_available"] and all(isinstance(s, str) and 0 < len(s) <= 20 for s in p["sizes_available"])
+        assert p["category"] in {"apparel", "equipment", "device", "supplement"}
+        assert p["activity"] in {"pilates", "gym", "running", "lounge", "yoga"}
+        assert p["image_front"].startswith("https://") and p["image_hover"].startswith("https://")
+        assert isinstance(p["initial_stock"], int) and p["initial_stock"] >= 0
 
 
 def test_migration_seeds_catalog_and_retires_demo_products(tmp_path):

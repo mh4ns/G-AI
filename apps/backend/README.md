@@ -58,7 +58,8 @@ Demo account from the seed: `demo@g-ai.health` / `PilatesPass2026!`.
 
 ## Store catalog
 
-`app/data/store_catalog.json` is the catalog's source of truth (ids `p1..p8`, the same products the website shows).
+`app/data/store_catalog.json` is the only source of truth for the catalog (ids `p1..p8`); the website reads it
+through `GET /store/products` (its `sampleCatalog.ts` is a browse-only fallback for when the backend is down).
 Migration `c3f1a9d2b8e4` loads it on `alembic upgrade head`. To change products later, edit the JSON and run:
 
 ```bash

@@ -55,7 +55,8 @@ class WorkoutLog(Base):
     duration_sec: Mapped[int] = mapped_column(Integer, default=0)
     calories_burned: Mapped[int] = mapped_column(Integer, default=0)
     reps_completed: Mapped[int] = mapped_column(Integer, default=0)
-    form_accuracy_pct: Mapped[float] = mapped_column(Float, default=100.0)  # Real-time computer vision score
+    # 0-100 pose score measured in the browser; NULL when the session ran without the camera.
+    form_accuracy_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

@@ -62,6 +62,17 @@ async def test_workout_log_updates_today_calories(client):
     assert len(logs) == 1 and logs[0]["form_accuracy_pct"] == 91.5
 
 
+async def test_workout_log_without_camera_has_no_form_score(client):
+    session = await register(client)
+    res = await client.post(
+        "/api/v1/workouts/logs",
+        json={"duration_sec": 600, "calories_burned": 80, "reps_completed": 20},
+        headers=bearer(session),
+    )
+    assert res.status_code == 201, res.text
+    assert res.json()["form_accuracy_pct"] is None
+
+
 async def test_workout_log_rejects_out_of_range_values(client):
     me = await register(client)
     res = await client.post(

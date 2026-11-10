@@ -39,7 +39,8 @@ class WorkoutLogCreate(BaseModel):
     duration_sec: int = Field(..., ge=1, le=6 * 60 * 60)
     calories_burned: int = Field(..., ge=0, le=5000)
     reps_completed: int = Field(0, ge=0, le=10000)
-    form_accuracy_pct: float = Field(..., ge=0.0, le=100.0)
+    # Measured in the browser with MediaPipe Pose; null when the session ran without the camera.
+    form_accuracy_pct: Optional[float] = Field(None, ge=0.0, le=100.0)
 
 
 class WorkoutLogResponse(BaseModel):
@@ -50,5 +51,5 @@ class WorkoutLogResponse(BaseModel):
     duration_sec: int
     calories_burned: int
     reps_completed: int
-    form_accuracy_pct: float
+    form_accuracy_pct: Optional[float]
     completed_at: datetime
