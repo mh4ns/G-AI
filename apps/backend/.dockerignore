@@ -4,3 +4,10 @@ __pycache__
 *.db
 .env
 .pytest_cache
+.env.*
+!.env.example
+tests
+*.sqlite
+*.sqlite3
+.venv/
+venv/

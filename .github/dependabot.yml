@@ -1,0 +1,50 @@
+# Weekly dependency updates, grouped so each ecosystem opens only a few PRs.
+version: 2
+updates:
+  # npm workspaces share one root package-lock.json, so Dependabot updates them from "/".
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/apps/hub"
+      - "/apps/site"
+      - "/apps/web"
+      - "/packages/ui"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      next-react:
+        patterns: ["next", "react", "react-dom", "eslint-config-next", "@types/react", "@types/react-dom"]
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+      runtime-minor:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: "/apps/backend"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      python-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - "/apps/backend"
+      - "/docker"
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
