@@ -6,11 +6,11 @@ FastAPI + async SQLAlchemy 2.0 service behind the web app.
 
 | Area | Endpoints (`/api/v1`) | Auth |
 |---|---|---|
-| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | — |
+| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/password`, `GET /auth/me` | — / required for password |
 | Quiz & plan | `POST /quiz/submit`, `GET /quiz/plans/me` | optional / required |
 | Today dashboard | `GET /today`, `POST /today/{water,calories,fasting,habits/toggle}` | required |
 | Workouts | `GET /workouts/{exercises,routines}`, `POST /workouts/logs`, `GET /workouts/logs/me` | public / required |
-| Store | `GET /store/products[/{id}]`, `POST /store/orders` | public / optional |
+| Store | `GET /store/products[/{id}]` (`?category=&activity=`), `POST /store/orders`, `GET /store/orders/me` | public / optional / required |
 
 Not implemented yet (see the root README roadmap): nutrition logging, body-fat tools, CBT journal, payments.
 
@@ -22,6 +22,11 @@ Not implemented yet (see the root README roadmap): nutrition logging, body-fat t
 - Order prices, names and images are read from the catalog; the client only picks product, size and quantity.
   Orders start as `payment_status=pending` until a payment provider confirms them.
 - Passwords: PBKDF2-HMAC-SHA256, 600k iterations, per-user salt (legacy 100k hashes still verify).
+- Failed logins are throttled per email+IP (5), email (20) and IP (50) per 15 minutes, stored in
+  `auth_throttles` under keyed hashes; over the limit, login answers `429` with `Retry-After`.
+  Behind proxies set `TRUSTED_PROXY_HOPS` (Vercel rewrite + Render = 2) so the real client IP is used.
+- Every JWT carries the user's `token_version`. Logout and password change bump it, which revokes all
+  earlier tokens on every device (see ADR-0003).
 - `ENVIRONMENT=production` refuses to start with the default `SECRET_KEY`, insecure cookies or `AUTO_CREATE_SCHEMA=true`.
 
 ## Layout
@@ -50,6 +55,36 @@ uvicorn app.main:app --reload --port 8000
 
 Swagger: `http://localhost:8000/api/v1/docs` (disabled in production).
 Demo account from the seed: `demo@g-ai.health` / `PilatesPass2026!`.
+
+## Store catalog
+
+`app/data/store_catalog.json` is the catalog's source of truth (ids `p1..p8`, the same products the website shows).
+Migration `c3f1a9d2b8e4` loads it on `alembic upgrade head`. To change products later, edit the JSON and run:
+
+```bash
+python -m app.services.catalog --dry-run   # show inserts / updates / deactivations
+python -m app.services.catalog             # apply (idempotent, keeps stock, never deletes)
+```
+
+## API contract for the web apps
+
+`packages/shared-types/openapi/backend-v1.json` is the generated OpenAPI schema and
+`packages/shared-types/api/store.ts` the matching TypeScript types. After changing a schema or route:
+`python -m app.export_openapi` (a test fails if the committed file is stale).
+
+## Postgres / Supabase
+
+`DATABASE_URL` accepts the provider's string as-is (`postgres://…`, `postgresql://…?sslmode=require`);
+it is rewritten for asyncpg. On Supabase's **transaction pooler (port 6543)** server-side prepared
+statements are disabled automatically (`DB_TRANSACTION_POOLER=true|false` overrides). The pool is small
+for free tiers (`DB_POOL_SIZE=3`, `DB_MAX_OVERFLOW=2`, `DB_POOL_RECYCLE_SECONDS=300`, `pool_pre_ping`).
+`GET /healthz` returns 200 when the database answers, 503 otherwise.
+
+Run the suite against Postgres (it drops all tables, so use a throwaway database):
+
+```bash
+TEST_DATABASE_URL=postgresql://postgres@localhost:5432/gai_test python -m pytest -q
+```
 
 ## Migrations
 
