@@ -1,5 +1,5 @@
 import json
-from typing import Annotated, List, Literal
+from typing import Annotated, List, Literal, Optional
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     # Create tables on startup instead of running Alembic migrations.
     # Convenient for local SQLite; production must use `alembic upgrade head`.
     AUTO_CREATE_SCHEMA: bool = True
+    # Connection pool, sized for free tiers (Supabase free allows ~60 direct / 200 pooled clients).
+    DB_POOL_SIZE: int = 3
+    DB_MAX_OVERFLOW: int = 2
+    DB_POOL_RECYCLE_SECONDS: int = 300
+    # Disable server-side prepared statements for a transaction-mode pooler (PgBouncer/Supavisor).
+    # Unset = auto-detect from the URL's port (6543 is Supabase's transaction pooler).
+    DB_TRANSACTION_POOLER: Optional[bool] = None
 
     # Security
     SECRET_KEY: str = INSECURE_DEV_SECRET
@@ -33,6 +40,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     AUTH_COOKIE_NAME: str = "g_ai_session"
     AUTH_COOKIE_SECURE: bool = False
+
+    # Login throttling: failed attempts allowed per window before answering 429.
+    LOGIN_WINDOW_SECONDS: int = 15 * 60
+    LOGIN_MAX_FAILURES_PER_EMAIL_IP: int = 5
+    LOGIN_MAX_FAILURES_PER_EMAIL: int = 20
+    LOGIN_MAX_FAILURES_PER_IP: int = 50
+    # How many reverse proxies in front of the app append to X-Forwarded-For
+    # (e.g. Vercel rewrite + Render = 2). 0 trusts no header and uses the socket peer address.
+    TRUSTED_PROXY_HOPS: int = 0
 
     # Calendar day boundaries for daily metrics
     DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"

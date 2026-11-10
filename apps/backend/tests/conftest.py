@@ -3,7 +3,9 @@ import tempfile
 
 # Configure an isolated database before the app (and its engine) is imported.
 _DB_FILE = os.path.join(tempfile.mkdtemp(prefix="g_ai_test_"), "test.db")
-os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{_DB_FILE}"
+# TEST_DATABASE_URL runs the suite against another database, e.g. a throwaway local Postgres.
+# Every test drops and recreates all tables there, so never point it at real data.
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or f"sqlite+aiosqlite:///{_DB_FILE}"
 os.environ["ENVIRONMENT"] = "test"
 os.environ["AUTO_CREATE_SCHEMA"] = "false"
 

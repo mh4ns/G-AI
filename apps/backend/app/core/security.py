@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Tuple
 
 import jwt
 
@@ -43,24 +43,28 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def create_access_token(subject: str | int, expires_minutes: Optional[int] = None) -> str:
+def create_access_token(subject: str | int, token_version: int, expires_minutes: Optional[int] = None) -> str:
+    """`tv` must equal the user's current token_version for the token to be accepted (see api/deps.py)."""
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {"sub": str(subject), "iat": now, "exp": expire, "type": "access"}
+    payload = {"sub": str(subject), "tv": token_version, "iat": now, "exp": expire, "type": "access"}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def decode_access_token(token: str) -> Optional[str]:
-    """Returns the subject (user id) of a valid access token, or None."""
+def decode_access_token(token: str) -> Optional[Tuple[int, int]]:
+    """Returns (user id, token version) of a valid, well-formed access token, or None."""
     try:
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
-            options={"require": ["exp", "sub"]},
+            options={"require": ["exp", "sub", "tv"]},
         )
     except jwt.PyJWTError:
         return None
-    if payload.get("type") != "access":
+    subject, version = payload.get("sub"), payload.get("tv")
+    if payload.get("type") != "access" or not isinstance(subject, str) or not subject.isdigit():
         return None
-    return payload.get("sub")
+    if not isinstance(version, int) or isinstance(version, bool):
+        return None
+    return int(subject), version

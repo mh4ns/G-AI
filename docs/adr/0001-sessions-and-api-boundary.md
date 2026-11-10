@@ -28,8 +28,7 @@ user's health data. Store orders trusted client prices and were marked `paid` wi
 
 - CSRF: relies on `SameSite=Lax` plus JSON bodies (cross-site forms cannot send `application/json`
   without a preflight that CORS rejects). Revisit if any endpoint starts accepting form posts.
-- There is no refresh token or server-side revocation yet: logout clears the cookie, but a copied
-  token stays valid until it expires (7 days). Add a token version per user before adding admin roles.
-- No login rate limiting yet; add it before public launch.
-- The web store still uses its local mock catalogue; wiring checkout to `/store/orders` requires
-  unifying product ids with the backend seed.
+- ~~There is no server-side revocation yet~~ → done in ADR-0003 (`token_version`).
+- ~~No login rate limiting yet~~ → done in ADR-0003.
+- ~~The web store and the backend seed use different product ids~~ → unified in ADR-0003; the site
+  still has to switch from its mock catalogue to `/store/products` and `/store/orders`.
