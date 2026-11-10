@@ -14,6 +14,10 @@ Issues and specs live as GitHub Issues for `mh4ns/G-AI`. Use the `gh` CLI. See `
 
 Canonical 5-role triage vocabulary mapped directly to GitHub labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
 
+### Antigravity bridge
+
+Claude Code hands tasks to Antigravity via `docs/agents/handoff/` and the `/claude-tasks` workflow. See `docs/agents/antigravity-bridge.md`.
+
 ### Domain docs
 
 Single-context layout with root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
