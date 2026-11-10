@@ -175,7 +175,8 @@ export default function TodayDashboardPage() {
         duration_sec: Math.max(1, Math.round(summary.durationMinutes * 60)),
         calories_burned: Math.max(0, Math.round(summary.caloriesBurned)),
         reps_completed: Math.max(0, Math.round(summary.repsCompleted)),
-        form_accuracy_pct: Math.min(100, Math.max(0, summary.averageFormScore)),
+        // No camera = nothing measured; the backend field is required, so 0 means "not scored".
+        form_accuracy_pct: Math.min(100, Math.max(0, summary.averageFormScore ?? 0)),
       });
       let metric = await api.today.get();
       if (!metric.habits_completed.includes("workout")) {

@@ -83,6 +83,33 @@ export interface ApiWorkoutLogCreate {
   routine_id?: number;
 }
 
+export interface ApiExercise {
+  id: number;
+  code: string;
+  name: string;
+  category: string;
+  primary_muscle: string;
+  difficulty: string;
+  description: string;
+  instructions: string[];
+  /** Three MediaPipe Pose landmark indices; the angle is measured at the middle one. */
+  landmark_joints: number[];
+  target_angle_min: number | null;
+  target_angle_max: number | null;
+  thumbnail_url: string | null;
+}
+
+export interface ApiWorkoutRoutine {
+  id: number;
+  slug: string;
+  title: string;
+  duration_min: number;
+  calorie_burn_est: number;
+  intensity: string;
+  exercises_sequence: { exercise_code?: string; reps?: number; duration_sec?: number; rest_sec?: number }[];
+  is_featured: boolean;
+}
+
 // --- Endpoints ----------------------------------------------------------------
 
 export const api = {
@@ -104,6 +131,8 @@ export const api = {
   },
   workouts: {
     log: (payload: ApiWorkoutLogCreate) => post<{ id: number }>("/workouts/logs", payload),
+    exercises: (init?: RequestInit) => request<ApiExercise[]>("/workouts/exercises", init),
+    routines: (init?: RequestInit) => request<ApiWorkoutRoutine[]>("/workouts/routines", init),
   },
 };
 
