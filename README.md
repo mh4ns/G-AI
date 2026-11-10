@@ -21,10 +21,12 @@
 **Ba website, một nền thiết kế:** web chính `apps/hub` (cổng 3002) dẫn tới G-AI Movement `apps/site`
 (trang thương hiệu + cửa hàng, cổng 3001) và G-AI Coach `apps/web` (ứng dụng huấn luyện, cổng 3000); logo của
 mỗi sản phẩm quay về web chính. Cả ba dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
-`npm run dev:hub`, `npm run dev:site`, `npm run dev:app`. Deploy: `docs/deploy-vercel.md`.
+`npm run dev:hub`, `npm run dev:site`, `npm run dev:app`. Deploy: 3 web lên Vercel (`docs/deploy-vercel.md`),
+backend lên Render + Supabase (`docs/deploy-render.md`, Blueprint `render.yaml`).
 
 **Chạy nhanh:** `docker compose up --build` (sao chép `.env.example` thành `.env` trước), hoặc chạy riêng
-từng app theo `apps/backend/README.md` và `apps/web/README.md`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
+từng app theo `apps/backend/README.md` và `apps/web/README.md`. Test e2e (Playwright, tự build và khởi động
+3 web + backend SQLite): `npm run e2e`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
 
 ---
 
@@ -51,7 +53,9 @@ G-ai/
 │   ├── SEQUENCE_DIAGRAM.md      # Sơ đồ tuần tự tổng thể
 │   └── SLIDES.md                # 13 Slide trình chiếu đề án (Marp-ready)
 │
-├── docker-compose.yml           # Khởi chạy toàn bộ môi trường (PostgreSQL + Backend + Web)
+├── e2e/                         # Test end-to-end Playwright (hub → quiz → Today, đăng nhập, logo, mobile)
+├── render.yaml                  # Render Blueprint cho backend (DB: Supabase)
+├── docker-compose.yml           # Khởi chạy toàn bộ môi trường (PostgreSQL + Backend + hub/site/web)
 ├── README.md                    # Bản đặc tả tổng quan dự án
 └── .gitignore                   # Cấu hình bỏ qua file tạm, cache, .venv
 ```

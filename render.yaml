@@ -1,0 +1,44 @@
+# Render Blueprint: the G-AI FastAPI backend (apps/backend) as a Docker web service.
+# The database is external (Supabase PostgreSQL). Setup steps: docs/deploy-render.md.
+services:
+  - type: web
+    name: g-ai-api
+    runtime: docker
+    region: singapore
+    plan: free
+    rootDir: apps/backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true
+    # Redeploy only when the backend changes (the frontends deploy on Vercel).
+    buildFilter:
+      paths:
+        - apps/backend/**
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: AUTO_CREATE_SCHEMA
+        value: "false"
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: BACKEND_CORS_ORIGINS
+        value: https://g-ai-app.vercel.app,https://g-ai-site.vercel.app
+      - key: SECRET_KEY
+        generateValue: true
+      # Requests pass through the Vercel rewrite and Render's proxy, so the client IP is
+      # the 2nd entry from the right in X-Forwarded-For (used by login rate limiting).
+      - key: TRUSTED_PROXY_HOPS
+        value: "2"
+      # Small connection pool for the free plans (Supabase pooler limits, 512 MB instance).
+      - key: DB_POOL_SIZE
+        value: "3"
+      - key: DB_MAX_OVERFLOW
+        value: "2"
+      - key: DB_POOL_RECYCLE_SECONDS
+        value: "300"
+      # Supabase connection string, pasted in the Render dashboard; it is never committed.
+      # Session pooler (port 5432) recommended. Port 6543 (Transaction pooler) also works:
+      # the backend turns prepared statements off for it automatically.
+      - key: DATABASE_URL
+        sync: false
