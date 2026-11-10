@@ -65,17 +65,18 @@ Expect occasional "job not found" errors until the durable job queue in
 
 ## 4. Backend (separate host)
 
-The backend needs a long-running Python process and PostgreSQL. Any of Render, Railway or Fly.io works
-with `apps/backend/Dockerfile`, and Supabase or Neon can provide the database. Backend environment variables:
+The backend runs on **Render** (Docker, from [`render.yaml`](../render.yaml)) with a **Supabase**
+PostgreSQL database. Follow [deploy-render.md](deploy-render.md); in short:
 
-```
-ENVIRONMENT=production
-DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:5432/DB
-SECRET_KEY=<random, at least 32 characters>
-AUTO_CREATE_SCHEMA=false
-AUTH_COOKIE_SECURE=true
-BACKEND_CORS_ORIGINS=https://<your-vercel-domain>
-```
+1. Supabase → **Connect** → *Session pooler* (port 5432) URI, with the prefix changed to
+   `postgresql+asyncpg://`.
+2. Render → **New → Blueprint** → this repo → paste that value as `DATABASE_URL`. Everything else
+   (`ENVIRONMENT=production`, generated `SECRET_KEY`, `AUTO_CREATE_SCHEMA=false`,
+   `AUTH_COOKIE_SECURE=true`, `BACKEND_CORS_ORIGINS`) comes from the Blueprint.
+3. Set `BACKEND_URL` on `g-ai-app` to the Render URL (e.g. `https://g-ai-api.onrender.com`) and
+   redeploy, because it is read at build time.
 
 The container runs `alembic upgrade head` on start. Browsers reach the backend only through the Vercel
-`/api/v1` proxy, so the session cookie stays first-party on the Vercel domain.
+`/api/v1` proxy, so the session cookie stays first-party on the Vercel domain. Any other Docker host
+(Railway, Fly.io) works with `apps/backend/Dockerfile` and the same variables; the app listens on `$PORT`
+(default 8000).
