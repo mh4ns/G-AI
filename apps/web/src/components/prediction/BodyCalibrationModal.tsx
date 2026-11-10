@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Sparkles, X, Check, Activity, Heart, ArrowRight, Camera, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
+import { Sparkles, X, Check, ArrowRight, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
 import { deletePredictionOnServer, hasPhotoConsent, setPhotoConsent } from "@/lib/prediction-client";
 
 interface BodyCalibrationModalProps {

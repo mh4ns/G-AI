@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowRight, Sparkles, Scale, Info, Plus, Minus } from "lucide-react";
+import { ArrowRight, Scale, Plus, Minus } from "lucide-react";
 import { calculateBMI, getBMICategory } from "@/lib/quiz-calculations";
 import { AthleticArchetype } from "@/types/quiz";
 

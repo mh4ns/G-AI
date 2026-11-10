@@ -4,17 +4,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { QuizResponses, PersonalizedPlanResult } from "@/types/quiz";
 import { 
   Trophy, 
-  Calendar, 
+  
   CheckCircle2, 
   ArrowRight, 
-  Video, 
-  Flame, 
-  Droplets, 
+  
+  
+  
   HeartHandshake, 
   Sparkles,
   ShieldCheck,
-  Dumbbell,
-  Compass,
+  
+  
   Activity
 } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -46,7 +46,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
           ? ["#FF5A36", "#FFFFFF", "#F59E0B", "#3B82F6"]
           : ["#FF6B4A", "#10B981", "#F59E0B", "#F472B6"],
       });
-    } catch (e) {
+    } catch {
       // fallback
     }
 

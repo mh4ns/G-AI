@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowUpRight, Sparkles, Compass } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 
 interface GalleryItem {
   id: string;

@@ -66,7 +66,6 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const [comparePos, setComparePos] = useState<number>(50); // 0 to 100%
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showSkeleton, setShowSkeleton] = useState<boolean>(false); // Step 3 & 6: Default OFF
-  const [hasError, setHasError] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isMale = archetype === "male_strength";
@@ -404,7 +403,6 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                     sizes="(max-width: 768px) 100vw, 420px"
                     className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter contrast-[1.04] brightness-105"
                     priority={day === 0 || day === activeMilestoneDay}
-                    onError={() => setHasError(true)}
                   />
                 </div>
               );

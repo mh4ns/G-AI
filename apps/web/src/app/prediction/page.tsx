@@ -8,9 +8,9 @@ import {
   Compass,
   ArrowRight,
   SlidersHorizontal,
-  Info,
+  
   MoreHorizontal,
-  Dumbbell,
+  
   AlertTriangle,
 } from "lucide-react";
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
@@ -130,7 +130,7 @@ export default function PredictionPage() {
       if (savedCustomPlan) {
         setPlanConfig(JSON.parse(savedCustomPlan));
       }
-    } catch (e) {
+    } catch {
       // LocalStorage safety fallback
     }
   }, []);
@@ -319,7 +319,7 @@ export default function PredictionPage() {
             setIsGenerating(false);
             setGenerationError(pollData.error?.message || "Tạo sinh ảnh dự đoán thất bại.");
           }
-        } catch (err) {
+        } catch {
           // Polling network hiccup; retry next tick
         }
       }, 1500);
@@ -386,7 +386,7 @@ export default function PredictionPage() {
     if (newPhoto) {
       try {
         localStorage.setItem("g_ai_user_twin_photo", newPhoto);
-      } catch (e) {
+      } catch {
         // ignore
       }
       // Without consent the photo stays on this device until the user confirms in the modal.
