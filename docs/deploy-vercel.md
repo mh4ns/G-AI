@@ -47,7 +47,8 @@ redeploy after changing them.
 | `BACKEND_URL` | for login and Today sync | Public HTTPS URL of the FastAPI backend, e.g. `https://g-ai-api.onrender.com` |
 | `IMAGE_MODEL`, `VISION_MODEL` | no | Override the default Gemini models |
 
-`BACKEND_URL` is also read **at build time** (Next.js rewrites).
+`BACKEND_URL` is also read **at build time** (Next.js rewrites). Set the same `BACKEND_URL` on
+**`g-ai-site`** too: the store proxies `/api/v1` to the backend.
 
 Without `BACKEND_URL`, guests can still use the quiz, the prediction page and a local-only Today page,
 but login and server sync return errors.
@@ -68,13 +69,14 @@ Expect occasional "job not found" errors until the durable job queue in
 The backend runs on **Render** (Docker, from [`render.yaml`](../render.yaml)) with a **Supabase**
 PostgreSQL database. Follow [deploy-render.md](deploy-render.md); in short:
 
-1. Supabase → **Connect** → *Session pooler* (port 5432) URI, with the prefix changed to
-   `postgresql+asyncpg://`.
-2. Render → **New → Blueprint** → this repo → paste that value as `DATABASE_URL`. Everything else
-   (`ENVIRONMENT=production`, generated `SECRET_KEY`, `AUTO_CREATE_SCHEMA=false`,
-   `AUTH_COOKIE_SECURE=true`, `BACKEND_CORS_ORIGINS`) comes from the Blueprint.
-3. Set `BACKEND_URL` on `g-ai-app` to the Render URL (e.g. `https://g-ai-api.onrender.com`) and
-   redeploy, because it is read at build time.
+1. Supabase → **Project Settings → Database → Connection string** → *Session pooler* (port 5432) URI,
+   with your password filled in.
+2. Render → **New → Blueprint** → this repo → paste that string as is as `DATABASE_URL`. Everything
+   else (`ENVIRONMENT=production`, generated `SECRET_KEY`, `AUTO_CREATE_SCHEMA=false`,
+   `AUTH_COOKIE_SECURE=true`, `BACKEND_CORS_ORIGINS`, `TRUSTED_PROXY_HOPS=2`, pool sizes) comes from
+   the Blueprint.
+3. Set `BACKEND_URL` on **both** `g-ai-app` and `g-ai-site` to the Render URL
+   (e.g. `https://g-ai-api.onrender.com`) and redeploy, because it is read at build time.
 
 The container runs `alembic upgrade head` on start. Browsers reach the backend only through the Vercel
 `/api/v1` proxy, so the session cookie stays first-party on the Vercel domain. Any other Docker host

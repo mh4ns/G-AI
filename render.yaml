@@ -26,7 +26,19 @@ services:
         value: https://g-ai-app.vercel.app,https://g-ai-site.vercel.app
       - key: SECRET_KEY
         generateValue: true
-      # Supabase connection string (Session pooler, port 5432) with the
-      # postgresql+asyncpg:// prefix. You paste it in the Render dashboard; it is never committed.
+      # Requests pass through the Vercel rewrite and Render's proxy, so the client IP is
+      # the 2nd entry from the right in X-Forwarded-For (used by login rate limiting).
+      - key: TRUSTED_PROXY_HOPS
+        value: "2"
+      # Small connection pool for the free plans (Supabase pooler limits, 512 MB instance).
+      - key: DB_POOL_SIZE
+        value: "3"
+      - key: DB_MAX_OVERFLOW
+        value: "2"
+      - key: DB_POOL_RECYCLE_SECONDS
+        value: "300"
+      # Supabase connection string, pasted in the Render dashboard; it is never committed.
+      # Session pooler (port 5432) recommended. Port 6543 (Transaction pooler) also works:
+      # the backend turns prepared statements off for it automatically.
       - key: DATABASE_URL
         sync: false
