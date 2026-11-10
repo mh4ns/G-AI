@@ -3,9 +3,11 @@
  *
  * Requests go to the same-origin `/api/v1/*` path, which next.config.mjs
  * rewrites to BACKEND_URL (as in apps/web, see ADR-0001). The contract lives in
- * apps/backend/app/api/v1/endpoints/store.py: the server owns names, prices and
+ * packages/shared-types/api/store.ts: the server owns names, prices and
  * stock; the client only picks product, size and quantity.
  */
+
+import type { StoreProduct } from "@/types/store";
 
 export const API_BASE = "/api/v1";
 
@@ -40,16 +42,23 @@ export interface CartLine {
   quantity: number;
 }
 
-/** GET /store/products response row (app/schemas/store.py ProductResponse). */
+/**
+ * GET /store/products row. Mirrors packages/shared-types/api/store.ts
+ * (ProductDTO); ids match src/data/mockStoreData.ts ("p1".."p8").
+ */
 export interface ApiProduct {
   id: string;
   name: string;
   subtitle: string;
   category: string;
+  subcategory: string | null;
+  activity: string | null;
+  description: string | null;
   discipline: string;
   material: string;
   price: number;
   original_price: number | null;
+  discount_percent?: number | null;
   color_name: string;
   color_hex: string;
   rating: number;
@@ -77,7 +86,15 @@ export interface OrderResponse {
   shipping_address: string;
   payment_status: string;
   order_status: string;
-  items: { product_id: string; name: string; size: string; unit_price: number; quantity: number; image?: string }[];
+  items: {
+    product_id: string;
+    name: string;
+    size: string;
+    unit_price: number;
+    quantity: number;
+    image: string;
+    color_name: string | null;
+  }[];
   created_at: string;
 }
 
@@ -97,23 +114,57 @@ export function cartKey(productId: string, size: string): string {
   return `${productId}::${size}`;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  apparel: "Trang Phục",
+  equipment: "Dụng Cụ Studio",
+  device: "Thiết Bị",
+  supplement: "Dinh Dưỡng",
+};
+
+function groupOf(category: string): StoreItem["group"] {
+  return category.toLowerCase() === "apparel" ? "apparel" : "equipment";
+}
+
+function labelOf(category: string, subcategory?: string | null): string {
+  return subcategory || CATEGORY_LABELS[category.toLowerCase()] || category;
+}
+
 export function fromApiProduct(p: ApiProduct): StoreItem {
-  const isApparel = p.category.toLowerCase() === "apparel";
   return {
     id: p.id,
     name: p.name,
-    group: isApparel ? "apparel" : "equipment",
-    categoryLabel: isApparel ? "Trang Phục Định Hình" : "Dụng Cụ Studio",
+    group: groupOf(p.category),
+    categoryLabel: labelOf(p.category, p.subcategory),
     badge: p.badge,
     price: p.price,
     originalPrice: p.original_price != null && p.original_price > p.price ? p.original_price : null,
     rating: p.rating,
     reviews: p.review_count,
     image: p.image_front,
-    specs: [p.discipline, p.material, p.color_name].filter(Boolean),
-    description: p.subtitle,
+    specs: [p.color_name, p.material, p.discipline].filter(Boolean),
+    description: p.description || p.subtitle,
     sizes: p.sizes_available?.length ? p.sizes_available : ["One Size"],
     stock: p.stock_quantity,
+  };
+}
+
+/** Maps the bundled mock catalog (same ids as the backend) for the offline fallback. */
+export function fromMockProduct(p: StoreProduct): StoreItem {
+  return {
+    id: p.id,
+    name: p.name,
+    group: groupOf(p.category),
+    categoryLabel: labelOf(p.category, p.subcategory),
+    badge: p.badge ?? null,
+    price: p.price,
+    originalPrice: p.originalPrice != null && p.originalPrice > p.price ? p.originalPrice : null,
+    rating: p.rating ?? 0,
+    reviews: p.reviewsCount ?? 0,
+    image: p.imageFront,
+    specs: [p.colorName, p.activity].filter(Boolean),
+    description: p.description,
+    sizes: p.sizes.length ? p.sizes : ["One Size"],
+    stock: null,
   };
 }
 
@@ -136,8 +187,12 @@ export async function fetchCatalog(timeoutMs = 5000): Promise<StoreItem[]> {
 function describeError(status: number, detail: unknown): string {
   if (status === 409) return "Một số sản phẩm không còn đủ hàng. Hãy giảm số lượng hoặc chọn sản phẩm khác.";
   if (typeof detail === "string") {
-    if (/not available/i.test(detail)) return "Có sản phẩm hoặc size không còn bán. Hãy kiểm tra lại giỏ hàng.";
-    return detail;
+    // 422 with a plain message = unknown product or size (see store.ts contract).
+    if (status === 422 || /not available/i.test(detail)) {
+      return "Có sản phẩm hoặc size không còn bán. Hãy kiểm tra lại giỏ hàng.";
+    }
+    if (status === 429) return "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.";
+    return status >= 500 ? "Máy chủ cửa hàng đang gặp sự cố. Vui lòng thử lại sau." : detail;
   }
   if (Array.isArray(detail)) {
     const fields = detail

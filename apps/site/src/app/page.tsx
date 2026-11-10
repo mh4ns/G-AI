@@ -10,11 +10,12 @@ import { DualAthleteGallery } from "@/components/home/DualAthleteGallery";
 import { AiVisionTeaser } from "@/components/home/AiVisionTeaser";
 import { MovementGoodsSection } from "@/components/home/MovementGoodsSection";
 import { CartDrawer } from "@/components/home/CartDrawer";
-import { SAMPLE_CATALOG } from "@/data/sampleCatalog";
+import { STORE_PRODUCTS } from "@/data/mockStoreData";
 import {
   MAX_QUANTITY_PER_LINE,
   cartKey,
   fetchCatalog,
+  fromMockProduct,
   parseStoredCart,
   type CartLine,
   type CatalogSource,
@@ -22,6 +23,8 @@ import {
 } from "@/lib/store-api";
 
 const CART_STORAGE_KEY = "g_ai_cart_v2";
+// Offline fallback: the same p1..p8 catalog the backend serves, browse-only.
+const SAMPLE_CATALOG: StoreItem[] = STORE_PRODUCTS.map(fromMockProduct);
 import { appUrl } from "@g-ai/ui";
 
 export default function HomePage() {
