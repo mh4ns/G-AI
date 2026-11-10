@@ -72,11 +72,14 @@ export const AgeSelectionFirstPage: React.FC<AgeSelectionFirstPageProps> = ({ on
           >
             {/* Model Photo Container with Soft Radiant Glow */}
             <div className="relative w-full aspect-[3/4] bg-gradient-to-b from-peach-50/40 via-white to-stone-50 flex items-end justify-center overflow-hidden p-2">
-              <img
+              <Image
                 src={card.image}
                 alt={card.label}
+                width={492}
+                height={390}
+                sizes="(max-width: 768px) 50vw, 180px"
                 className="w-full h-auto max-h-full object-contain object-bottom group-hover:scale-105 transition-transform duration-500 ease-out"
-                loading="eager"
+                priority
               />
             </div>
 

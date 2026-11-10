@@ -28,7 +28,6 @@ interface TimelineScrubberProps {
 export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
   currentDay,
   onDayChange,
-  archetype = "female_pilates",
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const trackRef = useRef<HTMLDivElement | null>(null);

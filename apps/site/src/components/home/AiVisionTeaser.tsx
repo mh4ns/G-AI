@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { Video, ShieldCheck, CheckCircle2, AlertCircle, Sparkles, ArrowRight } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
 import { appUrl } from "@g-ai/ui";
 
 export const AiVisionTeaser: React.FC = () => {
-  const [activeJoint, setActiveJoint] = useState<"hip" | "knee" | "spine">("knee");
 
   return (
     <section className="py-16 sm:py-24 bg-[#0D0C0B] text-white border-t border-stone-800 select-none">

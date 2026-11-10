@@ -63,7 +63,6 @@ function useAnimatedNumber(
 }
 
 export const TelemetryHud: React.FC<TelemetryHudProps> = ({
-  progress,
   currentDay,
   activeHotspot,
   userWeight,

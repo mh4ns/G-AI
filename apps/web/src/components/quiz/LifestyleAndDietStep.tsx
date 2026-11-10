@@ -1,6 +1,6 @@
 import React from "react";
 import { ActivityLevel, DietPreference } from "@/types/quiz";
-import { Coffee, Footprints, Bike, Zap, Apple, Salad, Fish, Clock, Check, type LucideIcon } from "lucide-react";
+import { Coffee, Footprints, Bike, Zap, Apple, Salad, Fish, Clock, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LifestyleAndDietStepProps {

@@ -5,20 +5,20 @@ import Link from "next/link";
 import {
   Flame,
   Droplets,
-  Video,
+  
   Play,
   Plus,
   CheckCircle2,
-  Calendar,
+  
   Sparkles,
-  Heart,
+  
   RotateCcw,
   Clock,
   ArrowRight,
   TrendingUp,
   Lightbulb,
 } from "lucide-react";
-import { PersonalizedPlanResult, QuizResponses } from "@/types/quiz";
+import { PersonalizedPlanResult } from "@/types/quiz";
 import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
@@ -112,7 +112,7 @@ export default function TodayDashboardPage() {
       if (savedTheme === "dark") {
         setTheme("dark");
       }
-    } catch (e) {
+    } catch {
       // fallback
     }
   }, []);
@@ -123,7 +123,7 @@ export default function TodayDashboardPage() {
     try {
       localStorage.setItem("g_ai_theme", nextTheme);
       localStorage.setItem("g_ai_theme_manual", "true");
-    } catch (e) {
+    } catch {
       // fallback
     }
   };
@@ -175,7 +175,9 @@ export default function TodayDashboardPage() {
         duration_sec: Math.max(1, Math.round(summary.durationMinutes * 60)),
         calories_burned: Math.max(0, Math.round(summary.caloriesBurned)),
         reps_completed: Math.max(0, Math.round(summary.repsCompleted)),
-        form_accuracy_pct: Math.min(100, Math.max(0, summary.averageFormScore)),
+        // Camera off = nothing measured: send null rather than a fake 0%.
+        form_accuracy_pct:
+          summary.averageFormScore == null ? null : Math.min(100, Math.max(0, summary.averageFormScore)),
       });
       let metric = await api.today.get();
       if (!metric.habits_completed.includes("workout")) {

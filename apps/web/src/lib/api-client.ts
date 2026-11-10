@@ -12,7 +12,9 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public detail?: unknown
+    public detail?: unknown,
+    /** Seconds from a 429 response's Retry-After header, when present. */
+    public retryAfterSec?: number
   ) {
     super(message);
     this.name = "ApiError";
@@ -30,7 +32,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     const detail = body?.detail;
     const message = typeof detail === "string" ? detail : `Request failed (${res.status})`;
-    throw new ApiError(res.status, message, detail);
+    const retryAfter = Number(res.headers.get("Retry-After"));
+    throw new ApiError(res.status, message, detail, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined);
   }
   return body as T;
 }
@@ -79,8 +82,36 @@ export interface ApiWorkoutLogCreate {
   duration_sec: number;
   calories_burned: number;
   reps_completed: number;
-  form_accuracy_pct: number;
+  /** 0–100 from camera tracking; null when the session was not scored (camera off). */
+  form_accuracy_pct?: number | null;
   routine_id?: number;
+}
+
+export interface ApiExercise {
+  id: number;
+  code: string;
+  name: string;
+  category: string;
+  primary_muscle: string;
+  difficulty: string;
+  description: string;
+  instructions: string[];
+  /** Three MediaPipe Pose landmark indices; the angle is measured at the middle one. */
+  landmark_joints: number[];
+  target_angle_min: number | null;
+  target_angle_max: number | null;
+  thumbnail_url: string | null;
+}
+
+export interface ApiWorkoutRoutine {
+  id: number;
+  slug: string;
+  title: string;
+  duration_min: number;
+  calorie_burn_est: number;
+  intensity: string;
+  exercises_sequence: { exercise_code?: string; reps?: number; duration_sec?: number; rest_sec?: number }[];
+  is_featured: boolean;
 }
 
 // --- Endpoints ----------------------------------------------------------------
@@ -104,6 +135,8 @@ export const api = {
   },
   workouts: {
     log: (payload: ApiWorkoutLogCreate) => post<{ id: number }>("/workouts/logs", payload),
+    exercises: (init?: RequestInit) => request<ApiExercise[]>("/workouts/exercises", init),
+    routines: (init?: RequestInit) => request<ApiWorkoutRoutine[]>("/workouts/routines", init),
   },
 };
 

@@ -12,8 +12,6 @@ import {
   ArrowRight, 
   User, 
   AlertCircle,
-  Eye,
-  Sliders
 } from "lucide-react";
 import { AthleticArchetype } from "@/types/quiz";
 
@@ -33,18 +31,16 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [studioBackgroundCutout, setStudioBackgroundCutout] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Stop camera when unmounting
   useEffect(() => {
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     };
   }, []);
 
@@ -56,6 +52,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
       });
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -198,7 +195,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
                 alt="User Body Photo Preview"
                 fill
                 className={`object-contain transition-all duration-300 ${
-                  studioBackgroundCutout ? "contrast-105" : ""
+                  "contrast-105"
                 }`}
               />
 

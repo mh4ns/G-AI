@@ -3,8 +3,8 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Activity, ShieldCheck, Flame, Compass, Play, Lightbulb } from "lucide-react";
-import { SweepHighlight, FlipTextHover } from "@/components/home/KineticText";
+import { ArrowRight, Sparkles, Lightbulb } from "lucide-react";
+import { SweepHighlight } from "@/components/home/KineticText";
 import { appUrl } from "@g-ai/ui";
 
 interface DualAthleteHeroProps {

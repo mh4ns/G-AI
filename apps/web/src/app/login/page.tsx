@@ -16,6 +16,12 @@ function errorMessage(err: unknown, mode: "login" | "register"): string {
   if (err instanceof ApiError) {
     if (err.status === 401) return "Email hoặc mật khẩu không đúng.";
     if (err.status === 409) return "Email này đã được đăng ký. Hãy đăng nhập.";
+    if (err.status === 429) {
+      const minutes = err.retryAfterSec ? Math.max(1, Math.ceil(err.retryAfterSec / 60)) : null;
+      return minutes
+        ? `Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ${minutes} phút.`
+        : "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ít phút.";
+    }
     if (err.status === 422) {
       return mode === "register"
         ? "Vui lòng kiểm tra lại: email hợp lệ, họ tên từ 2 ký tự, mật khẩu từ 8 ký tự."
