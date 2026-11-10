@@ -1,0 +1,2141 @@
+{
+  "components": {
+    "schemas": {
+      "CaloriesUpdateRequest": {
+        "properties": {
+          "amount_kcal": {
+            "description": "Calories eaten to add (negative to undo)",
+            "maximum": 5000.0,
+            "minimum": -5000.0,
+            "title": "Amount Kcal",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "amount_kcal"
+        ],
+        "title": "CaloriesUpdateRequest",
+        "type": "object"
+      },
+      "DailyMetricResponse": {
+        "properties": {
+          "calories_burned": {
+            "title": "Calories Burned",
+            "type": "integer"
+          },
+          "calories_consumed": {
+            "title": "Calories Consumed",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "fasting_minutes": {
+            "title": "Fasting Minutes",
+            "type": "integer"
+          },
+          "fasting_state": {
+            "title": "Fasting State",
+            "type": "string"
+          },
+          "habits_completed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Habits Completed",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "water_intake_ml": {
+            "title": "Water Intake Ml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "date",
+          "calories_consumed",
+          "calories_burned",
+          "water_intake_ml",
+          "fasting_minutes",
+          "fasting_state",
+          "habits_completed",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "DailyMetricResponse",
+        "type": "object"
+      },
+      "ExerciseResponse": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "difficulty": {
+            "title": "Difficulty",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "instructions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Instructions",
+            "type": "array"
+          },
+          "landmark_joints": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Landmark Joints",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "primary_muscle": {
+            "title": "Primary Muscle",
+            "type": "string"
+          },
+          "target_angle_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Angle Max"
+          },
+          "target_angle_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Angle Min"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "category",
+          "primary_muscle",
+          "difficulty",
+          "description",
+          "instructions",
+          "landmark_joints",
+          "target_angle_min",
+          "target_angle_max",
+          "thumbnail_url"
+        ],
+        "title": "ExerciseResponse",
+        "type": "object"
+      },
+      "FastingUpdateRequest": {
+        "properties": {
+          "fasting_minutes": {
+            "anyOf": [
+              {
+                "maximum": 1440.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fasting Minutes"
+          },
+          "fasting_state": {
+            "enum": [
+              "idle",
+              "fasting",
+              "eating_window"
+            ],
+            "title": "Fasting State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fasting_state"
+        ],
+        "title": "FastingUpdateRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HabitToggleRequest": {
+        "properties": {
+          "habit_key": {
+            "description": "e.g. morning_stretch, water, workout",
+            "pattern": "^[a-z][a-z0-9_]{1,49}$",
+            "title": "Habit Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "habit_key"
+        ],
+        "title": "HabitToggleRequest",
+        "type": "object"
+      },
+      "OrderCreateRequest": {
+        "properties": {
+          "customer_email": {
+            "format": "email",
+            "title": "Customer Email",
+            "type": "string"
+          },
+          "customer_name": {
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Customer Name",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderItemRequest"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "shipping_address": {
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Shipping Address",
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_email",
+          "customer_name",
+          "shipping_address",
+          "items"
+        ],
+        "title": "OrderCreateRequest",
+        "type": "object"
+      },
+      "OrderItemRequest": {
+        "description": "What the client may choose. Name, price and image are always read from the catalog.",
+        "properties": {
+          "product_id": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Product Id",
+            "type": "string"
+          },
+          "quantity": {
+            "default": 1,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "size": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Size",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "size"
+        ],
+        "title": "OrderItemRequest",
+        "type": "object"
+      },
+      "OrderLineItem": {
+        "description": "Snapshot of a catalog product at the time of ordering.",
+        "properties": {
+          "color_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color Name"
+          },
+          "image": {
+            "title": "Image",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "size": {
+            "title": "Size",
+            "type": "string"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "product_id",
+          "name",
+          "size",
+          "unit_price",
+          "quantity",
+          "image"
+        ],
+        "title": "OrderLineItem",
+        "type": "object"
+      },
+      "OrderResponse": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "customer_email": {
+            "title": "Customer Email",
+            "type": "string"
+          },
+          "customer_name": {
+            "title": "Customer Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "order_status": {
+            "title": "Order Status",
+            "type": "string"
+          },
+          "payment_status": {
+            "title": "Payment Status",
+            "type": "string"
+          },
+          "shipping_address": {
+            "title": "Shipping Address",
+            "type": "string"
+          },
+          "total_amount": {
+            "title": "Total Amount",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "customer_email",
+          "customer_name",
+          "total_amount",
+          "shipping_address",
+          "payment_status",
+          "order_status",
+          "items",
+          "created_at"
+        ],
+        "title": "OrderResponse",
+        "type": "object"
+      },
+      "PasswordChange": {
+        "properties": {
+          "current_password": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChange",
+        "type": "object"
+      },
+      "PersonalizedPlanResponse": {
+        "properties": {
+          "assessment_id": {
+            "title": "Assessment Id",
+            "type": "integer"
+          },
+          "bmi": {
+            "title": "Bmi",
+            "type": "number"
+          },
+          "bmr": {
+            "title": "Bmr",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "daily_calorie_target": {
+            "title": "Daily Calorie Target",
+            "type": "integer"
+          },
+          "daily_water_target_ml": {
+            "title": "Daily Water Target Ml",
+            "type": "integer"
+          },
+          "estimated_duration_weeks": {
+            "title": "Estimated Duration Weeks",
+            "type": "integer"
+          },
+          "focus_routine": {
+            "title": "Focus Routine",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "projected_weight_milestones": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Projected Weight Milestones",
+            "type": "array"
+          },
+          "recommended_diet_type": {
+            "title": "Recommended Diet Type",
+            "type": "string"
+          },
+          "tdee": {
+            "title": "Tdee",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "assessment_id",
+          "bmi",
+          "bmr",
+          "tdee",
+          "daily_calorie_target",
+          "daily_water_target_ml",
+          "estimated_duration_weeks",
+          "projected_weight_milestones",
+          "focus_routine",
+          "recommended_diet_type",
+          "is_active",
+          "created_at"
+        ],
+        "title": "PersonalizedPlanResponse",
+        "type": "object"
+      },
+      "ProductResponse": {
+        "properties": {
+          "activity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "pilates | gym | running | lounge | yoga",
+            "title": "Activity"
+          },
+          "badge": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Badge"
+          },
+          "category": {
+            "description": "apparel | equipment | device | supplement",
+            "title": "Category",
+            "type": "string"
+          },
+          "color_hex": {
+            "title": "Color Hex",
+            "type": "string"
+          },
+          "color_name": {
+            "title": "Color Name",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "discipline": {
+            "title": "Discipline",
+            "type": "string"
+          },
+          "discount_percent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whole-percent saving versus original_price, or null when not discounted.",
+            "readOnly": true,
+            "title": "Discount Percent"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "image_front": {
+            "title": "Image Front",
+            "type": "string"
+          },
+          "image_hover": {
+            "description": "Second image shown on hover (the website's imageBack).",
+            "title": "Image Hover",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "material": {
+            "title": "Material",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "original_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Price"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "rating": {
+            "title": "Rating",
+            "type": "number"
+          },
+          "review_count": {
+            "title": "Review Count",
+            "type": "integer"
+          },
+          "sizes_available": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sizes Available",
+            "type": "array"
+          },
+          "stock_quantity": {
+            "title": "Stock Quantity",
+            "type": "integer"
+          },
+          "subcategory": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subcategory"
+          },
+          "subtitle": {
+            "title": "Subtitle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "subtitle",
+          "category",
+          "discipline",
+          "material",
+          "price",
+          "original_price",
+          "color_name",
+          "color_hex",
+          "rating",
+          "review_count",
+          "badge",
+          "image_front",
+          "image_hover",
+          "sizes_available",
+          "stock_quantity",
+          "is_active",
+          "discount_percent"
+        ],
+        "title": "ProductResponse",
+        "type": "object"
+      },
+      "QuizAssessmentResponse": {
+        "properties": {
+          "activity_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Level"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_group": {
+            "title": "Age Group",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_weight_kg": {
+            "title": "Current Weight Kg",
+            "type": "number"
+          },
+          "fitness_level": {
+            "title": "Fitness Level",
+            "type": "string"
+          },
+          "focus_areas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Focus Areas",
+            "type": "array"
+          },
+          "gender": {
+            "title": "Gender",
+            "type": "string"
+          },
+          "height_cm": {
+            "title": "Height Cm",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "obstacles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Obstacles",
+            "type": "array"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalizedPlanResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "primary_goal": {
+            "title": "Primary Goal",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "target_weight_kg": {
+            "title": "Target Weight Kg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "session_id",
+          "age",
+          "age_group",
+          "gender",
+          "height_cm",
+          "current_weight_kg",
+          "target_weight_kg",
+          "activity_level",
+          "primary_goal",
+          "focus_areas",
+          "obstacles",
+          "fitness_level",
+          "created_at"
+        ],
+        "title": "QuizAssessmentResponse",
+        "type": "object"
+      },
+      "QuizSubmitRequest": {
+        "properties": {
+          "activity_level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sedentary",
+                  "lightly_active",
+                  "moderately_active",
+                  "very_active"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Level"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 13.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_group": {
+            "anyOf": [
+              {
+                "enum": [
+                  "18-29",
+                  "30-39",
+                  "40-49",
+                  "50+"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Group"
+          },
+          "archetype": {
+            "anyOf": [
+              {
+                "enum": [
+                  "female_pilates",
+                  "male_strength"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archetype"
+          },
+          "current_weight_kg": {
+            "maximum": 250.0,
+            "minimum": 30.0,
+            "title": "Current Weight Kg",
+            "type": "number"
+          },
+          "fitness_level": {
+            "default": "beginner",
+            "maxLength": 30,
+            "title": "Fitness Level",
+            "type": "string"
+          },
+          "focus_areas": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Focus Areas",
+            "type": "array"
+          },
+          "gender": {
+            "default": "female",
+            "enum": [
+              "female",
+              "male"
+            ],
+            "title": "Gender",
+            "type": "string"
+          },
+          "height_cm": {
+            "maximum": 250.0,
+            "minimum": 100.0,
+            "title": "Height Cm",
+            "type": "number"
+          },
+          "obstacles": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 15,
+            "title": "Obstacles",
+            "type": "array"
+          },
+          "primary_goal": {
+            "maxLength": 50,
+            "minLength": 1,
+            "pattern": "^[a-z_]+$",
+            "title": "Primary Goal",
+            "type": "string"
+          },
+          "session_id": {
+            "description": "Client generated UUID session",
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Session Id",
+            "type": "string"
+          },
+          "target_weight_kg": {
+            "maximum": 250.0,
+            "minimum": 30.0,
+            "title": "Target Weight Kg",
+            "type": "number"
+          }
+        },
+        "required": [
+          "session_id",
+          "height_cm",
+          "current_weight_kg",
+          "target_weight_kg",
+          "primary_goal"
+        ],
+        "title": "QuizSubmitRequest",
+        "type": "object"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "token_type": {
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponse"
+          }
+        },
+        "required": [
+          "access_token",
+          "expires_in",
+          "user"
+        ],
+        "title": "Token",
+        "type": "object"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "full_name",
+          "password"
+        ],
+        "title": "UserCreate",
+        "type": "object"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin",
+        "type": "object"
+      },
+      "UserResponse": {
+        "properties": {
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "full_name": {
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "full_name",
+          "id",
+          "is_active",
+          "created_at"
+        ],
+        "title": "UserResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WaterUpdateRequest": {
+        "properties": {
+          "amount_ml": {
+            "default": 250,
+            "description": "Amount in ml to add (negative to undo)",
+            "maximum": 2000.0,
+            "minimum": -2000.0,
+            "title": "Amount Ml",
+            "type": "integer"
+          }
+        },
+        "title": "WaterUpdateRequest",
+        "type": "object"
+      },
+      "WorkoutLogCreate": {
+        "properties": {
+          "calories_burned": {
+            "maximum": 5000.0,
+            "minimum": 0.0,
+            "title": "Calories Burned",
+            "type": "integer"
+          },
+          "duration_sec": {
+            "maximum": 21600.0,
+            "minimum": 1.0,
+            "title": "Duration Sec",
+            "type": "integer"
+          },
+          "form_accuracy_pct": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Form Accuracy Pct",
+            "type": "number"
+          },
+          "reps_completed": {
+            "default": 0,
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Reps Completed",
+            "type": "integer"
+          },
+          "routine_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routine Id"
+          }
+        },
+        "required": [
+          "duration_sec",
+          "calories_burned",
+          "form_accuracy_pct"
+        ],
+        "title": "WorkoutLogCreate",
+        "type": "object"
+      },
+      "WorkoutLogResponse": {
+        "properties": {
+          "calories_burned": {
+            "title": "Calories Burned",
+            "type": "integer"
+          },
+          "completed_at": {
+            "format": "date-time",
+            "title": "Completed At",
+            "type": "string"
+          },
+          "duration_sec": {
+            "title": "Duration Sec",
+            "type": "integer"
+          },
+          "form_accuracy_pct": {
+            "title": "Form Accuracy Pct",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "reps_completed": {
+            "title": "Reps Completed",
+            "type": "integer"
+          },
+          "routine_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routine Id"
+          }
+        },
+        "required": [
+          "id",
+          "routine_id",
+          "duration_sec",
+          "calories_burned",
+          "reps_completed",
+          "form_accuracy_pct",
+          "completed_at"
+        ],
+        "title": "WorkoutLogResponse",
+        "type": "object"
+      },
+      "WorkoutRoutineResponse": {
+        "properties": {
+          "calorie_burn_est": {
+            "title": "Calorie Burn Est",
+            "type": "integer"
+          },
+          "duration_min": {
+            "title": "Duration Min",
+            "type": "integer"
+          },
+          "exercises_sequence": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Exercises Sequence",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "intensity": {
+            "title": "Intensity",
+            "type": "string"
+          },
+          "is_featured": {
+            "title": "Is Featured",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "duration_min",
+          "calorie_burn_est",
+          "intensity",
+          "exercises_sequence",
+          "is_featured"
+        ],
+        "title": "WorkoutRoutineResponse",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "title": "G-AI Backend",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Wrong email or password"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Throttled; see Retry-After"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "description": "Ends the session on every device: all tokens issued to this user so far stop working.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Logout",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/password": {
+      "post": {
+        "description": "Changes the password, signs out every other session and returns a fresh session for this one.",
+        "operationId": "change_password_api_v1_auth_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Current password is wrong"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Throttled; see Retry-After"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Change Password",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/v1/quiz/plans/me": {
+      "get": {
+        "operationId": "my_active_plan_api_v1_quiz_plans_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalizedPlanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Active Plan",
+        "tags": [
+          "Quiz & Assessment"
+        ]
+      }
+    },
+    "/api/v1/quiz/submit": {
+      "post": {
+        "description": "Persists a quiz assessment and its computed plan. Guests may submit; when a\nsession is present the records are attached to that user (never to a client-supplied id).",
+        "operationId": "submit_quiz_api_v1_quiz_submit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizSubmitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizAssessmentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit Quiz",
+        "tags": [
+          "Quiz & Assessment"
+        ]
+      }
+    },
+    "/api/v1/store/orders": {
+      "post": {
+        "description": "Creates an order awaiting payment. Prices, names and images come from the\ncatalog; the client only chooses product, size and quantity. Stock is\nreserved here (row-locked on PostgreSQL).",
+        "operationId": "create_order_api_v1_store_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Order",
+        "tags": [
+          "E-Commerce Store"
+        ]
+      }
+    },
+    "/api/v1/store/orders/me": {
+      "get": {
+        "description": "The signed-in user's orders, newest first. Guest orders are not attached later by email,\nbecause an email typed at checkout is not proof of owning that address.",
+        "operationId": "my_orders_api_v1_store_orders_me_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponse"
+                  },
+                  "title": "Response My Orders Api V1 Store Orders Me Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Orders",
+        "tags": [
+          "E-Commerce Store"
+        ]
+      }
+    },
+    "/api/v1/store/products": {
+      "get": {
+        "description": "Active catalog products in catalog order, optionally filtered (case-insensitive) by category and activity.",
+        "operationId": "list_products_api_v1_store_products_get",
+        "parameters": [
+          {
+            "description": "apparel | equipment | device | supplement",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 50,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "apparel | equipment | device | supplement",
+              "title": "Category"
+            }
+          },
+          {
+            "description": "pilates | gym | running | lounge | yoga",
+            "in": "query",
+            "name": "activity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "pilates | gym | running | lounge | yoga",
+              "title": "Activity"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  },
+                  "title": "Response List Products Api V1 Store Products Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Products",
+        "tags": [
+          "E-Commerce Store"
+        ]
+      }
+    },
+    "/api/v1/store/products/{product_id}": {
+      "get": {
+        "operationId": "get_product_api_v1_store_products__product_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Product",
+        "tags": [
+          "E-Commerce Store"
+        ]
+      }
+    },
+    "/api/v1/today": {
+      "get": {
+        "description": "Today's metrics for the signed-in user, created on first access.",
+        "operationId": "get_today_api_v1_today_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyMetricResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Today",
+        "tags": [
+          "Today Dashboard"
+        ]
+      }
+    },
+    "/api/v1/today/calories": {
+      "post": {
+        "operationId": "update_calories_api_v1_today_calories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaloriesUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyMetricResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Calories",
+        "tags": [
+          "Today Dashboard"
+        ]
+      }
+    },
+    "/api/v1/today/fasting": {
+      "post": {
+        "operationId": "update_fasting_api_v1_today_fasting_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FastingUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyMetricResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Fasting",
+        "tags": [
+          "Today Dashboard"
+        ]
+      }
+    },
+    "/api/v1/today/habits/toggle": {
+      "post": {
+        "operationId": "toggle_habit_api_v1_today_habits_toggle_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HabitToggleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyMetricResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Toggle Habit",
+        "tags": [
+          "Today Dashboard"
+        ]
+      }
+    },
+    "/api/v1/today/water": {
+      "post": {
+        "operationId": "update_water_api_v1_today_water_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaterUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyMetricResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Water",
+        "tags": [
+          "Today Dashboard"
+        ]
+      }
+    },
+    "/api/v1/workouts/exercises": {
+      "get": {
+        "description": "Exercises with the MediaPipe landmark joints and target angles used for form scoring.",
+        "operationId": "list_exercises_api_v1_workouts_exercises_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciseResponse"
+                  },
+                  "title": "Response List Exercises Api V1 Workouts Exercises Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Exercises",
+        "tags": [
+          "Workouts & AI Live PT"
+        ]
+      }
+    },
+    "/api/v1/workouts/logs": {
+      "post": {
+        "description": "Records a finished session for the signed-in user and adds its calories to today's metrics.",
+        "operationId": "log_workout_api_v1_workouts_logs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkoutLogCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutLogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Log Workout",
+        "tags": [
+          "Workouts & AI Live PT"
+        ]
+      }
+    },
+    "/api/v1/workouts/logs/me": {
+      "get": {
+        "operationId": "my_workout_logs_api_v1_workouts_logs_me_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkoutLogResponse"
+                  },
+                  "title": "Response My Workout Logs Api V1 Workouts Logs Me Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "My Workout Logs",
+        "tags": [
+          "Workouts & AI Live PT"
+        ]
+      }
+    },
+    "/api/v1/workouts/routines": {
+      "get": {
+        "operationId": "list_routines_api_v1_workouts_routines_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkoutRoutineResponse"
+                  },
+                  "title": "Response List Routines Api V1 Workouts Routines Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Routines",
+        "tags": [
+          "Workouts & AI Live PT"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "health_check_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Check",
+        "tags": [
+          "Health"
+        ]
+      }
+    }
+  }
+}

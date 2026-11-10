@@ -52,3 +52,5 @@ export interface MealRecord {
   carbsG: number;
   fatG: number;
 }
+
+export * from './api/store';
