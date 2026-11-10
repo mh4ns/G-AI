@@ -82,7 +82,8 @@ export interface ApiWorkoutLogCreate {
   duration_sec: number;
   calories_burned: number;
   reps_completed: number;
-  form_accuracy_pct: number;
+  /** 0–100 from camera tracking; null when the session was not scored (camera off). */
+  form_accuracy_pct?: number | null;
   routine_id?: number;
 }
 
