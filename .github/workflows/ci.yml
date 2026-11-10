@@ -103,16 +103,22 @@ jobs:
           cache-dependency-path: apps/backend/requirements.txt
       - run: npm ci --no-audit --no-fund
       - run: pip install -r apps/backend/requirements.txt
-      - name: Download app builds
+      # Each artifact holds the contents of one app's .next directory.
+      - name: Download hub build
         uses: actions/download-artifact@v4
         with:
-          pattern: next-build-*
-          path: build-artifacts
-      - name: Put builds in place
-        run: |
-          for app in hub site web; do
-            mv "build-artifacts/next-build-$app/.next" "apps/$app/.next"
-          done
+          name: next-build-hub
+          path: apps/hub/.next
+      - name: Download site build
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build-site
+          path: apps/site/.next
+      - name: Download app build
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build-web
+          path: apps/web/.next
       - name: Playwright version
         id: pw
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
