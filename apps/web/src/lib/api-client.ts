@@ -12,7 +12,9 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public detail?: unknown
+    public detail?: unknown,
+    /** Seconds from a 429 response's Retry-After header, when present. */
+    public retryAfterSec?: number
   ) {
     super(message);
     this.name = "ApiError";
@@ -30,7 +32,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     const detail = body?.detail;
     const message = typeof detail === "string" ? detail : `Request failed (${res.status})`;
-    throw new ApiError(res.status, message, detail);
+    const retryAfter = Number(res.headers.get("Retry-After"));
+    throw new ApiError(res.status, message, detail, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined);
   }
   return body as T;
 }
