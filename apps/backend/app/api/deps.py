@@ -33,11 +33,13 @@ async def get_optional_user(
     token = _extract_token(request, credentials)
     if not token:
         return None
-    subject = decode_access_token(token)
-    if subject is None or not subject.isdigit():
+    claims = decode_access_token(token)
+    if claims is None:
         return None
-    user = await db.get(User, int(subject))
-    if user is None or not user.is_active:
+    user_id, token_version = claims
+    user = await db.get(User, user_id)
+    # A bumped token_version (logout, password change) revokes every token issued before it.
+    if user is None or not user.is_active or user.token_version != token_version:
         return None
     return user
 
@@ -46,3 +48,17 @@ async def get_current_user(user: Optional[User] = Depends(get_optional_user)) ->
     if user is None:
         raise _UNAUTHORIZED
     return user
+
+
+def client_ip(request: Request) -> str:
+    """
+    Caller IP for throttling. X-Forwarded-For is trusted only for the configured number of
+    proxy hops (TRUSTED_PROXY_HOPS), because any client can send that header.
+    """
+    hops = settings.TRUSTED_PROXY_HOPS
+    if hops > 0:
+        forwarded = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+        if forwarded:
+            # Each trusted proxy appends the address it saw; the entry `hops` from the end is the client.
+            return forwarded[-hops] if len(forwarded) >= hops else forwarded[0]
+    return request.client.host if request.client else "unknown"

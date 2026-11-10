@@ -8,10 +8,13 @@ from app.core.database import Base
 class Product(Base):
     __tablename__ = "products"
 
-    id: Mapped[str] = mapped_column(String(50), primary_key=True)  # e.g., "ga-sculpt-01"
+    id: Mapped[str] = mapped_column(String(50), primary_key=True)  # e.g., "p1" (see app/data/store_catalog.json)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     subtitle: Mapped[str] = mapped_column(String(150), nullable=False)
-    category: Mapped[str] = mapped_column(String(50), nullable=False)  # "Apparel", "Apparatus", "Accessory"
+    category: Mapped[str] = mapped_column(String(50), nullable=False)  # "apparel", "equipment", "device", "supplement"
+    subcategory: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # "Leggings", "Home Gym", ...
+    activity: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)  # "pilates", "gym", "running", "lounge", "yoga"
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     discipline: Mapped[str] = mapped_column(String(50), default="Reformer Pilates")
     material: Mapped[str] = mapped_column(String(150), default="82% Recycled Polyamide, 18% Elastane")
     

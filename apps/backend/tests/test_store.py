@@ -44,3 +44,45 @@ async def test_inactive_products_hidden(client, products):
     ids = [p["id"] for p in (await client.get("/api/v1/store/products")).json()]
     assert ids == ["ga-test-01"]
     assert (await client.get("/api/v1/store/products/ga-test-02")).status_code == 404
+
+
+async def test_products_expose_ui_fields_and_filters(client):
+    from app.core.database import async_session_maker
+    from app.services.catalog import load_catalog, sync_catalog
+
+    async with async_session_maker() as session:
+        await sync_catalog(session, load_catalog())
+        await session.commit()
+
+    p5 = (await client.get("/api/v1/store/products/p5")).json()
+    assert p5["category"] == "equipment"
+    assert p5["subcategory"] == "Home Gym"
+    assert p5["activity"] == "pilates"
+    assert p5["discount_percent"] == 37
+    assert p5["image_hover"].startswith("https://")
+    assert p5["description"]
+
+    apparel = (await client.get("/api/v1/store/products", params={"category": "APPAREL"})).json()
+    assert [p["id"] for p in apparel] == ["p1", "p2", "p4", "p7"]
+    lounge = (await client.get("/api/v1/store/products", params={"category": "apparel", "activity": "lounge"})).json()
+    assert [p["id"] for p in lounge] == ["p1", "p7"]
+
+
+async def test_my_orders_requires_login_and_returns_only_own(client, products):
+    from tests.conftest import bearer, register
+
+    assert (await client.get("/api/v1/store/orders/me")).status_code == 401
+
+    alice = await register(client, "alice@example.com")
+    first = (await _order(client, [{"product_id": "ga-test-01", "size": "S", "quantity": 1}])).json()
+    second = (await _order(client, [{"product_id": "ga-test-01", "size": "M", "quantity": 1}])).json()
+
+    client.cookies.clear()
+    await _order(client, [{"product_id": "ga-test-01", "size": "M", "quantity": 1}])  # guest order, same email
+    bob = await register(client, "bob@example.com")
+    client.cookies.clear()
+
+    mine = (await client.get("/api/v1/store/orders/me", headers=bearer(alice))).json()
+    assert {o["id"] for o in mine} == {first["id"], second["id"]}
+    assert mine[0]["items"][0]["color_name"] is not None
+    assert (await client.get("/api/v1/store/orders/me", headers=bearer(bob))).json() == []
