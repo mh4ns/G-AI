@@ -209,7 +209,7 @@ export default function HomePage() {
           <p className={`text-sm sm:text-base max-w-2xl mx-auto leading-relaxed ${
             isLight ? "text-stone-600" : "text-stone-400"
           }`}>
-            Trả lời khảo sát thể trạng 2 phút. Thuật toán khoa học chuyển hóa Mifflin-St Jeor sẽ dự đoán chính xác cân nặng, lượng calo mục tiêu và lộ trình bài tập phù hợp với cơ thể bạn.
+            Trả lời khảo sát thể trạng 2 phút. G-AI ước tính lượng calo mỗi ngày bằng công thức Mifflin-St Jeor, rồi dựng lộ trình bài tập theo cơ thể và mục tiêu của bạn.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">

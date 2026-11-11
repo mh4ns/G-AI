@@ -132,7 +132,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
           Quét Hình Thể & Dáng Đứng Cá Nhân
         </h2>
         <p className="text-xs sm:text-sm text-stone-500 max-w-lg mx-auto leading-relaxed">
-          Tải ảnh hoặc chụp qua camera để thuật toán AI đo góc lệch cột sống, xác định tỷ lệ cơ thể và tạo ra Bản Sao Số biến đổi 28 ngày chính xác theo khuôn mặt và vóc dáng của bạn.
+          Tải ảnh toàn thân hoặc chụp qua camera để G-AI tạo ảnh minh họa vóc dáng 28 ngày từ chính ảnh của bạn. Ảnh lưu trên trình duyệt này và chỉ được gửi đi khi bạn đồng ý tạo dự đoán.
         </p>
       </div>
 
@@ -220,7 +220,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900/80 border border-white/10 text-[11px] font-mono text-stone-300">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Bảo mật 100% cục bộ</span>
+                  <span>Chỉ gửi đi khi bạn đồng ý</span>
                 </div>
               </div>
             </div>
@@ -236,7 +236,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
               <div className="space-y-1">
                 <h3 className="font-bold text-sm sm:text-base">Chưa Có Ảnh Cá Nhân</h3>
                 <p className="text-xs text-stone-400">
-                  Chọn ảnh chụp toàn thân dáng đứng hoặc bật camera để AI quét nhanh trong 5 giây.
+                  Chọn ảnh chụp toàn thân dáng đứng, hoặc bật camera để chụp ngay.
                 </p>
               </div>
 

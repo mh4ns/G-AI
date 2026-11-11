@@ -40,6 +40,8 @@ export default function PredictionPage() {
   const [customMilestones, setCustomMilestones] = useState<string[] | null>(null);
   const [completedMilestones, setCompletedMilestones] = useState<Record<number, string>>({});
   const [userStats, setUserStats] = useState<{ height: number; weight: number; targetWeight: number } | null>(null);
+  // TDEE minus the daily calorie target from the saved plan; drives the weight projection.
+  const [dailyCalorieGap, setDailyCalorieGap] = useState<number | undefined>(undefined);
   const [isRecalculatingPlan, setIsRecalculatingPlan] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number; stageMessage: string } | undefined>(undefined);
@@ -80,6 +82,9 @@ export default function PredictionPage() {
       const savedPlan = localStorage.getItem("g_ai_user_plan");
       if (savedPlan) {
         const parsed = JSON.parse(savedPlan);
+        if (typeof parsed.tdee === "number" && typeof parsed.dailyCalorieTarget === "number") {
+          setDailyCalorieGap(Math.abs(parsed.tdee - parsed.dailyCalorieTarget));
+        }
         if (parsed.archetype) {
           setArchetype(parsed.archetype);
           setPlanConfig((prev) => ({
@@ -628,6 +633,7 @@ export default function PredictionPage() {
               activeHotspot={activeHotspot}
               userWeight={userStats?.weight}
               targetWeight={userStats?.targetWeight}
+              dailyCalorieGapKcal={dailyCalorieGap}
               onJumpToTarget={() => setCurrentDay(28)}
             />
 
@@ -648,7 +654,7 @@ export default function PredictionPage() {
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-[#FF5A36] font-bold">Tuần 1 · Ngày 01 — 07</span>
-                  <span className="text-xs text-stone-300">Giảm ~0.6kg (Thải nước mô)</span>
+                  <span className="text-xs text-stone-300">Trọng tâm: thở & cổ vai</span>
                 </div>
                 <h5 className="text-sm sm:text-base font-bold text-white mb-1">
                   Đánh thức cơ hoành & giảm căng cứng cổ gáy
@@ -669,13 +675,13 @@ export default function PredictionPage() {
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-emerald-400 font-bold">Tuần 2 · Ngày 08 — 14</span>
-                  <span className="text-xs text-stone-300">Giảm ~1.4kg (Siết cơ bụng sâu)</span>
+                  <span className="text-xs text-stone-300">Trọng tâm: cơ bụng sâu</span>
                 </div>
                 <h5 className="text-sm sm:text-base font-bold text-white mb-1">
                   Căn chỉnh cột sống & làm phẳng bụng dưới
                 </h5>
                 <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Kích hoạt cơ ngang bụng sâu (Transverse Abdominis). Nhóm cơ này đóng vai trò như đai nịt tự nhiên kéo phẳng thành bụng dưới mà không cần nín thở hóp bụng.
+                  Kích hoạt cơ ngang bụng sâu (Transverse Abdominis). Nhóm cơ này giữ thân người vững khi bạn vận động, mà không cần nín thở hóp bụng.
                 </p>
               </div>
 
@@ -690,13 +696,13 @@ export default function PredictionPage() {
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-amber-400 font-bold">Tuần 3 · Ngày 15 — 21</span>
-                  <span className="text-xs text-stone-300">Giảm ~1.8kg (Săn chắc chuỗi cơ sau)</span>
+                  <span className="text-xs text-stone-300">Trọng tâm: chuỗi cơ sau</span>
                 </div>
                 <h5 className="text-sm sm:text-base font-bold text-white mb-1">
                   Cân bằng khung chậu & khắc phục võng lưng
                 </h5>
                 <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Các bài Glute Bridge và Bird Dog điều chỉnh triệt để tật võng lưng do ngồi làm việc nhiều. Cơ mông được nâng đỡ, đưa trọng tâm cơ thể về vị trí cân bằng tự nhiên.
+                  Các bài Glute Bridge và Bird Dog giúp giảm tư thế võng lưng do ngồi làm việc nhiều. Cơ mông được nâng đỡ, đưa trọng tâm cơ thể về vị trí cân bằng tự nhiên.
                 </p>
               </div>
 
@@ -711,13 +717,13 @@ export default function PredictionPage() {
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-emerald-400 font-bold">Tuần 4 · Ngày 22 — 28</span>
-                  <span className="text-xs text-stone-300">Mục tiêu ~2.5kg & Eo -3.8cm</span>
+                  <span className="text-xs text-stone-300">Trọng tâm: đánh giá lại</span>
                 </div>
                 <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Vóc dáng chuẩn mực & bước đi tự tin
+                  Đánh giá lại & giữ nhịp
                 </h5>
                 <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Điểm tư thế đạt 88/100. Vai mở rộng thanh thoát, thắt lưng khỏe mạnh, thói quen giữ thẳng lưng đã trở thành phản xạ tự nhiên suốt cả ngày.
+                  So sánh với Ngày 0: cân nặng, số đo vòng eo và cảm giác khi ngồi làm việc. Thói quen giữ thẳng lưng cần thời gian; tiếp tục chu kỳ sau để giữ nhịp.
                 </p>
               </div>
             </div>

@@ -101,7 +101,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
         <p className={`text-sm mt-1 max-w-md mx-auto ${
           isMale ? "text-stone-400" : "text-stone-600"
         }`}>
-          Thông tin y khoa an toàn giúp thuật toán AI loại bỏ bài tập có rủi ro gây chấn thương.
+          Cho G-AI biết chỗ bạn hay đau để loại các bài tập dễ làm nặng thêm. Đây không thay cho chẩn đoán của bác sĩ.
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Sparkles, ShoppingBag, Check, Star, ShieldCheck, Info } from "lucide-react";
+import { Sparkles, ShoppingBag, Check, ShieldCheck, Info } from "lucide-react";
 
 import type { CatalogSource, StoreItem } from "@/lib/store-api";
 import { canOptimizeImage, formatPrice } from "@/lib/store-api";
@@ -175,12 +175,7 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({
 
                   <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 text-xs text-amber-500 font-mono">
-                        <Star className="w-3.5 h-3.5 fill-amber-500" />
-                        <span className={`font-bold ${isLight ? "text-stone-700" : "text-stone-300"}`}>{product.rating}</span>
-                        <span className="text-[11px] text-stone-400">({product.reviews} đánh giá)</span>
-                      </div>
-
+                      {/* Ratings stay hidden until the store collects real reviews. */}
                       <h3
                         className={`text-base sm:text-lg font-bold tracking-tight leading-snug group-hover:text-brand transition-colors ${
                           isLight ? "text-stone-900" : "text-white"
@@ -304,7 +299,7 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({
           <div className="hidden sm:block text-stone-300 dark:text-stone-700">•</div>
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-brand" />
-            <span>Tương thích 100% bài tập trong Khảo sát 28 ngày</span>
+            <span>Dùng được với các bài tập trong lộ trình 28 ngày</span>
           </div>
           <div className="hidden sm:block text-stone-300 dark:text-stone-700">•</div>
           <div className="flex items-center gap-2">

@@ -7,6 +7,14 @@ import { ArrowRight, Sparkles, Lightbulb } from "lucide-react";
 import { SweepHighlight } from "@/components/home/KineticText";
 import { appUrl } from "@g-ai/ui";
 
+// Facts about the programme itself, not outcomes: G-AI has no measured results
+// to show yet, so the hero promises none.
+const PROGRAM_FACTS = [
+  { label: "Khảo sát", value: "2 phút", desc: "Trả lời xong là có lộ trình" },
+  { label: "Lộ trình", value: "28 ngày", desc: "Calo và bài tập theo cơ thể bạn" },
+  { label: "Thiết bị", value: "Webcam", desc: "Không cần đồng hồ hay vòng đeo" },
+];
+
 interface DualAthleteHeroProps {
   athleteMode: "female" | "male";
   theme: "dark" | "light";
@@ -29,14 +37,10 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({
       headlinePrefix: "Khắc Phục Võng Lưng &",
       highlightWord: "Siết Eo Tự Nhiên",
       headlineSuffix: "Sau 28 Ngày",
-      tagline: "Ứng dụng khoa học chuyển hóa & bài tập Pilates cơ lõi sâu. AI đồng hành qua camera sửa dáng từng centimet mà không cần tạ nặng.",
+      tagline: "Bài tập Pilates cho cơ lõi sâu và lượng calo tính theo cơ thể bạn. AI theo dõi tư thế qua camera và nhắc khi bạn sai form, không cần tạ nặng.",
       color: "coral" as const,
       accentHex: "#FF6B4A",
-      stats: [
-        { label: "BMR Trung Bình", value: "1,350 kcal", desc: "Năng lượng trao đổi chất cơ bản" },
-        { label: "Góc Gù Lưng (Kyphosis)", value: "36° → 12°", desc: "Cột sống thẳng tự nhiên" },
-        { label: "Kích Hoạt Cơ Bụng Sâu", value: "+48%", desc: "Transverse Abdominis" },
-      ],
+      stats: PROGRAM_FACTS,
       primaryImage: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=85",
       badge: "PILATES SCULPT • 28 DAYS",
     },
@@ -45,14 +49,10 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({
       headlinePrefix: "Tái Tạo Chuỗi Cơ Sau &",
       highlightWord: "Bức Phá Thể Lực",
       headlineSuffix: "Chuẩn Cơ Sinh Học",
-      tagline: "Phát triển sức mạnh chức năng, giải phóng khớp vai cổ và xây dựng cơ bắp cân đối. AI cảnh báo sai khớp gối và đếm rep theo thời gian thực.",
+      tagline: "Phát triển sức mạnh chức năng, mở khớp vai cổ và xây cơ cân đối. AI đếm rep qua camera và nhắc khi bạn sai form.",
       color: "emerald" as const,
       accentHex: "#10B981",
-      stats: [
-        { label: "BMR Trung Bình", value: "1,820 kcal", desc: "Đốt mỡ liên tục cả ngày" },
-        { label: "Độ Mở Khớp Háng & Lưng", value: "+38°", desc: "Giải phóng chèn ép thắt lưng" },
-        { label: "Hiệu Suất Phát Lực Lưng Xô", value: "92%", desc: "Posterior Chain Symmetry" },
-      ],
+      stats: PROGRAM_FACTS,
       primaryImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=85",
       badge: "ATHLETIC POWER • 28 DAYS",
     },
@@ -246,8 +246,8 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({
               <div className="absolute bottom-4 inset-x-4 z-10 p-4 rounded-2xl bg-black/80 backdrop-blur-md border border-white/15 text-white flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span>AI COMPUTER VISION • READY</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>AI qua camera</span>
                   </div>
                   <h4 className="font-bold text-xs sm:text-sm">
                     {athleteMode === "female" ? "Phân Tích Cột Sống & Khớp Hông" : "Định Vị Đường Đi Tạ & Chuỗi Cơ Sau"}

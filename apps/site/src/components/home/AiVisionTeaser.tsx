@@ -15,7 +15,7 @@ export const AiVisionTeaser: React.FC = () => {
           <div className="lg:col-span-5 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Công Nghệ Thị Giác Máy Tính Độc Quyền</span>
+              <span>Xử lý ngay trên máy bạn</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
@@ -23,7 +23,7 @@ export const AiVisionTeaser: React.FC = () => {
             </h2>
 
             <p className="text-sm sm:text-base text-stone-400 leading-relaxed">
-              Không cần mua Apple Watch hay vòng đeo đắt tiền. Bạn chỉ cần đặt điện thoại hoặc mở webcam máy tính. Trợ lý AI phân tích 33 điểm xương khớp theo thời gian thực (MediaPipe Pose), cảnh báo sai tư thế và tự động đếm rep chính xác 100%.
+              Không cần đồng hồ thông minh hay vòng đeo. Bạn chỉ cần đặt điện thoại hoặc mở webcam máy tính. AI theo dõi 33 điểm trên cơ thể bằng MediaPipe Pose, nhắc khi bạn sai tư thế và tự đếm rep. Video được xử lý trên máy bạn, không gửi đi đâu.
             </p>
 
             {/* Checklist of Core Vision Capabilities */}
@@ -40,7 +40,7 @@ export const AiVisionTeaser: React.FC = () => {
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-bold text-white">Tự Động Đếm Rep Khi Đạt Góc Khớp Chuẩn</h4>
-                  <p className="text-xs text-stone-400 mt-0.5">Chỉ tính điểm khi Squat đủ sâu 90° hoặc Plank giữ thẳng trục cột sống.</p>
+                  <p className="text-xs text-stone-400 mt-0.5">Squat chỉ được tính khi góc gối đạt 80–100° ở điểm thấp nhất; Plank được tính khi vai, hông và gót thẳng hàng.</p>
                 </div>
               </div>
             </div>
@@ -65,14 +65,10 @@ export const AiVisionTeaser: React.FC = () => {
               {/* Webcam Status Bar */}
               <div className="flex items-center justify-between pb-4 border-b border-stone-800/80 mb-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
                   <span className="text-xs font-mono text-stone-300 font-bold uppercase tracking-wider">
-                    LIVE WEBCAM FEED • 1080P 60FPS
+                    Minh họa màn hình tập
                   </span>
                 </div>
-                <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-stone-800 text-stone-400">
-                  LATENCY: 8ms
-                </span>
               </div>
 
               {/* Skeletal Pose Simulation Canvas Frame */}
@@ -143,7 +139,7 @@ export const AiVisionTeaser: React.FC = () => {
                 {/* Real-time Feedback Pill */}
                 <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-mono backdrop-blur-md">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Cột sống thẳng chuẩn • Độ chuẩn xác 96.4%</span>
+                  <span>Cột sống thẳng hàng</span>
                 </div>
               </div>
             </div>

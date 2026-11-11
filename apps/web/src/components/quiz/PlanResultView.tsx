@@ -63,6 +63,8 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
   const weightDiff = responses.currentWeightKg - responses.targetWeightKg;
   const isLosing = weightDiff > 0;
   const isGaining = weightDiff < 0;
+  // The calorie floor can shrink the planned deficit, so show the real gap.
+  const dailyCalorieGap = Math.abs(result.tdee - result.dailyCalorieTarget);
 
   // Mini Digital Twin Avatar Morphing Vector
   // Day 0: slouch, curved spine, wider waist. Day 28: upright spine, cinched waist.
@@ -121,7 +123,11 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
               <strong className={`font-bold ${isMale ? "text-[#FF5A36]" : "text-[#FF6B4A]"}`}>
                 {responses.targetWeightKg} kg
               </strong>{" "}
-              ({isLosing ? `Giảm ${Math.abs(weightDiff)} kg mỡ an toàn` : isGaining ? `Tăng ${Math.abs(weightDiff)} kg cơ nạc` : "Định hình & siết cơ săn chắc"}).
+              ({isLosing
+                ? `giảm ${Math.abs(weightDiff)} kg, ăn ít hơn khoảng ${dailyCalorieGap} kcal mỗi ngày`
+                : isGaining
+                  ? `tăng ${Math.abs(weightDiff)} kg, ăn thêm khoảng ${dailyCalorieGap} kcal mỗi ngày`
+                  : "giữ cân, tập trung vào sức mạnh và tư thế"}).
             </p>
           </div>
 
@@ -227,11 +233,11 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
             <div className="flex items-center gap-2">
               <span className="font-bold text-white">Trạng thái:</span>
               <span className="font-mono text-[#FF5A36]">
-                {previewDay === 0 ? "Ngày 0: Cột sống gù nhẹ, cơ lõi chưa siết" : "Ngày 28: Cột sống thẳng trục, cơ lõi siết gọn"}
+                {previewDay === 0 ? "Ngày 0: điểm xuất phát" : "Ngày 28: tư thế lộ trình hướng tới"}
               </span>
             </div>
             <p className="text-stone-300 leading-relaxed">
-              Mô hình viễn trắc AI dự báo vòng eo giảm <strong>4 – 6 cm</strong>, cơ mông nâng <strong>15%</strong> và áp lực đĩa đệm thắt lưng giảm <strong>28%</strong> sau chu kỳ 28 ngày.
+              Hình này minh họa hướng thay đổi tư thế mà giáo án nhắm tới, không phải số đo dự đoán của bạn. Kết quả thật phụ thuộc vào việc tập đều, ăn uống và giấc ngủ.
             </p>
             <Link
               href="/prediction"
@@ -430,7 +436,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
 
       <div className="flex items-center justify-center gap-2 text-stone-400 text-xs mt-6">
         <HeartHandshake className={`w-4 h-4 ${isMale ? "text-[#FF5A36]" : "text-[#FF6B4A]"}`} />
-        <span>100% Khoa học Trao đổi chất • Loại trừ rủi ro chấn thương cột sống & khớp gối.</span>
+        <span>Calo được ước tính bằng công thức Mifflin-St Jeor. Đây không phải lời khuyên y khoa: hỏi bác sĩ trước khi tập nếu bạn có bệnh lý hoặc chấn thương.</span>
       </div>
     </div>
   );
