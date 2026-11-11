@@ -10,6 +10,28 @@ export function calculateBMI(weightKg: number, heightCm: number): number {
   return parseFloat((weightKg / (heightM * heightM)).toFixed(1));
 }
 
+/** WHO adult BMI band treated as healthy: 18.5 to 24.9. */
+export const HEALTHY_BMI_MIN = 18.5;
+export const HEALTHY_BMI_MAX = 24.9;
+
+/**
+ * Whole-kilogram weights inside the healthy BMI band for a height. The quiz
+ * never lets a target weight go below `min`: a coaching app must not hand
+ * someone a plan that ends underweight.
+ */
+export function healthyWeightRangeKg(heightCm: number): { min: number; max: number } {
+  const heightM2 = (heightCm / 100) ** 2;
+  return {
+    min: Math.ceil(HEALTHY_BMI_MIN * heightM2),
+    max: Math.floor(HEALTHY_BMI_MAX * heightM2),
+  };
+}
+
+/** Lowest target weight the quiz accepts for this height. */
+export function minSafeTargetWeightKg(heightCm: number): number {
+  return healthyWeightRangeKg(heightCm).min;
+}
+
 export function getBMICategory(bmi: number): { label: string; color: string; advice: string } {
   if (bmi < 18.5) {
     return {
@@ -176,7 +198,9 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   }
 
   if (safetyNotes.length === 0) {
-    safetyNotes.push("Thể trạng cơ khớp hoàn hảo: Giáo án mở khóa 100% bài tập với biên độ chuyển động đầy đủ.");
+    safetyNotes.push(
+      "Bạn không báo chấn thương nào, nên giáo án dùng đủ các bài tập. Dừng lại khi thấy đau, và hỏi ý kiến bác sĩ nếu cơn đau kéo dài."
+    );
   }
 
   // 10. Generate 4-day workout routine tailored to Archetype & Equipment

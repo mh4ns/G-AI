@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { healthyWeightRangeKg, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
 import Image from "next/image";
 import { Sparkles, X, Check, ArrowRight, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
 import { deletePredictionOnServer, hasPhotoConsent, setPhotoConsent } from "@/lib/prediction-client";
@@ -177,7 +178,9 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
       else setWeight(currentArchetype === "male_strength" ? "76" : "56");
     } else if (field === "targetWeight") {
       const num = parseFloat(targetWeight);
-      if (!isNaN(num) && num > 0) setTargetWeight(cleanNumberInput(String(Math.min(250, Math.max(30, num)))));
+      // Never below the healthy BMI floor for the entered height.
+      const floor = minSafeTargetWeightKg(parseFloat(height) || (currentArchetype === "male_strength" ? 175 : 162));
+      if (!isNaN(num) && num > 0) setTargetWeight(cleanNumberInput(String(Math.min(250, Math.max(floor, num)))));
       else setTargetWeight(currentArchetype === "male_strength" ? "73.5" : "52");
     }
   };
@@ -186,7 +189,10 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     e.preventDefault();
     const finalHeight = parseFloat(height) || (currentArchetype === "male_strength" ? 175 : 162);
     const finalWeight = parseFloat(weight) || (currentArchetype === "male_strength" ? 76 : 56);
-    const finalTargetWeight = parseFloat(targetWeight) || (currentArchetype === "male_strength" ? 73.5 : 52);
+    const finalTargetWeight = Math.max(
+      minSafeTargetWeightKg(finalHeight),
+      parseFloat(targetWeight) || (currentArchetype === "male_strength" ? 73.5 : 52)
+    );
 
     onSave({
       archetype: currentArchetype,
@@ -373,9 +379,18 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                 className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="52"
                 aria-label="Cân nặng mục tiêu tính bằng kg"
+                aria-describedby="calibration-healthy-range"
               />
             </div>
           </div>
+          <p id="calibration-healthy-range" className="text-xs text-stone-400 leading-relaxed">
+            {(() => {
+              const h = parseFloat(height);
+              if (!h || h < 100) return "Mục tiêu không thể thấp hơn vùng cân nặng khỏe mạnh (BMI 18,5).";
+              const range = healthyWeightRangeKg(h);
+              return `Vùng cân nặng khỏe mạnh với chiều cao ${Math.round(h)} cm: ${range.min}–${range.max} kg. Mục tiêu không thể thấp hơn ${range.min} kg.`;
+            })()}
+          </p>
 
           {/* Primary Posture Challenge */}
           <div>

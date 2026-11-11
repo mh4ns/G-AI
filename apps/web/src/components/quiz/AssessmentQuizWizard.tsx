@@ -9,7 +9,7 @@ import {
   FitnessObstacle, 
   AthleticArchetype 
 } from "@/types/quiz";
-import { calculatePersonalizedPlan } from "@/lib/quiz-calculations";
+import { calculatePersonalizedPlan, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
 import { StepHeader } from "./StepHeader";
 import { ArchetypeSelectionStep } from "./ArchetypeSelectionStep";
 import { AgeGoalStep } from "./AgeGoalStep";
@@ -37,7 +37,9 @@ export const AssessmentQuizWizard: React.FC = () => {
     age: 26,
     heightCm: 165,
     currentWeightKg: 58,
-    targetWeightKg: 50,
+    // Start the target at the current weight: the quiz suggests no weight change
+    // until the person chooses one.
+    targetWeightKg: 58,
     activityLevel: "lightly_active",
     dietPreference: "balanced",
     obstacles: ["sweet_cravings", "sore_back"],
@@ -79,7 +81,12 @@ export const AssessmentQuizWizard: React.FC = () => {
     field: "heightCm" | "currentWeightKg" | "targetWeightKg",
     val: number
   ) => {
-    setResponses((prev) => ({ ...prev, [field]: val }));
+    setResponses((prev) => {
+      const next = { ...prev, [field]: val };
+      // A taller height raises the healthy floor; lift the target to it if needed.
+      next.targetWeightKg = Math.max(next.targetWeightKg, minSafeTargetWeightKg(next.heightCm));
+      return next;
+    });
   };
 
   const handleToggleObstacle = (obstacleId: FitnessObstacle) => {

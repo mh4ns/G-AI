@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ArrowRight, Scale, Plus, Minus } from "lucide-react";
-import { calculateBMI, getBMICategory } from "@/lib/quiz-calculations";
+import { calculateBMI, getBMICategory, healthyWeightRangeKg } from "@/lib/quiz-calculations";
 import { AthleticArchetype } from "@/types/quiz";
 
 interface BodyStatsStepProps {
@@ -26,6 +26,8 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
   const bmi = calculateBMI(currentWeightKg, heightCm);
   const bmiCategory = getBMICategory(bmi);
   const weightDiff = targetWeightKg - currentWeightKg;
+  const healthy = healthyWeightRangeKg(heightCm);
+  const atTargetFloor = targetWeightKg <= healthy.min;
 
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-6 animate-in fade-in duration-300">
@@ -43,7 +45,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
         <p className={`text-sm mt-1 max-w-md mx-auto ${
           isMale ? "text-stone-400" : "text-stone-600"
         }`}>
-          Dữ liệu giúp thuật toán tính chính xác năng lượng chuyển hóa sinh học (BMR) và chỉ số khối (BMI).
+          Dùng để ước tính năng lượng cơ bản (BMR) và chỉ số khối cơ thể (BMI) của bạn.
         </p>
       </div>
 
@@ -176,16 +178,18 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
                     ? "bg-emerald-100 text-emerald-700" 
                     : "bg-blue-100 text-blue-700"
                 }`}>
-                  {weightDiff > 0 ? `+${weightDiff} kg tăng cơ` : `${weightDiff} kg giảm mỡ`}
+                  {weightDiff > 0 ? `tăng ${weightDiff} kg` : `giảm ${Math.abs(weightDiff)} kg`}
                 </span>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onChangeStats("targetWeightKg", Math.max(35, targetWeightKg - 1))}
+              onClick={() => onChangeStats("targetWeightKg", Math.max(healthy.min, targetWeightKg - 1))}
+              disabled={atTargetFloor}
               aria-label="Giảm cân nặng mục tiêu 1 kg"
-              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+              aria-describedby="target-weight-range"
+              className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
             >
@@ -202,6 +206,16 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
             </button>
           </div>
         </div>
+
+        <p
+          id="target-weight-range"
+          aria-live="polite"
+          className={`px-1 text-xs leading-relaxed ${isMale ? "text-stone-400" : "text-stone-600"}`}
+        >
+          {atTargetFloor
+            ? `Với chiều cao ${heightCm} cm, ${healthy.min} kg là mức thấp nhất còn trong vùng cân nặng khỏe mạnh (BMI 18,5). G-AI không lập lộ trình xuống thấp hơn.`
+            : `Vùng cân nặng khỏe mạnh với chiều cao ${heightCm} cm: ${healthy.min}–${healthy.max} kg (BMI 18,5–24,9).`}
+        </p>
       </div>
 
       {/* Next Button */}
