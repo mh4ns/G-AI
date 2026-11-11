@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState, useLayoutEffect } from "react";
 import Image from "next/image";
 import {
   X,
@@ -100,7 +100,30 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   }, [isOpen, step]);
 
-  if (!isOpen) return null;
+  // Panel reveal (transitions.dev 07): stay mounted while the close plays.
+  // Opening flips data-open only after the closed state has been laid out,
+  // so the transition always has a start state.
+  const [mounted, setMounted] = useState(isOpen);
+  const [shown, setShown] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      return;
+    }
+    setShown(false);
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--panel-close-dur")) || 350;
+    const id = setTimeout(() => setMounted(false), ms);
+    return () => clearTimeout(id);
+  }, [isOpen]);
+  useLayoutEffect(() => {
+    if (!mounted || !isOpen) return;
+    void panelRef.current?.offsetHeight; // commit the closed state first
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, [mounted, isOpen]);
+
+  if (!mounted) return null;
 
   const rows = lines.map((line) => {
     const item = catalog.get(line.productId);
@@ -143,10 +166,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const muted = isLight ? "text-stone-500" : "text-stone-400";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label="Giỏ hàng">
-      <div onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div
+      className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? "" : "pointer-events-none"}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Giỏ hàng"
+    >
+      <div onClick={onClose} data-open={shown} className="t-backdrop absolute inset-0 bg-black/60" />
 
-      <div className="absolute inset-y-0 right-0 w-full max-w-lg flex">
+      <div ref={panelRef} data-open={shown} className="t-panel-slide t-panel--drawer absolute inset-y-0 right-0 w-full max-w-lg flex">
         <div className={`w-full flex flex-col shadow-2xl border-l ${panel}`}>
           {/* Top bar */}
           <div
@@ -329,7 +357,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       <h4 className="font-bold text-xs sm:text-sm truncate">{item?.name ?? line.productId}</h4>
                       {problem && <p className="text-xs text-rose-500 font-semibold">{problem}</p>}
                       <div className="flex items-center justify-between pt-1">
-                        <span className=" font-bold text-sm text-brand">
+                        <span className="font-bold text-sm text-accent">
                           {item ? formatPrice(item.price * line.quantity) : "—"}
                         </span>
                         <div
@@ -376,7 +404,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             >
               <div className="flex justify-between items-baseline text-sm">
                 <span className="font-bold">Tạm tính</span>
-                <span className="text-xl font-bold text-brand">{formatPrice(subtotal)}</span>
+                <span className="text-xl font-bold text-accent">{formatPrice(subtotal)}</span>
               </div>
               <p className={`text-xs ${muted}`}>
                 Giá cuối cùng do máy chủ xác nhận khi tạo đơn. Đơn ở trạng thái chờ thanh toán — chưa thu tiền.

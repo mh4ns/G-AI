@@ -1,3 +1,5 @@
+@import "./motion.css";
+
 /*
  * Shared base styles for every G-AI site. Each app's globals.css imports this
  * file and then adds the @tailwind layers.
@@ -39,23 +41,13 @@ h3 {
   color: #a8a29e; /* stone-400 on dark: 7.5:1 */
 }
 
-/* Custom Soft Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+/* Orange text that passes on both grounds: brand-action on light (4.7:1),
+   brand on dark (6.4:1). */
+.text-accent {
+  color: #c93e1a;
 }
-
-@keyframes pulse-slow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.03); }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 3s ease-in-out infinite;
+[data-theme="dark"] .text-accent {
+  color: #ff5a36;
 }
 
 /* Impeccable Neutral Adaptive Scrollbar */

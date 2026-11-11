@@ -108,7 +108,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
 
       {/* 2. Plan Customization Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="relative w-full max-w-lg rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-7 shadow-2xl text-stone-100">
             {/* Close Button */}
             <button

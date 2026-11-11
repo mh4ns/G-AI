@@ -83,7 +83,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-6 animate-in fade-in duration-300">
+    <div className="w-full max-w-2xl mx-auto px-4 py-6">
       <div className="text-center mb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-stone-900">
           Thói quen & tiền sử cơ khớp

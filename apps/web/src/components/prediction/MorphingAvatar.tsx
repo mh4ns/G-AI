@@ -467,7 +467,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         {showSkeleton && (
           <svg
             viewBox="0 0 320 500"
-            className="absolute inset-0 w-full h-full z-20 pointer-events-none overflow-visible animate-in fade-in duration-300"
+            className="absolute inset-0 w-full h-full z-20 pointer-events-none overflow-visible"
           >
             <defs>
               <filter id="skeletonGlow" x="-20%" y="-20%" width="140%" height="140%">

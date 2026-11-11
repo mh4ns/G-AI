@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Timer, CalendarDays, Webcam } from "lucide-react";
-import { appUrl } from "@g-ai/ui";
+import { SlidingTabs, appUrl } from "@g-ai/ui";
 
 interface DualAthleteHeroProps {
   athleteMode: "female" | "male";
@@ -49,37 +49,15 @@ export const DualAthleteHero: React.FC<DualAthleteHeroProps> = ({ athleteMode, t
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
         <div className="lg:col-span-6">
           {/* Programme switch: a segmented control, not a gender toggle. */}
-          <div
-            role="tablist"
-            aria-label="Chọn chương trình"
-            className={`inline-flex p-1 rounded-full border ${
-              isLight ? "bg-white border-stone-200" : "bg-stone-900 border-stone-800"
-            }`}
-          >
-            {(Object.keys(PROGRAMMES) as Array<keyof typeof PROGRAMMES>).map((mode) => {
-              const active = athleteMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => onSelectAthlete(mode)}
-                  className={`min-h-11 px-5 rounded-full text-sm font-semibold transition-colors duration-200 ${
-                    active
-                      ? isLight
-                        ? "bg-stone-900 text-white"
-                        : "bg-white text-stone-900"
-                      : isLight
-                        ? "text-stone-600 hover:text-stone-900"
-                        : "text-stone-300 hover:text-white"
-                  }`}
-                >
-                  {PROGRAMMES[mode].tab}
-                </button>
-              );
-            })}
-          </div>
+          <SlidingTabs
+            ariaLabel="Chọn chương trình"
+            value={athleteMode}
+            onChange={onSelectAthlete}
+            options={[
+              { value: "female", label: PROGRAMMES.female.tab },
+              { value: "male", label: PROGRAMMES.male.tab },
+            ]}
+          />
 
           <h1
             className={`font-display mt-8 text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight leading-[1.08] text-balance ${

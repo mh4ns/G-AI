@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Moon, ShoppingBag, Sun } from "lucide-react";
 import { BrandLogo, appUrl, hubUrl } from "@g-ai/ui";
@@ -18,6 +18,12 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
   cartCount = 0,
   onOpenCart,
 }) => {
+  // Keep showing the last count while the badge shrinks away at zero.
+  const [lastCount, setLastCount] = useState(cartCount);
+  useEffect(() => {
+    if (cartCount > 0) setLastCount(cartCount);
+  }, [cartCount]);
+
   const iconButton = `relative w-11 h-11 rounded-full border flex items-center justify-center transition-colors duration-200 ${
     isLight
       ? "bg-white border-stone-200 text-stone-700 hover:text-stone-950 hover:border-stone-400"
@@ -56,11 +62,12 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
               aria-label={cartCount > 0 ? `Mở giỏ hàng, ${cartCount} sản phẩm` : "Mở giỏ hàng"}
             >
               <ShoppingBag className="w-[18px] h-[18px]" aria-hidden />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-brand-action text-white text-xs font-semibold flex items-center justify-center">
-                  {cartCount}
+              {/* Notification badge (transitions.dev 03): slides on and pops when the bag fills. */}
+              <span className="t-badge" data-open={cartCount > 0} aria-hidden>
+                <span className="t-badge-dot min-w-5 h-5 px-1 rounded-full bg-brand-action text-white text-xs font-semibold flex items-center justify-center">
+                  {lastCount}
                 </span>
-              )}
+              </span>
             </button>
           )}
 

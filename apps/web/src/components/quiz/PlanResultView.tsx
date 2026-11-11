@@ -73,7 +73,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
   const chestWidth = 42 + progressRatio * (isMale ? 6 : 2); // Broader chest
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-8 animate-in fade-in duration-500 text-stone-900">
+    <div className="w-full max-w-3xl mx-auto px-4 py-8 text-stone-900">
       {/* Top Trophy Banner */}
       <div className="text-center mb-8">
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-2">

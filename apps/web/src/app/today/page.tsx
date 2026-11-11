@@ -8,7 +8,6 @@ import {
   
   Play,
   Plus,
-  CheckCircle2,
   
   Sparkles,
   
@@ -21,7 +20,7 @@ import {
   Sun,
 } from "lucide-react";
 import { PersonalizedPlanResult } from "@/types/quiz";
-import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
+import { BrandLogo, SubtleNumber, siteUrl, hubUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
 
@@ -375,7 +374,7 @@ export default function TodayDashboardPage() {
             {/* Remaining Highlight Box */}
             <div className="p-4 rounded-2xl bg-gradient-to-br from-peach-50 via-cream-100 to-peach-100 border border-peach-200/80 text-center sm:text-left">
               <div className="text-xs text-peach-700 font-semibold ">Calo còn lại</div>
-              <div className="text-3xl sm:text-4xl font-extrabold text-peach-600 mt-1">{remainingCalories}</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-peach-600 mt-1"><SubtleNumber value={remainingCalories} /></div>
               <div className="text-xs text-stone-600 mt-0.5">kcal có thể nạp thêm</div>
             </div>
 
@@ -386,7 +385,7 @@ export default function TodayDashboardPage() {
                   <Flame className="w-3.5 h-3.5 text-amber-500" />
                   Đã nạp vào
                 </div>
-                <div className="text-xl font-bold text-stone-800 mt-1">{caloriesEaten} <span className="text-xs font-normal text-muted">kcal</span></div>
+                <div className="text-xl font-bold text-stone-800 mt-1"><SubtleNumber value={caloriesEaten} /> <span className="text-xs font-normal text-muted">kcal</span></div>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/70">
@@ -394,7 +393,7 @@ export default function TodayDashboardPage() {
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                   Đã đốt
                 </div>
-                <div className="text-xl font-bold text-stone-800 mt-1">{caloriesBurned} <span className="text-xs font-normal text-muted">kcal</span></div>
+                <div className="text-xl font-bold text-stone-800 mt-1"><SubtleNumber value={caloriesBurned} /> <span className="text-xs font-normal text-muted">kcal</span></div>
               </div>
             </div>
           </div>
@@ -458,20 +457,20 @@ export default function TodayDashboardPage() {
                 </div>
               </div>
               <span className="text-xs font-bold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
-                {waterPercent}%
+                <SubtleNumber value={waterPercent} />%
               </span>
             </div>
 
             {/* Progress Bar */}
             <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 my-2">
               <div
-                className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-smooth-out)] motion-reduce:transition-none"
                 style={{ width: `${waterPercent}%` }}
               />
             </div>
 
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-100">
-              <span className="text-xs font-semibold text-stone-700">{waterDrunkMl} / {plan.recommendedWaterMl} ml</span>
+              <span className="text-xs font-semibold text-stone-700"><SubtleNumber value={waterDrunkMl} /> / {plan.recommendedWaterMl.toLocaleString("vi-VN")} ml</span>
               <button
                 onClick={addWater}
                 className="min-h-11 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold flex items-center gap-1 transition-colors active:scale-95"
@@ -521,67 +520,62 @@ export default function TodayDashboardPage() {
             </span>
           </h3>
 
-          <div className="space-y-2.5">
-            <div
-              onClick={() => toggleChecklist("workout")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-peach-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.workout ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.workout ? "line-through text-muted" : "font-medium text-stone-700"}`}>
-                  Hoàn thành 18 phút bài tập Pilates bụng
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-brand-action bg-peach-50 px-2.5 py-0.5 rounded-full">18 phút</span>
-            </div>
-
-            <div
-              onClick={() => toggleChecklist("water")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-sky-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.water ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.water ? "line-through text-muted" : "font-medium text-stone-700"}`}>
-                  Uống đủ {(plan.recommendedWaterMl / 1000).toFixed(1)}L nước lọc trong ngày
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full">{waterDrunkMl}ml</span>
-            </div>
-
-            <div
-              onClick={() => toggleChecklist("mindfulness")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-stone-300 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.mindfulness ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.mindfulness ? "line-through text-muted" : "font-medium text-stone-700"}`}>
-                  5 phút thở thư giãn Box Breathing giảm căng thẳng
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-stone-700 bg-stone-100 px-2.5 py-0.5 rounded-full">5 phút</span>
-            </div>
-
-            <div
-              onClick={() => toggleChecklist("fasting")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-amber-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.fasting ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.fasting ? "line-through text-muted" : "font-medium text-stone-700"}`}>
-                  Không ăn vặt sau 20:00 tối
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full">Tối nay</span>
-            </div>
-          </div>
+          <ul className="space-y-2.5">
+            {[
+              {
+                key: "workout",
+                label: "Hoàn thành 18 phút bài tập Pilates bụng",
+                tag: "18 phút",
+                tagClass: "text-brand-action bg-peach-50",
+              },
+              {
+                key: "water",
+                label: `Uống đủ ${(plan.recommendedWaterMl / 1000).toFixed(1)}L nước lọc trong ngày`,
+                tag: `${waterDrunkMl.toLocaleString("vi-VN")} ml`,
+                tagClass: "text-sky-800 bg-sky-50",
+              },
+              {
+                key: "mindfulness",
+                label: "5 phút thở thư giãn Box Breathing giảm căng thẳng",
+                tag: "5 phút",
+                tagClass: "text-stone-700 bg-stone-100",
+              },
+              {
+                key: "fasting",
+                label: "Không ăn vặt sau 20:00 tối",
+                tag: "Tối nay",
+                tagClass: "text-amber-800 bg-amber-50",
+              },
+            ].map((task) => {
+              const done = !!checklist[task.key];
+              return (
+                <li key={task.key}>
+                  {/* Checkbox check (transitions.dev 25): the box fills, then the tick draws. */}
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={done}
+                    onClick={() => toggleChecklist(task.key)}
+                    className="t-check group w-full min-h-12 p-3 rounded-2xl border border-stone-200 hover:border-stone-300 bg-stone-50/50 flex items-center justify-between gap-3 text-left transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="w-5 h-5 shrink-0 rounded-md border-2 border-stone-300 bg-white flex items-center justify-center transition-colors duration-[var(--check-box)] group-aria-checked:bg-emerald-600 group-aria-checked:border-emerald-600">
+                        <svg viewBox="0 0 10.1668 10.1668" className="w-3 h-3" aria-hidden>
+                          <path d="M1 5.52L3.92 9.17L9.17 1" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className={`text-sm ${done ? "line-through text-muted" : "font-medium text-stone-700"}`}>
+                        {task.label}
+                      </span>
+                    </span>
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${task.tagClass}`}>
+                      {task.tag}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       </main>
 

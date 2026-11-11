@@ -63,7 +63,7 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
   const activeColor = "#FF5A36";
 
   return (
-    <div className="w-full max-w-lg mx-auto px-4 py-16 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+    <div className="w-full max-w-lg mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
       {/* Animated Circular Progress Gauge */}
       <div className="relative w-44 h-44 mb-8 flex items-center justify-center">
         <svg className="w-full h-full -rotate-90 relative z-10" viewBox="0 0 100 100">
@@ -101,7 +101,7 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
 
       {/* Dynamic Status Text */}
       <div className="min-h-[48px] mb-8">
-        <h3 className="text-base sm:text-lg font-bold tracking-tight animate-fade-in text-stone-900">
+        <h3 className="text-base sm:text-lg font-bold tracking-tight text-stone-900">
           {computationSteps[currentStepIndex]}
         </h3>
       </div>

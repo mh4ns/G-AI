@@ -112,7 +112,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8 flex flex-col items-center animate-in fade-in duration-300">
+    <div className="w-full max-w-4xl mx-auto px-4 py-8 flex flex-col items-center">
       <div className="text-center space-y-2 mb-6">
         <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
           Quét hình thể & dáng đứng cá nhân

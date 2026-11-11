@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
+import { SlidingTabs } from "@g-ai/ui";
 
 interface GalleryItem {
   id: string;
@@ -84,7 +85,7 @@ export const DualAthleteGallery: React.FC = () => {
   const filtered = filter === "all" ? galleryItems : galleryItems.filter((i) => i.gender === filter);
 
   return (
-    <section className="py-16 sm:py-24 bg-canvas-dark text-white border-t border-stone-800 select-none">
+    <section data-theme="dark" className="py-16 sm:py-24 bg-canvas-dark text-white border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-6 border-b border-stone-800 gap-6">
@@ -97,27 +98,16 @@ export const DualAthleteGallery: React.FC = () => {
             </p>
           </div>
 
-          {/* Gallery filter: one active style for every option. */}
-          <div role="tablist" aria-label="Lọc theo chương trình" className="flex items-center p-1 rounded-full bg-stone-900 border border-stone-800 self-start md:self-auto">
-            {([
-              ["all", "Tất cả"],
-              ["female", "Pilates"],
-              ["male", "Sức mạnh"],
-            ] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={filter === value}
-                onClick={() => setFilter(value)}
-                className={`min-h-11 px-4 rounded-full text-sm font-medium transition-colors ${
-                  filter === value ? "bg-white text-stone-900" : "text-stone-300 hover:text-white"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <SlidingTabs
+            ariaLabel="Lọc theo chương trình"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "all", label: "Tất cả" },
+              { value: "female", label: "Pilates" },
+              { value: "male", label: "Sức mạnh" },
+            ]}
+          />
         </div>
 
         {/* Masonry Asymmetrical Grid */}

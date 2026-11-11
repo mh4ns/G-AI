@@ -143,7 +143,7 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
   const goals = isMale ? maleGoals : femaleGoals;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:py-10 animate-in fade-in duration-500">
+    <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:py-10">
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2 text-stone-900">
           Độ tuổi của bạn & mục tiêu trọng tâm

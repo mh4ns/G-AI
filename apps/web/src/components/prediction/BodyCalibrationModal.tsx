@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { healthyWeightRangeKg, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
 import Image from "next/image";
 import { Sparkles, X, Check, ArrowRight, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
@@ -87,7 +87,39 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     }
   }, [isOpen, initialHeight, initialWeight, initialTargetWeight, currentPhoto]);
 
-  if (!isOpen) return null;
+  // Modal open / close (transitions.dev 06): open only after the resting
+  // state has been laid out; on close play .is-closing, then unmount.
+  const [mounted, setMounted] = useState(isOpen);
+  const [phase, setPhase] = useState<"idle" | "open" | "closing">("idle");
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      return;
+    }
+    setPhase((p) => (p === "idle" ? p : "closing"));
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--modal-close-dur")) || 150;
+    const id = setTimeout(() => {
+      setMounted(false);
+      setPhase("idle");
+    }, ms);
+    return () => clearTimeout(id);
+  }, [isOpen]);
+  useLayoutEffect(() => {
+    if (!mounted || !isOpen) return;
+    void dialogRef.current?.offsetHeight;
+    const id = requestAnimationFrame(() => setPhase("open"));
+    return () => cancelAnimationFrame(id);
+  }, [mounted, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  if (!mounted) return null;
 
   const handleArchetypeToggle = (next: "female_pilates" | "male_strength") => {
     setCurrentArchetype(next);
@@ -206,13 +238,30 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none overflow-y-auto">
-      <div className="relative w-full max-w-lg my-8 rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-8 shadow-2xl text-white">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ${isOpen ? "" : "pointer-events-none"}`}
+    >
+      <div
+        aria-hidden
+        onClick={onClose}
+        data-open={phase === "open"}
+        className="t-backdrop fixed inset-0 bg-black/80"
+        style={{ transitionDuration: phase === "open" ? "var(--modal-open-dur)" : "var(--modal-close-dur)" }}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Hiệu chỉnh thể trạng"
+        className={`t-modal relative w-full max-w-lg my-8 rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-8 shadow-2xl text-white${
+          phase === "open" ? " is-open" : phase === "closing" ? " is-closing" : ""
+        }`}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           aria-label="Đóng cửa sổ hiệu chỉnh"
-          className="absolute top-5 right-5 p-2 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>

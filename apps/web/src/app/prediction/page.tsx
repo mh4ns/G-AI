@@ -180,6 +180,31 @@ export default function PredictionPage() {
     };
   }, []);
 
+  // Menu dropdown (transitions.dev 05): play the close before resting.
+  const [menuClosing, setMenuClosing] = useState(false);
+  const menuWasOpen = useRef(false);
+  useEffect(() => {
+    if (isMoreMenuOpen) {
+      menuWasOpen.current = true;
+      setMenuClosing(false);
+      return;
+    }
+    if (!menuWasOpen.current) return;
+    menuWasOpen.current = false;
+    setMenuClosing(true);
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dropdown-close-dur")) || 150;
+    const id = setTimeout(() => setMenuClosing(false), ms);
+    return () => clearTimeout(id);
+  }, [isMoreMenuOpen]);
+
+  // Close the menu on Escape too.
+  useEffect(() => {
+    if (!isMoreMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsMoreMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isMoreMenuOpen]);
+
   // Close more menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -456,8 +481,15 @@ export default function PredictionPage() {
               </button>
 
               {/* Popover Dropdown */}
-              {isMoreMenuOpen && (
-                <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-[#141210] border border-stone-800 shadow-2xl py-2 z-50 text-sm text-stone-200 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div
+                  role="menu"
+                  data-origin="top-right"
+                  inert={!isMoreMenuOpen || undefined}
+                  aria-hidden={!isMoreMenuOpen || undefined}
+                  className={`t-dropdown absolute right-0 mt-2 w-60 rounded-2xl bg-[#141210] border border-stone-800 shadow-2xl py-2 z-50 text-sm text-stone-200${
+                    isMoreMenuOpen ? " is-open" : menuClosing ? " is-closing" : ""
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => {
@@ -479,7 +511,6 @@ export default function PredictionPage() {
                     <span>Khảo sát lại từ đầu</span>
                   </Link>
                 </div>
-              )}
             </div>
 
             {/* ONLY ONE Primary Header Button */}
@@ -497,7 +528,7 @@ export default function PredictionPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-36 lg:pb-12">
         {/* Step 4: Gender Mismatch Warning Banner */}
         {genderMismatchWarning && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200 animate-in fade-in duration-200">
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="flex-1 space-y-1">
               <p className="font-bold text-amber-300">Thông báo đối soát hình thể</p>

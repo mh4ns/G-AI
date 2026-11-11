@@ -373,7 +373,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
       {/* 5. Selected Hotspot Detail Card (If active) */}
       {selectedHotspot && (
         <div
-          className="p-4 rounded-2xl bg-stone-900/90 border text-xs sm:text-sm animate-in fade-in duration-200"
+          className="p-4 rounded-2xl bg-stone-900/90 border text-xs sm:text-sm"
           style={{ borderColor: selectedHotspot.color }}
         >
           <div className="flex items-center justify-between mb-1.5">

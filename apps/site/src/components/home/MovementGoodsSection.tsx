@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Sparkles, ShoppingBag, Check, ShieldCheck, Info } from "lucide-react";
+import { SlidingTabs } from "@g-ai/ui";
 
 import type { CatalogSource, StoreItem } from "@/lib/store-api";
 import { canOptimizeImage, formatPrice } from "@/lib/store-api";
@@ -63,35 +64,16 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({
             </p>
           </div>
 
-          {/* Minimalist Filter Tabs */}
-          <div role="tablist" aria-label="Lọc sản phẩm" className="flex items-center gap-1 p-1 rounded-full bg-stone-500/10 border border-stone-500/20 text-sm">
-            {(
-              [
-                { id: "all", label: "Tất cả" },
-                { id: "equipment", label: "Dụng cụ" },
-                { id: "apparel", label: "Trang phục" },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={selectedFilter === tab.id}
-                onClick={() => setSelectedFilter(tab.id)}
-                className={`min-h-11 px-4 rounded-full font-medium transition-colors ${
-                  selectedFilter === tab.id
-                    ? isLight
-                      ? "bg-stone-900 text-white shadow-sm font-bold"
-                      : "bg-white text-stone-900 shadow-sm font-bold"
-                    : isLight
-                    ? "text-stone-600 hover:text-stone-900"
-                    : "text-stone-300 hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <SlidingTabs
+            ariaLabel="Lọc sản phẩm"
+            value={selectedFilter}
+            onChange={setSelectedFilter}
+            options={[
+              { value: "all", label: "Tất cả" },
+              { value: "equipment", label: "Dụng cụ" },
+              { value: "apparel", label: "Trang phục" },
+            ]}
+          />
         </div>
 
         {source === "sample" && (
@@ -171,8 +153,8 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({
                     <div className="space-y-2">
                       {/* Ratings stay hidden until the store collects real reviews. */}
                       <h3
-                        className={`text-base sm:text-lg font-bold tracking-tight leading-snug group-hover:text-brand transition-colors ${
-                          isLight ? "text-stone-900" : "text-white"
+                        className={`text-base sm:text-lg font-bold tracking-tight leading-snug transition-colors ${
+                          isLight ? "text-stone-900 group-hover:text-brand-action" : "text-white group-hover:text-brand"
                         }`}
                       >
                         {product.name}
