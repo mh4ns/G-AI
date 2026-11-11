@@ -376,7 +376,7 @@ export default function TodayDashboardPage() {
             <div className="p-4 rounded-2xl bg-gradient-to-br from-peach-50 via-cream-100 to-peach-100 border border-peach-200/80 text-center sm:text-left">
               <div className="text-xs text-peach-700 font-semibold ">Calo còn lại</div>
               <div className="text-3xl sm:text-4xl font-extrabold text-peach-600 mt-1">{remainingCalories}</div>
-              <div className="text-xs text-stone-500 mt-0.5">kcal có thể nạp thêm</div>
+              <div className="text-xs text-stone-600 mt-0.5">kcal có thể nạp thêm</div>
             </div>
 
             {/* In / Out Details */}
@@ -408,10 +408,9 @@ export default function TodayDashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-white">Mô hình nhân vật biến đổi 28 ngày (Digital Twin)</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold">MỚI</span>
+                <h3 className="font-bold text-sm text-white">Dự đoán vóc dáng 28 ngày</h3>
               </div>
-              <p className="text-xs text-muted mt-0.5">Kéo thanh timeline để xem mô phỏng gù lưng giảm dần và siết eo tự nhiên.</p>
+              <p className="text-xs text-stone-300 mt-0.5">Kéo thanh thời gian để xem lộ trình 28 ngày theo từng tuần.</p>
             </div>
           </div>
           <Link
@@ -426,24 +425,20 @@ export default function TodayDashboardPage() {
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-peach-500/20 border border-peach-500/30 text-peach-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-peach-400" aria-hidden />
-                Bài tập hôm nay • Sẵn sàng với AI Live PT
-              </div>
               <h3 className="text-xl sm:text-2xl font-bold">
                 Pilates siết cơ bụng & thẳng vai
               </h3>
-              <p className="text-xs sm:text-sm text-muted max-w-md">
-                18 phút • 4 bài tập • Bật webcam để AI Companion quan sát cột sống và sửa tư thế gù lưng thời gian thực.
+              <p className="text-xs sm:text-sm text-stone-300 max-w-md">
+                18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.
               </p>
             </div>
 
             <button
               onClick={() => setIsStudioOpen(true)}
-              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-600 hover:from-peach-600 hover:to-peach-700 text-white font-bold text-sm shadow-glow transition-all duration-200 active:scale-[0.98] flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-center"
+              className="min-h-12 px-6 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px w-full sm:w-auto"
             >
               <Play className="w-4 h-4 fill-white" />
-              <span>Bắt đầu tập ngay (AI Studio)</span>
+              <span>Bắt đầu tập</span>
             </button>
           </div>
         </section>

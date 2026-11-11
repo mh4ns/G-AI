@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dumbbell, SlidersHorizontal, X, Check, Loader2, Sparkles, Utensils } from "lucide-react";
+import { Dumbbell, SlidersHorizontal, X, Loader2, Sparkles, Utensils } from "lucide-react";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 export interface PlanConfig {
@@ -25,7 +25,6 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [workoutType, setWorkoutType] = useState(currentPlan.workoutType);
   const [weeklySets, setWeeklySets] = useState(currentPlan.weeklySets);
-  const [dietStyle, setDietStyle] = useState(currentPlan.dietStyle);
   const [archetype, setArchetype] = useState<"female_pilates" | "male_strength">(
     currentPlan.archetype
   );
@@ -34,7 +33,6 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
   const handleOpen = () => {
     setWorkoutType(currentPlan.workoutType);
     setWeeklySets(currentPlan.weeklySets);
-    setDietStyle(currentPlan.dietStyle);
     setArchetype(currentPlan.archetype);
     setIsOpen(true);
   };
@@ -44,7 +42,6 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
     const isUnchanged =
       workoutType === currentPlan.workoutType &&
       weeklySets === currentPlan.weeklySets &&
-      dietStyle === currentPlan.dietStyle &&
       archetype === currentPlan.archetype;
 
     if (isUnchanged) {
@@ -56,7 +53,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
     await onUpdatePlan({
       workoutType,
       weeklySets,
-      dietStyle,
+      dietStyle: currentPlan.dietStyle,
       archetype,
     });
     setSaving(false);
@@ -203,33 +200,13 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 </div>
               </div>
 
-              {/* Option 3: Nutrition / Diet */}
-              <div>
-                <label className="text-stone-300 font-semibold block mb-2 flex items-center gap-1.5">
-                  <Utensils className="w-3.5 h-3.5 text-brand" />
-                  <span>Chế độ dinh dưỡng kết hợp</span>
-                </label>
-                <div className="space-y-2">
-                  {[
-                    "Thâm hụt calo sinh học lành mạnh (-350 kcal/ngày)",
-                    "Dinh dưỡng cân bằng giàu đạm (High-Protein 1.8g/kg)",
-                    "Chế độ Low-Carb kiểm soát mỡ nội tạng",
-                  ].map((diet) => (
-                    <button
-                      key={diet}
-                      type="button"
-                      onClick={() => setDietStyle(diet)}
-                      className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between ${
-                        dietStyle === diet
-                          ? "bg-emerald-500/10 border-emerald-500/50 text-white font-semibold"
-                          : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
-                      }`}
-                    >
-                      <span>{diet}</span>
-                      {dietStyle === diet && <Check className="w-3.5 h-3.5 text-emerald-400" />}
-                    </button>
-                  ))}
-                </div>
+              {/* Calories come from the quiz plan; nothing here changes them. */}
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-stone-900 border border-stone-800">
+                <Utensils className="w-4 h-4 mt-0.5 shrink-0 text-brand" aria-hidden />
+                <p className="text-stone-300 leading-relaxed">
+                  <span className="font-semibold text-stone-100">Lượng calo:</span> {currentPlan.dietStyle}. Con số
+                  này lấy từ khảo sát; làm lại khảo sát nếu cân nặng hoặc mục tiêu của bạn thay đổi.
+                </p>
               </div>
             </div>
 

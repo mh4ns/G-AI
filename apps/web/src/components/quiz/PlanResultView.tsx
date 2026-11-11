@@ -92,7 +92,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
       <div className="p-6 sm:p-7 rounded-3xl shadow-xl mb-6 relative overflow-hidden border bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 border-stone-800 text-white">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
-            <span className="text-xs text-brand-action">
+            <span className="text-xs text-brand">
               Dự kiến cán đích
             </span>
             <div className="text-2xl sm:text-4xl font-extrabold mt-1">
@@ -100,7 +100,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
             </div>
             <p className="text-stone-300 text-xs sm:text-sm mt-1">
               Trong <strong className="text-white font-bold">{result.estimatedWeeks} tuần</strong> để đạt mốc{" "}
-              <strong className="font-bold text-brand-action">
+              <strong className="font-bold text-brand">
                 {responses.targetWeightKg} kg
               </strong>{" "}
               ({isLosing
@@ -113,7 +113,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
 
           <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/15 text-center self-stretch sm:self-auto shrink-0">
             <span className="text-xs text-stone-300 block ">Thời lượng</span>
-            <span className="text-lg sm:text-xl font-extrabold text-white ">30-40 Phút/Ngày</span>
+            <span className="text-lg sm:text-xl font-extrabold text-white ">30–40 phút/ngày</span>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
         <div className="bg-black/30 rounded-2xl p-4 border border-white/10">
           <div className="flex justify-between text-xs text-stone-300 mb-2">
             <span>Hôm nay ({responses.currentWeightKg} kg)</span>
-            <span className={"text-brand-action"}>
+            <span className="text-brand">
               Mục tiêu ({responses.targetWeightKg} kg)
             </span>
           </div>

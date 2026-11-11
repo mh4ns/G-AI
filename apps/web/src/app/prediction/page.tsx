@@ -29,6 +29,15 @@ import {
   setPhotoConsent,
 } from "@/lib/prediction-client";
 
+const NO_PLAN_CALORIES = "chưa có, làm khảo sát để G-AI tính";
+
+/** The plan's real calorie line, e.g. "1415 kcal/ngày (ít hơn mức tiêu hao khoảng 400 kcal)". */
+function calorieLine(tdee: number, target: number): string {
+  const gap = Math.round(tdee - target);
+  if (Math.abs(gap) < 10) return `${target} kcal/ngày (giữ mức tiêu hao)`;
+  return `${target} kcal/ngày (${gap > 0 ? "ít" : "nhiều"} hơn mức tiêu hao khoảng ${Math.abs(gap)} kcal)`;
+}
+
 export default function PredictionPage() {
   const [currentDay, setCurrentDay] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"profile" | "front" | "threeQuarter">("front");
@@ -60,7 +69,7 @@ export default function PredictionPage() {
   const [planConfig, setPlanConfig] = useState<PlanConfig>({
     workoutType: "Pilates & Siết Cơ Lõi",
     weeklySets: "16 set bài tập / tuần (Tiêu chuẩn)",
-    dietStyle: "Thâm hụt calo sinh học lành mạnh (-350 kcal/ngày)",
+    dietStyle: NO_PLAN_CALORIES,
     archetype: "female_pilates",
   });
 
@@ -79,11 +88,16 @@ export default function PredictionPage() {
         }
       }
 
+      // Calories always come from the quiz plan, never from an older saved preset.
+      let planCalories: string | null = null;
       const savedPlan = localStorage.getItem("g_ai_user_plan");
       if (savedPlan) {
         const parsed = JSON.parse(savedPlan);
         if (typeof parsed.tdee === "number" && typeof parsed.dailyCalorieTarget === "number") {
           setDailyCalorieGap(Math.abs(parsed.tdee - parsed.dailyCalorieTarget));
+          planCalories = calorieLine(parsed.tdee, parsed.dailyCalorieTarget);
+          const calories = planCalories;
+          setPlanConfig((prev) => ({ ...prev, dietStyle: calories }));
         }
         if (parsed.archetype) {
           setArchetype(parsed.archetype);
@@ -133,7 +147,7 @@ export default function PredictionPage() {
 
       const savedCustomPlan = localStorage.getItem("g_ai_prediction_plan");
       if (savedCustomPlan) {
-        setPlanConfig(JSON.parse(savedCustomPlan));
+        setPlanConfig({ ...JSON.parse(savedCustomPlan), dietStyle: planCalories ?? NO_PLAN_CALORIES });
       }
     } catch {
       // LocalStorage safety fallback

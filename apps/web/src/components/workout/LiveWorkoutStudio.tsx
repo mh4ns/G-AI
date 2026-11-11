@@ -487,11 +487,11 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline text-xs font-mono font-bold tracking-widest text-brand uppercase">
+              <span className="hidden sm:inline text-xs font-bold text-brand">
                 AI Live PT Studio
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold whitespace-nowrap">
-                BÀI {Math.min(exerciseIndex + 1, exercises.length)}/{exercises.length}
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold whitespace-nowrap">
+                Bài {Math.min(exerciseIndex + 1, exercises.length)}/{exercises.length}
               </span>
             </div>
             <h2 className="text-sm sm:text-base font-bold text-stone-200 truncate">{currentExercise.name}</h2>
@@ -501,7 +501,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setIsMuted((m) => !m)}
-            className="p-2.5 rounded-full border bg-stone-900 border-stone-700 text-stone-300 hover:text-white transition-colors"
+            className="w-11 h-11 flex items-center justify-center rounded-full border bg-stone-900 border-stone-700 text-stone-300 hover:text-white transition-colors"
             title={isMuted ? "Bật hướng dẫn giọng nói" : "Tắt giọng nói"}
             aria-label={isMuted ? "Bật hướng dẫn giọng nói" : "Tắt giọng nói"}
             aria-pressed={!isMuted}
@@ -512,7 +512,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
           {!summary && (
             <button
               onClick={cameraOn || cameraBusy ? stopCamera : startCamera}
-              className={`px-3 py-1.5 rounded-full border text-xs font-mono font-bold transition-colors flex items-center gap-1.5 ${
+              className={`min-h-11 px-3.5 rounded-full border text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 cameraOn
                   ? "bg-emerald-500/20 border-emerald-500 text-emerald-300"
                   : "bg-stone-900 border-stone-700 text-stone-300 hover:text-white"
@@ -535,7 +535,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2.5 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 hover:text-white transition-colors"
+            className="w-11 h-11 flex items-center justify-center rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 hover:text-white transition-colors"
             title="Đóng buồng tập"
             aria-label="Đóng buồng tập"
           >
@@ -567,7 +567,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
 
             <div className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-center gap-2">
               <div
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-xs font-mono max-w-full"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-white/10 text-xs max-w-full"
                 role="status"
                 aria-live="polite"
               >
@@ -575,7 +575,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                 <span className="text-stone-200 truncate">{formStatus}</span>
               </div>
               {cameraOn && liveAngle != null && (
-                <div className="px-3 py-1.5 rounded-full bg-black/75 border border-white/10 text-xs font-mono text-stone-200">
+                <div className="px-3 py-1.5 rounded-full bg-black/75 border border-white/10 text-xs text-stone-200">
                   {liveAngle}° · mục tiêu {Math.round(currentExercise.targetMin)}–{Math.round(currentExercise.targetMax)}°
                 </div>
               )}
@@ -601,7 +601,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                 {!cameraBusy && (
                   <button
                     onClick={startCamera}
-                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-stone-200 text-stone-900 font-bold font-mono text-[11px] shrink-0 transition-colors"
+                    className="min-h-11 px-4 rounded-xl bg-white hover:bg-stone-200 text-stone-900 font-semibold text-sm shrink-0 transition-colors"
                   >
                     {cameraError ? "Thử lại" : "Kết nối camera"}
                   </button>
@@ -628,18 +628,18 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                             : "bg-stone-900/40 border-stone-800 text-stone-500"
                       }`}
                     >
-                      <div className="text-[10px] font-mono uppercase">Bài {idx + 1}</div>
-                      <div className="text-xs font-bold truncate mt-0.5" title={ex.name}>{ex.name}</div>
+                      <div className="text-xs">Bài {idx + 1}</div>
+                      <div className="text-xs font-semibold line-clamp-2 mt-0.5">{ex.name}</div>
                     </div>
                   );
                 })}
               </div>
               {catalogSource === "default" && (
-                <p className="text-[11px] text-stone-500 -mt-2">Máy chủ chưa phản hồi — đang dùng bài tập mặc định.</p>
+                <p className="text-xs text-stone-500 -mt-2">Máy chủ chưa phản hồi — đang dùng bài tập mặc định.</p>
               )}
 
               <div className="p-5 rounded-3xl bg-gradient-to-br from-stone-900 via-stone-950 to-black border border-stone-800 text-center">
-                <div className="text-xs font-mono uppercase tracking-widest text-brand font-bold">
+                <div className="text-xs text-brand font-bold">
                   {currentExercise.holdSeconds ? "Thời gian giữ đúng tư thế" : "Số lần đã hoàn thành"}
                 </div>
                 <div className="text-5xl sm:text-6xl font-extrabold font-mono tracking-tight my-2 text-white tabular-nums">
@@ -659,13 +659,13 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
 
               <div className="p-4 rounded-2xl bg-stone-900/70 border border-stone-800 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 block">
+                  <span className="text-xs text-stone-400 block">
                     Độ chuẩn form (bài này)
                   </span>
                   <div className={`text-xl font-extrabold font-mono mt-0.5 ${label.className}`}>
                     {formScore == null ? "—" : `${formScore}%`} · {label.text}
                   </div>
-                  <span className="text-[10px] text-stone-500">% khung hình nằm trong vùng góc mục tiêu</span>
+                  <span className="text-xs text-stone-500">% khung hình nằm trong vùng góc mục tiêu</span>
                 </div>
                 <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
                   <Award className="w-5 h-5 text-emerald-400" />
@@ -673,7 +673,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
               </div>
 
               <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-mono text-brand font-bold">
+                <div className="flex items-center gap-2 text-xs text-brand font-bold">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Chỉ dẫn từ AI PT</span>
                 </div>
@@ -688,13 +688,13 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                 <button
                   onClick={() => addCount(1)}
                   disabled={isPaused}
-                  className="px-4 py-3 rounded-2xl bg-white hover:bg-stone-200 text-stone-950 font-bold font-mono text-xs transition-colors flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                  className="min-h-12 px-4 rounded-2xl bg-white hover:bg-stone-200 text-stone-950 font-semibold text-sm transition-colors flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   +1 {currentExercise.holdSeconds ? "giây" : "rep"} (thủ công)
                 </button>
                 <button
                   onClick={() => setIsPaused((p) => !p)}
-                  className="px-4 py-3 rounded-2xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-white font-bold font-mono text-xs transition-colors flex items-center justify-center gap-2 active:scale-95"
+                  className="min-h-12 px-4 rounded-2xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 active:scale-95"
                 >
                   {isPaused ? <Play className="w-3.5 h-3.5 fill-white" /> : <Pause className="w-3.5 h-3.5" />}
                   <span>{isPaused ? "Tiếp tục" : "Tạm dừng"}</span>
@@ -702,7 +702,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
               </div>
               <button
                 onClick={nextExercise}
-                className="w-full py-2.5 rounded-xl border border-stone-800 hover:border-stone-700 text-stone-400 hover:text-stone-200 text-xs font-mono transition-colors flex items-center justify-center gap-1.5"
+                className="w-full min-h-11 rounded-xl border border-stone-800 hover:border-stone-700 text-stone-300 hover:text-white text-sm transition-colors flex items-center justify-center gap-1.5"
               >
                 <span>Bỏ qua động tác này</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -717,12 +717,12 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Hoàn thành buổi tập</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-                {summary.repsCompleted > 0 ? "Xuất sắc! Bạn đã tập xong" : "Buổi tập đã kết thúc"}
+                {summary.repsCompleted > 0 ? "Bạn đã tập xong" : "Buổi tập đã kết thúc"}
               </h2>
               <p className="text-xs sm:text-sm text-stone-400 max-w-sm mx-auto">
                 {summary.averageFormScore == null
@@ -733,36 +733,36 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
 
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <div className="p-3 rounded-2xl bg-black/40 border border-stone-800">
-                <div className="flex items-center justify-center gap-1 text-[11px] text-amber-500 font-mono">
+                <div className="flex items-center justify-center gap-1 text-xs text-amber-500">
                   <Flame className="w-3.5 h-3.5" />
                   <span>Calo</span>
                 </div>
                 <div className="text-xl sm:text-2xl font-extrabold text-white font-mono mt-1">~{summary.caloriesBurned}</div>
-                <div className="text-[10px] text-stone-500">kcal (ước tính)</div>
+                <div className="text-xs text-stone-500">kcal (ước tính)</div>
               </div>
               <div className="p-3 rounded-2xl bg-black/40 border border-stone-800">
-                <div className="flex items-center justify-center gap-1 text-[11px] text-emerald-400 font-mono">
+                <div className="flex items-center justify-center gap-1 text-xs text-emerald-400">
                   <Award className="w-3.5 h-3.5" />
                   <span>Form</span>
                 </div>
                 <div className="text-xl sm:text-2xl font-extrabold text-white font-mono mt-1">
                   {summary.averageFormScore == null ? "—" : `${summary.averageFormScore}%`}
                 </div>
-                <div className={`text-[10px] ${summaryLabel.className}`}>{summaryLabel.text}</div>
+                <div className={`text-xs ${summaryLabel.className}`}>{summaryLabel.text}</div>
               </div>
               <div className="p-3 rounded-2xl bg-black/40 border border-stone-800">
-                <div className="flex items-center justify-center gap-1 text-[11px] text-sky-400 font-mono">
+                <div className="flex items-center justify-center gap-1 text-xs text-sky-400">
                   <Activity className="w-3.5 h-3.5" />
                   <span>Rep</span>
                 </div>
                 <div className="text-xl sm:text-2xl font-extrabold text-white font-mono mt-1">{summary.repsCompleted}</div>
-                <div className="text-[10px] text-stone-500">{summary.durationMinutes} phút</div>
+                <div className="text-xs text-stone-500">{summary.durationMinutes} phút</div>
               </div>
             </div>
 
             <button
               onClick={handleFinishAndSave}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand to-brand-deep hover:brightness-110 text-white font-bold font-mono text-sm shadow-xl transition-[filter] active:scale-[0.98]"
+              className="w-full min-h-12 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base transition-colors active:scale-[0.98]"
             >
               Lưu kết quả & cập nhật Dashboard
             </button>

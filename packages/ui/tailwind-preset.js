@@ -29,7 +29,6 @@ module.exports = {
         cream: { 50: "#FDFCF7", 100: "#FAF7F0", 200: "#F4ECE1", 300: "#EADCCB" },
         peach: { 50: "#FFF5F2", 100: "#FFE8E2", 200: "#FFC8BA", 400: "#FF8A6E", 500: "#FF6542", 600: "#E64E2B" },
         sage: { 50: "#F2F9F5", 100: "#E1F2E9", 200: "#C3E5D4", 400: "#60B88B", 500: "#369B67", 600: "#277B50" },
-        lavender: { 50: "#F8F7FF", 100: "#EFEAFD", 200: "#DCD4FA", 400: "#A78BFA", 500: "#8B5CF6" },
         sunshine: { 50: "#FFFBEB", 100: "#FEF3C7", 400: "#FBBF24", 500: "#F59E0B" },
         pitch: "#121314",
         ecru: { 50: "#FAF9F5", 100: "#F5F3EF", 200: "#EFECE6", 300: "#E3DFD7" },

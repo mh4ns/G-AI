@@ -97,7 +97,7 @@ export default function HubPage() {
   return (
     <div className="min-h-screen bg-canvas text-stone-900">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <BrandLogo isLight size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
+        <BrandLogo isLight size="md" />
         <a
           href={appUrl("/login")}
           className="min-h-11 inline-flex items-center text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"
