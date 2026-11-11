@@ -409,20 +409,20 @@ export default function PredictionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas-dark text-stone-100 font-sans selection:bg-[#FF5A36]/30 selection:text-white">
+    <div className="min-h-screen bg-canvas-dark text-stone-100 font-sans selection:bg-brand/30 selection:text-white">
       {/* 1. Step 8: Header with ONLY ONE Primary Button ("Bắt đầu Ngày 1") + More Menu ("⋯") */}
       <header className="sticky top-0 z-40 bg-canvas-dark/90 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/today"
-              className="p-2 -ml-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800/60 transition-colors"
-              title="Quay lại Today Hub"
+              className="w-11 h-11 -ml-2 rounded-xl text-stone-300 hover:text-white hover:bg-stone-800/60 transition-colors flex items-center justify-center"
+              aria-label="Quay lại trang Hôm nay"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" aria-hidden />
             </Link>
-            <Link href={hubUrl("/")} className="flex items-center group">
-              <BrandLogo isLight={false} size="sm" showSubtitle subtitle="Dự đoán vóc dáng 28 ngày" />
+            <Link href={hubUrl("/")} className="min-h-11 flex items-center" aria-label="G-AI – trang chính">
+              <BrandLogo isLight={false} size="sm" />
             </Link>
           </div>
 
@@ -432,32 +432,34 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className="w-9 h-9 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                className="w-11 h-11 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 title="Tùy chọn khác"
-                aria-label="Menu tùy chọn bổ sung"
+                aria-label="Tùy chọn khác"
+                aria-haspopup="menu"
+                aria-expanded={isMoreMenuOpen}
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
 
               {/* Popover Dropdown */}
               {isMoreMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#141210] border border-stone-800 shadow-2xl py-2 z-50 text-xs text-stone-200 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-[#141210] border border-stone-800 shadow-2xl py-2 z-50 text-sm text-stone-200 animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     type="button"
                     onClick={() => {
                       setIsMoreMenuOpen(false);
                       setIsModalOpen(true);
                     }}
-                    className="w-full px-4 py-2.5 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer"
+                    className="w-full min-h-11 px-4 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer"
                   >
-                    <SlidersHorizontal className="w-4 h-4 text-[#FF5A36]" />
+                    <SlidersHorizontal className="w-4 h-4 text-brand" />
                     <span>Hiệu chỉnh chỉ số thể trạng</span>
                   </button>
 
                   <Link
                     href="/quiz"
                     onClick={() => setIsMoreMenuOpen(false)}
-                    className="w-full px-4 py-2.5 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors"
+                    className="w-full min-h-11 px-4 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors"
                   >
                     <Compass className="w-4 h-4 text-sky-400" />
                     <span>Khảo sát lại từ đầu</span>
@@ -469,7 +471,7 @@ export default function PredictionPage() {
             {/* ONLY ONE Primary Header Button */}
             <Link
               href="/today"
-              className="px-4 sm:px-5 py-2 rounded-full bg-white hover:bg-stone-200 text-stone-900 text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95"
+              className="min-h-11 inline-flex items-center px-4 sm:px-5 rounded-full bg-white hover:bg-stone-200 text-stone-900 text-sm font-semibold transition-colors active:translate-y-px"
             >
               Bắt đầu Ngày 1
             </Link>
@@ -510,7 +512,7 @@ export default function PredictionPage() {
             {/* Header info */}
             <div className="w-full flex items-center justify-between mb-3 px-1">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-stone-300 text-xs">
-                <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
+                <Sparkles className="w-3.5 h-3.5 text-brand" />
                 <span className="font-medium">Trục trọng tâm & dáng đứng 28 ngày</span>
               </div>
               <span className="text-xs text-stone-300 font-medium">
@@ -547,9 +549,9 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("cervical")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "cervical"
-                    ? "bg-[#FF5A36]/15 border-[#FF5A36] text-white font-bold"
+                    ? "bg-brand/15 border-brand text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
                 }`}
               >
@@ -563,7 +565,7 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("thoracic")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "thoracic"
                     ? "bg-sky-500/15 border-sky-400 text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
@@ -579,7 +581,7 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("core")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "core"
                     ? "bg-emerald-500/15 border-emerald-400 text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
@@ -595,7 +597,7 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("pelvis")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "pelvis"
                     ? "bg-amber-500/15 border-amber-400 text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
@@ -639,7 +641,7 @@ export default function PredictionPage() {
 
             {/* 4-Week Physiological Adaptation Chapters */}
             <div className="pt-2 space-y-3">
-              <span className="text-xs font-bold text-stone-300 uppercase tracking-normal block px-1">
+              <span className="text-xs font-bold text-stone-300 tracking-normal block px-1">
                 Lộ trình thích nghi cơ sinh học
               </span>
 
@@ -648,12 +650,12 @@ export default function PredictionPage() {
                 onClick={() => setCurrentDay(7)}
                 className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
                   currentDay === 7
-                    ? "bg-stone-900 border-[#FF5A36]/70 shadow-lg"
+                    ? "bg-stone-900 border-brand/70 shadow-lg"
                     : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-[#FF5A36] font-bold">Tuần 1 · Ngày 01 — 07</span>
+                  <span className="text-xs text-brand font-bold">Tuần 1 · Ngày 01 — 07</span>
                   <span className="text-xs text-stone-300">Trọng tâm: thở & cổ vai</span>
                 </div>
                 <h5 className="text-sm sm:text-base font-bold text-white mb-1">
@@ -669,7 +671,7 @@ export default function PredictionPage() {
                 onClick={() => setCurrentDay(14)}
                 className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
                   currentDay === 14
-                    ? "bg-stone-900 border-[#FF5A36]/70 shadow-lg"
+                    ? "bg-stone-900 border-brand/70 shadow-lg"
                     : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
                 }`}
               >
@@ -690,7 +692,7 @@ export default function PredictionPage() {
                 onClick={() => setCurrentDay(21)}
                 className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
                   currentDay === 21
-                    ? "bg-stone-900 border-[#FF5A36]/70 shadow-lg"
+                    ? "bg-stone-900 border-brand/70 shadow-lg"
                     : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
                 }`}
               >
@@ -732,7 +734,7 @@ export default function PredictionPage() {
             <div className="pt-4 flex flex-col sm:flex-row gap-3">
               <Link
                 href="/today"
-                className="flex-1 py-3.5 sm:py-4 rounded-2xl bg-[#FF5A36] hover:bg-[#e04825] text-white font-bold text-sm text-center transition-all shadow-xl shadow-[#FF5A36]/25 flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 sm:py-4 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-bold text-sm text-center transition-all shadow-xl flex items-center justify-center gap-2"
               >
                 <span>Bắt đầu kế hoạch tập Ngày 1</span>
                 <ArrowRight className="w-4 h-4" />

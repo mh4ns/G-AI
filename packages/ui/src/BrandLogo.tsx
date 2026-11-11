@@ -54,7 +54,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       {/* Optional Subtitle (e.g., / Biometric Kinetic Lab) */}
       {showSubtitle && (
         <span
-          className={`text-[10px] font-mono tracking-widest uppercase hidden sm:inline ml-0.5 ${
+          className={`text-xs hidden sm:inline ml-0.5 ${
             isLight ? "text-stone-400" : "text-stone-500"
           }`}
         >

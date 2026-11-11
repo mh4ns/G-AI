@@ -46,19 +46,19 @@ export const AgeSelectionFirstPage: React.FC<AgeSelectionFirstPageProps> = ({ on
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col items-center animate-in fade-in duration-500">
       {/* Top Studio Badge */}
-      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-peach-50 border border-peach-200 text-[#FF5A36] text-xs font-semibold mb-6 shadow-sm">
-        <Sparkles className="w-3.5 h-3.5 fill-[#FF5A36]" />
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-peach-50 border border-peach-200 text-brand-action text-xs font-semibold mb-6 shadow-sm">
+        <Sparkles className="w-3.5 h-3.5 fill-brand" />
         <span>G—AI Home Pilates & Kinetic Studio</span>
       </div>
 
       {/* Main Title - Inspired by BetterMe Pilates */}
-      <h1 className="text-3xl sm:text-5xl font-black text-stone-900 text-center tracking-tight leading-[1.1] mb-2">
+      <h1 className="text-3xl sm:text-5xl font-extrabold text-stone-900 text-center tracking-tight leading-[1.1] mb-2">
         Home Pilates <br className="hidden sm:block" />
         Workout Studio
       </h1>
 
       {/* Subtitle - All caps tracked out clean */}
-      <p className="text-xs sm:text-sm font-bold tracking-widest text-stone-400 uppercase text-center mb-8 sm:mb-12">
+      <p className="text-xs sm:text-sm font-bold text-stone-500 text-center mb-8 sm:mb-12">
         Choose Your Age
       </p>
 
@@ -68,7 +68,7 @@ export const AgeSelectionFirstPage: React.FC<AgeSelectionFirstPageProps> = ({ on
           <button
             key={card.range}
             onClick={() => onSelectAge(card.numericAge, card.range)}
-            className="group relative flex flex-col rounded-3xl overflow-hidden bg-white border border-stone-200/90 hover:border-[#FF5A36] hover:shadow-[0_12px_32px_rgba(255,90,54,0.14)] transition-all duration-300 active:scale-[0.98] text-center"
+            className="group relative flex flex-col rounded-3xl overflow-hidden bg-white border border-stone-200/90 hover:border-brand hover:shadow-[0_12px_32px_rgba(255,90,54,0.14)] transition-all duration-300 active:scale-[0.98] text-center"
           >
             {/* Model Photo Container with Soft Radiant Glow */}
             <div className="relative w-full aspect-[3/4] bg-gradient-to-b from-peach-50/40 via-white to-stone-50 flex items-end justify-center overflow-hidden p-2">
@@ -84,7 +84,7 @@ export const AgeSelectionFirstPage: React.FC<AgeSelectionFirstPageProps> = ({ on
             </div>
 
             {/* Footer Age Label */}
-            <div className="py-3.5 px-2 bg-white border-t border-stone-100 group-hover:bg-[#FF5A36] transition-colors duration-300">
+            <div className="py-3.5 px-2 bg-white border-t border-stone-100 group-hover:bg-brand-action-hover transition-colors duration-300">
               <span className="font-extrabold text-sm sm:text-base text-stone-800 group-hover:text-white transition-colors duration-300">
                 {card.label}
               </span>
@@ -94,7 +94,7 @@ export const AgeSelectionFirstPage: React.FC<AgeSelectionFirstPageProps> = ({ on
       </div>
 
       {/* Trust & Legal Footer */}
-      <div className="text-center space-y-3 max-w-lg text-[11px] text-stone-400 leading-relaxed">
+      <div className="text-center space-y-3 max-w-lg text-xs text-stone-500 leading-relaxed">
         <div className="flex items-center justify-center gap-1.5 text-stone-500 font-medium">
           <ShieldCheck className="w-4 h-4 text-emerald-500" />
           <span>Hệ thống phân tích thể trạng chuẩn y khoa • Bảo mật thông tin 100%</span>

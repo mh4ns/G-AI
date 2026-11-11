@@ -5,7 +5,6 @@ import Image from "next/image";
 import { 
   Camera, 
   Upload, 
-  Sparkles, 
   Check, 
   RotateCcw, 
   ShieldCheck, 
@@ -13,20 +12,16 @@ import {
   User, 
   AlertCircle,
 } from "lucide-react";
-import { AthleticArchetype } from "@/types/quiz";
 
 interface PhotoUploadStepProps {
-  archetype: AthleticArchetype;
   onPhotoSubmit: (photoBase64: string | null) => void;
   onSkip: () => void;
 }
 
 export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
-  archetype,
   onPhotoSubmit,
   onSkip,
 }) => {
-  const isMale = archetype === "male_strength";
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -118,19 +113,10 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8 flex flex-col items-center animate-in fade-in duration-300">
-      {/* Header Badge */}
       <div className="text-center space-y-2 mb-6">
-        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-semibold ${
-          isMale 
-            ? "bg-stone-900 border border-stone-800 text-[#FF5A36]" 
-            : "bg-peach-50 border border-peach-200 text-[#FF6B4A]"
-        }`}>
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>BƯỚC ĐẶC BIỆT • CÁ NHÂN HÓA BẢN SAO SỐ (DIGITAL TWIN)</span>
-        </div>
-        <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
-          Quét Hình Thể & Dáng Đứng Cá Nhân
-        </h2>
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+          Quét hình thể & dáng đứng cá nhân
+        </h1>
         <p className="text-xs sm:text-sm text-stone-500 max-w-lg mx-auto leading-relaxed">
           Tải ảnh toàn thân hoặc chụp qua camera để G-AI tạo ảnh minh họa vóc dáng 28 ngày từ chính ảnh của bạn. Ảnh lưu trên trình duyệt này và chỉ được gửi đi khi bạn đồng ý tạo dự đoán.
         </p>
@@ -143,14 +129,10 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
           {/* Subtle Grid Calibration Overlay */}
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
-          {/* Central Plumb Line Alignment Guide */}
-          <div className="absolute inset-y-4 left-1/2 -translate-x-1/2 w-px border-l border-dashed border-white/20 pointer-events-none z-10 flex flex-col justify-between items-center py-2 text-[10px] font-mono text-stone-500">
-            <span>Trục đỉnh đầu</span>
-            <span className="bg-stone-900/80 px-2 py-0.5 rounded border border-white/10 text-emerald-400">
-              Trọng tâm cơ học
-            </span>
-            <span>Trục tiếp đất</span>
-          </div>
+          {/* Centre line to help line up head and feet, only while framing a shot. */}
+          {isCameraActive && (
+            <div aria-hidden className="absolute inset-y-6 left-1/2 -translate-x-1/2 w-px border-l border-dashed border-white/40 pointer-events-none z-10" />
+          )}
 
           {/* Active Camera Mode */}
           {isCameraActive && (
@@ -166,9 +148,9 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
                 <button
                   type="button"
                   onClick={handleCaptureSnapshot}
-                  className="px-6 py-3 rounded-full bg-white text-stone-950 font-bold text-xs font-mono shadow-xl flex items-center gap-2 hover:bg-stone-200 active:scale-95 transition-all"
+                  className="px-6 py-3 rounded-full bg-white text-stone-950 font-bold text-xs shadow-xl flex items-center gap-2 hover:bg-stone-200 active:scale-95 transition-all"
                 >
-                  <Camera className="w-4 h-4 text-[#FF5A36]" />
+                  <Camera className="w-4 h-4 text-brand-action" />
                   <span>Chụp Ngay</span>
                 </button>
                 <button
@@ -179,7 +161,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
                     }
                     setIsCameraActive(false);
                   }}
-                  className="px-4 py-3 rounded-full bg-stone-900/80 backdrop-blur-md text-white font-mono text-xs border border-white/20 hover:bg-stone-800"
+                  className="px-4 py-3 rounded-full bg-stone-900/80 backdrop-blur-md text-white text-xs border border-white/20 hover:bg-stone-800"
                 >
                   Hủy
                 </button>
@@ -194,16 +176,14 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
                 src={photoPreview}
                 alt="User Body Photo Preview"
                 fill
-                className={`object-contain transition-all duration-300 ${
-                  "contrast-105"
-                }`}
+                className="object-contain transition-all duration-300 contrast-105"
               />
 
               {/* Studio Clean Cutout Badge */}
               <div className="absolute top-4 left-4 z-20">
-                <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-black/80 text-emerald-400 border border-emerald-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-md">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-black/80 text-emerald-400 border border-emerald-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-md">
                   <Check className="w-3 h-3 text-emerald-400" />
-                  Đã Chuẩn Hóa Phông Studio #0A0908
+                  Đã chuẩn hóa phông Studio #0A0908
                 </span>
               </div>
 
@@ -212,13 +192,13 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
                 <button
                   type="button"
                   onClick={() => setPhotoPreview(null)}
-                  className="px-4 py-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-xs font-mono text-stone-300 hover:text-white flex items-center gap-1.5 active:scale-95 transition-all"
+                  className="px-4 py-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-xs text-stone-300 hover:text-white flex items-center gap-1.5 active:scale-95 transition-all"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Chọn ảnh khác</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900/80 border border-white/10 text-[11px] font-mono text-stone-300">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900/80 border border-white/10 text-xs text-stone-300">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Chỉ gửi đi khi bạn đồng ý</span>
                 </div>
@@ -229,13 +209,13 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
           {/* Empty Upload State */}
           {!photoPreview && !isCameraActive && (
             <div className="flex flex-col items-center justify-center p-6 text-center space-y-4 z-10 max-w-sm">
-              <div className="w-16 h-16 rounded-3xl bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-400">
+              <div className="w-16 h-16 rounded-3xl bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-500">
                 <User className="w-8 h-8 stroke-[1.5]" />
               </div>
 
               <div className="space-y-1">
-                <h3 className="font-bold text-sm sm:text-base">Chưa Có Ảnh Cá Nhân</h3>
-                <p className="text-xs text-stone-400">
+                <h3 className="font-bold text-sm sm:text-base">Chưa có ảnh cá nhân</h3>
+                <p className="text-sm text-stone-300">
                   Chọn ảnh chụp toàn thân dáng đứng, hoặc bật camera để chụp ngay.
                 </p>
               </div>
@@ -252,23 +232,19 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
                 <button
                   type="button"
                   onClick={handleStartCamera}
-                  className={`flex-1 py-3 px-4 rounded-2xl font-bold font-mono text-xs flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md ${
-                    isMale
-                      ? "bg-[#FF5A36] hover:bg-[#e04825] text-white"
-                      : "bg-[#FF6B4A] hover:bg-[#ff5530] text-white"
-                  }`}
+                  className="flex-1 min-h-12 px-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md bg-brand-action hover:bg-brand-action-hover text-white"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Bật Camera Chụp</span>
+                  <span>Bật camera chụp</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 font-bold font-mono text-xs flex items-center justify-center gap-2 transition-transform active:scale-95"
+                  className="flex-1 min-h-12 px-4 rounded-2xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 font-semibold text-sm flex items-center justify-center gap-2 transition-transform active:scale-95"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>Tải Ảnh Lên</span>
+                  <span>Tải ảnh lên</span>
                 </button>
 
                 <input
@@ -285,21 +261,21 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
 
         {/* Posture Guidelines Cues */}
         <div className="w-full mt-4 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/60 dark:bg-stone-900/40 text-xs space-y-2">
-          <div className="flex items-center gap-2 font-mono font-semibold text-stone-700 dark:text-stone-300">
+          <div className="flex items-center gap-2 font-semibold text-stone-700 dark:text-stone-300">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
             <span>Tiêu chuẩn chụp để AI phân tích chuẩn xác nhất:</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-stone-500 dark:text-stone-400 font-mono">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-stone-500 dark:text-stone-500 ">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-action" />
               <span>Đứng thẳng, hai chân bằng vai</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-action" />
               <span>Trang phục ôm sát cơ thể</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-action" />
               <span>Phòng đủ sáng, chụp rõ toàn thân</span>
             </div>
           </div>
@@ -310,20 +286,16 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
           <button
             type="button"
             onClick={onSkip}
-            className="w-full sm:w-auto px-5 py-3 rounded-full text-xs font-mono text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors"
+            className="w-full sm:w-auto min-h-12 px-6 rounded-full border border-stone-300 bg-white text-sm font-semibold text-stone-800 hover:border-stone-500 transition-colors"
           >
-            Bỏ qua & dùng hình thể mẫu theo khảo sát
+            Bỏ qua, dùng hình mẫu
           </button>
 
           <button
             type="button"
             onClick={handleConfirmPhoto}
             disabled={!photoPreview || isProcessing}
-            className={`w-full sm:w-auto px-8 py-3.5 rounded-full font-bold font-mono text-xs flex items-center justify-center gap-2 shadow-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
-              isMale
-                ? "bg-[#FF5A36] hover:bg-[#ff461e] text-white shadow-[#FF5A36]/25"
-                : "bg-[#FF6B4A] hover:bg-[#ff5530] text-white shadow-[#FF6B4A]/25"
-            }`}
+            className="w-full sm:w-auto min-h-12 px-8 rounded-full font-semibold text-sm flex items-center justify-center gap-2 transition-colors active:translate-y-px disabled:opacity-40 disabled:cursor-not-allowed bg-brand-action hover:bg-brand-action-hover text-white"
           >
             {isProcessing ? (
               <span className="flex items-center gap-2">
@@ -332,7 +304,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
               </span>
             ) : (
               <>
-                <span>Xác Nhận & Tạo Bản Sao Số</span>
+                <span>Xác nhận & tạo bản sao số</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

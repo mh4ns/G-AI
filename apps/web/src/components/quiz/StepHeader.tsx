@@ -1,69 +1,65 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { AthleticArchetype } from "@/types/quiz";
 import { BrandLogo, hubUrl } from "@g-ai/ui";
 
 interface StepHeaderProps {
-  currentStep: number;
-  totalSteps: number;
+  /** 1-based question number; the optional photo step passes no number. */
+  questionNumber?: number;
+  totalQuestions: number;
+  /** 0 to 1 across the whole quiz, photo step included. */
+  progress: number;
   onBack: () => void;
   canGoBack: boolean;
-  archetype?: AthleticArchetype;
 }
 
 export const StepHeader: React.FC<StepHeaderProps> = ({
-  currentStep,
-  totalSteps,
+  questionNumber,
+  totalQuestions,
+  progress,
   onBack,
   canGoBack,
-  archetype = "female_pilates",
 }) => {
-  const isMale = archetype === "male_strength";
-  const progressPercent = Math.round((currentStep / totalSteps) * 100);
+  const progressPercent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
+  const status = questionNumber ? `Câu ${questionNumber} / ${totalQuestions}` : "Bước tùy chọn";
 
   return (
-    <header className="w-full max-w-xl mx-auto px-4 pt-6 pb-2 select-none">
-      {/* Top Bar with Brand & Back */}
+    <header className="w-full max-w-xl mx-auto px-4 pt-6 pb-2">
       <div className="flex items-center justify-between mb-4">
         {canGoBack ? (
           <button
+            type="button"
             onClick={onBack}
-            className={`w-9 h-9 rounded-full border shadow-sm flex items-center justify-center transition-colors ${
-              isMale
-                ? "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-[#FF5A36]"
-                : "bg-white border-stone-200 text-stone-600 hover:text-black hover:border-black"
-            }`}
-            aria-label="Quay lại"
+            className="w-11 h-11 rounded-full border bg-white border-stone-200 text-stone-700 hover:text-stone-950 hover:border-stone-400 flex items-center justify-center transition-colors"
+            aria-label="Quay lại câu trước"
           >
-            <ArrowLeft className="w-4 h-4 stroke-[2]" />
+            <ArrowLeft className="w-[18px] h-[18px]" aria-hidden />
           </button>
         ) : (
-          <div className="w-9" />
+          <div className="w-11" />
         )}
 
-        <Link href={hubUrl("/")} className="flex items-center gap-2 group">
-          <BrandLogo isLight={!isMale} size="sm" />
-          <span className="font-mono text-[10px] tracking-widest text-stone-400 uppercase hidden sm:inline">
-            / {isMale ? "STRENGTH" : "PILATES"}
-          </span>
+        <Link href={hubUrl("/")} className="min-h-11 min-w-11 flex items-center justify-center" aria-label="G-AI – trang chính">
+          <BrandLogo isLight size="sm" />
         </Link>
 
-        <div className="flex items-center gap-1 text-[11px] font-mono text-stone-400 w-9 justify-end">
-          <Lock className="w-3 h-3 text-stone-400" />
-        </div>
+        <span className="w-11 text-right text-xs font-medium text-stone-600 whitespace-nowrap" aria-hidden>
+          {questionNumber ? `${questionNumber}/${totalQuestions}` : ""}
+        </span>
       </div>
 
-      {/* Radiant Minimal Progress Line */}
-      <div className={`w-full h-1.5 rounded-full overflow-hidden ${
-        isMale ? "bg-stone-800" : "bg-stone-100"
-      }`}>
+      <div
+        role="progressbar"
+        aria-label={status}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progressPercent}
+        className="w-full h-1.5 rounded-full overflow-hidden bg-stone-200"
+      >
         <div
-          className={`h-full rounded-full transition-all duration-500 ease-out ${
-            isMale ? "bg-[#FF5A36]" : "bg-[#FF6B4A]"
-          }`}
+          className="h-full rounded-full bg-brand-action transition-[width] duration-500 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>

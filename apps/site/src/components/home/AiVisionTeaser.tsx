@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ShieldCheck, CheckCircle2, Sparkles, ArrowRight } from "lucide-react";
+import { ShieldCheck, CheckCircle2, ArrowRight } from "lucide-react";
 import { appUrl } from "@g-ai/ui";
 
 export const AiVisionTeaser: React.FC = () => {
@@ -13,13 +13,8 @@ export const AiVisionTeaser: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           {/* Left Text Explanation */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Xử lý ngay trên máy bạn</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              Tập Chuẩn Form Ngay Tại Nhà Với AI Live PT
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              Tập chuẩn form ngay tại nhà với AI Live PT
             </h2>
 
             <p className="text-sm sm:text-base text-stone-400 leading-relaxed">
@@ -31,7 +26,7 @@ export const AiVisionTeaser: React.FC = () => {
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-stone-900/60 border border-stone-800">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-sm font-bold text-white">Sửa Lỗi Võng Lưng & Gù Vai Tức Thì</h4>
+                  <h4 className="text-sm font-bold text-white">Sửa lỗi võng lưng & gù vai tức thì</h4>
                   <p className="text-xs text-stone-400 mt-0.5">Giọng nói AI nhắc nhở hạ vai và siết cơ bụng ngay khi bạn sai biên độ.</p>
                 </div>
               </div>
@@ -48,12 +43,12 @@ export const AiVisionTeaser: React.FC = () => {
             <div className="pt-2 space-y-2">
               <Link
                 href={appUrl("/quiz")}
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-stone-900 font-bold text-xs font-mono hover:bg-stone-200 transition-all shadow-lg active:scale-95"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-stone-900 font-bold text-xs hover:bg-stone-200 transition-all shadow-lg active:scale-95"
               >
-                <span>Làm Khảo Sát Để Kích Hoạt AI Live PT</span>
-                <ArrowRight className="w-4 h-4 text-[#FF5A36]" />
+                <span>Làm khảo sát để kích hoạt AI Live PT</span>
+                <ArrowRight className="w-4 h-4 text-brand" />
               </Link>
-              <p className="text-[11px] text-stone-500 font-mono">
+              <p className="text-xs text-stone-400">
                 * Hoàn thành đánh giá thể trạng 2 phút để thuật toán cá nhân hóa góc khớp và giáo án riêng cho bạn.
               </p>
             </div>
@@ -65,7 +60,7 @@ export const AiVisionTeaser: React.FC = () => {
               {/* Webcam Status Bar */}
               <div className="flex items-center justify-between pb-4 border-b border-stone-800/80 mb-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xs font-mono text-stone-300 font-bold uppercase tracking-wider">
+                  <span className="text-xs text-stone-300 font-bold ">
                     Minh họa màn hình tập
                   </span>
                 </div>
@@ -128,16 +123,16 @@ export const AiVisionTeaser: React.FC = () => {
 
                 {/* Floating Rep Counter HUD Widget */}
                 <div className="absolute top-4 right-4 p-3 rounded-2xl bg-black/85 backdrop-blur-md border border-stone-800 text-center min-w-[90px]">
-                  <span className="text-[9px] font-mono uppercase text-stone-400 block">Đếm Rep</span>
+                  <span className="text-xs text-stone-400 block">Đếm Rep</span>
                   <div className="flex items-baseline justify-center gap-1 mt-0.5">
-                    <span className="text-2xl font-black font-mono text-emerald-400">12</span>
-                    <span className="text-xs font-mono text-stone-500">/15</span>
+                    <span className="text-2xl font-extrabold text-emerald-400">12</span>
+                    <span className="text-xs text-stone-500">/15</span>
                   </div>
-                  <span className="text-[9px] text-emerald-300 font-mono">Đạt biên độ</span>
+                  <span className="text-xs text-emerald-300 ">Đạt biên độ</span>
                 </div>
 
                 {/* Real-time Feedback Pill */}
-                <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-mono backdrop-blur-md">
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs backdrop-blur-md">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Cột sống thẳng hàng</span>
                 </div>

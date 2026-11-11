@@ -60,25 +60,19 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
     };
   }, [onComplete, computationSteps.length]);
 
-  const activeColor = isMale ? "#FF5A36" : "#FF6B4A";
+  const activeColor = "#FF5A36";
 
   return (
     <div className="w-full max-w-lg mx-auto px-4 py-16 flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
       {/* Animated Circular Progress Gauge */}
       <div className="relative w-44 h-44 mb-8 flex items-center justify-center">
-        {/* Soft Radiant Halo */}
-        <div 
-          className="absolute inset-0 rounded-full blur-2xl animate-pulse opacity-40" 
-          style={{ backgroundColor: activeColor }}
-        />
-
         <svg className="w-full h-full -rotate-90 relative z-10" viewBox="0 0 100 100">
           <circle
             cx="50"
             cy="50"
             r="42"
             fill="none"
-            stroke={isMale ? "#272522" : "#F1EFE9"}
+            stroke={"#F1EFE9"}
             strokeWidth="7"
           />
           <circle
@@ -96,12 +90,10 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
         </svg>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <span className={`text-4xl font-black font-mono tracking-tight ${
-            isMale ? "text-white" : "text-stone-900"
-          }`}>
+          <span className="text-4xl font-extrabold tracking-tight text-stone-900">
             {percent}%
           </span>
-          <span className="text-[10px] font-mono tracking-widest uppercase mt-0.5 text-stone-400">
+          <span className="text-xs mt-0.5 text-stone-500">
             AI Analyzing
           </span>
         </div>
@@ -109,17 +101,13 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
 
       {/* Dynamic Status Text */}
       <div className="min-h-[48px] mb-8">
-        <h3 className={`text-base sm:text-lg font-bold tracking-tight animate-fade-in ${
-          isMale ? "text-white" : "text-stone-900"
-        }`}>
+        <h3 className="text-base sm:text-lg font-bold tracking-tight animate-fade-in text-stone-900">
           {computationSteps[currentStepIndex]}
         </h3>
       </div>
 
       {/* Progress Checklist */}
-      <div className={`w-full p-4 rounded-2xl border space-y-2.5 text-left ${
-        isMale ? "bg-[#161514] border-stone-800" : "bg-white border-stone-200 shadow-soft"
-      }`}>
+      <div className="w-full p-4 rounded-2xl border space-y-2.5 text-left bg-white border-stone-200 shadow-soft">
         {computationSteps.slice(0, 4).map((text, idx) => {
           const isDone = currentStepIndex > idx || percent >= 95;
           const isCurrent = currentStepIndex === idx;
@@ -127,12 +115,12 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
           return (
             <div
               key={idx}
-              className={`flex items-center gap-2.5 text-xs transition-colors duration-300 ${
+              className={`flex items-start gap-2.5 text-sm transition-colors duration-300 ${
                 isDone 
-                  ? "text-emerald-500 font-semibold" 
+                  ? "text-emerald-700 font-semibold" 
                   : isCurrent 
-                  ? isMale ? "text-white font-medium" : "text-stone-900 font-medium"
-                  : "text-stone-400"
+                  ? "text-stone-900 font-medium"
+                  : "text-stone-500"
               }`}
             >
               <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
@@ -148,7 +136,7 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
                 )}
               </div>
-              <span className="truncate">{text}</span>
+              <span>{text}</span>
             </div>
           );
         })}

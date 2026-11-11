@@ -158,28 +158,28 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
     { title: string; color: string; desc: string; tip: string }
   > = {
     cervical: {
-      title: "Vùng Cổ & Vai Gáy",
+      title: "Vùng cổ & vai gáy",
       color: SEMANTIC_COLORS.hotspots.cervical.color,
       desc: "Kéo giãn cổ, đưa đầu về gần trục cơ thể và hạ vai đang cuộn về trước.",
       tip: "Bài tập trọng tâm: Pilates Chin Tuck & Kéo giãn mở khớp vai cạnh tường.",
     },
     thoracic: {
-      title: "Lưng Trên & Khớp Ngực",
+      title: "Lưng trên & khớp ngực",
       color: SEMANTIC_COLORS.hotspots.thoracic.color,
       desc: "Kéo giãn cơ ngực lớn, tăng sức bền nhóm cơ trám (Rhomboids) để giảm dáng gù lưng.",
       tip: "Bài tập trọng tâm: Mở ngực trên thảm Foam Roller & Swan Dive nhẹ nhàng.",
     },
     core: {
-      title: "Cơ Bụng Sâu & Thắt Lưng",
+      title: "Cơ bụng sâu & thắt lưng",
       color: SEMANTIC_COLORS.hotspots.core.color,
       desc: "Tập cơ ngang bụng, nhóm cơ giữ cho thân người vững khi bạn vận động.",
       tip: "Bài tập trọng tâm: Nhịp thở sườn bên Pilates & The Hundred giữ trục.",
     },
     pelvis: {
-      title: "Khung Chậu & Cơ Mông",
+      title: "Khung chậu & cơ mông",
       color: SEMANTIC_COLORS.hotspots.pelvis.color,
       desc: "Tập cơ mông và cơ bụng để giảm tư thế võng lưng (nghiêng chậu ra trước).",
-      tip: "Bài tập trọng tâm: Pelvic Glute Bridge & Cân bằng hông Quadruped.",
+      tip: "Bài tập trọng tâm: Pelvic Glute Bridge & cân bằng hông Quadruped.",
     },
   };
 
@@ -191,7 +191,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-stone-900/90 border border-stone-800 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div
-            className="w-2.5 h-2.5 rounded-full animate-pulse shrink-0"
+            className="w-2.5 h-2.5 rounded-full shrink-0"
             style={{ backgroundColor: SEMANTIC_COLORS.success }}
           />
           <h4 className="text-sm font-bold text-stone-100 tracking-normal">
@@ -202,18 +202,18 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
         {/* Dedicated Always-Visible Target Button */}
         <button
           onClick={onJumpToTarget}
-          className="px-3.5 py-1.5 rounded-full bg-[#FF5A36]/15 hover:bg-[#FF5A36]/25 border border-[#FF5A36]/40 text-[#FF5A36] hover:text-white text-xs font-semibold flex items-center justify-between sm:justify-start gap-1.5 transition-all active:scale-95 shadow-sm self-start sm:self-auto"
+          className="min-h-11 px-4 rounded-full bg-brand/15 hover:bg-brand/25 border border-brand/40 text-brand hover:text-white text-xs font-semibold flex items-center justify-between sm:justify-start gap-1.5 transition-all active:scale-95 shadow-sm self-start sm:self-auto"
           title="Xem mốc Ngày 28"
           aria-label="Xem mốc Ngày 28"
         >
           <span className="flex items-center gap-1.5">
-            <Target className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <Target className="w-3.5 h-3.5 text-brand" />
             <span>Mục tiêu:</span>
-            <strong className="text-white font-mono tabular-nums">
+            <strong className="text-white tabular-nums">
               {targetWeight ? `${targetWeight} kg` : "--"}
             </strong>
           </span>
-          <ArrowRight className="w-3.5 h-3.5 text-[#FF5A36]" />
+          <ArrowRight className="w-3.5 h-3.5 text-brand" />
         </button>
       </div>
 
@@ -224,29 +224,29 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
           <div>
             <div className="flex items-center justify-between text-stone-300 mb-1.5">
               <span className="text-xs font-semibold">Cân nặng</span>
-              <Flame className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <Flame className="w-3.5 h-3.5 text-brand" />
             </div>
 
             {hasWeight ? (
               <div className="flex items-baseline gap-1.5 flex-wrap">
-                <span className="font-mono tabular-nums text-stone-400 text-sm">
+                <span className=" tabular-nums text-stone-400 text-sm">
                   {baseWeight.toFixed(1)}
                 </span>
                 <span className="text-stone-400 text-xs">→</span>
-                <span className="font-mono tabular-nums text-white text-2xl sm:text-3xl font-black">
+                <span className=" tabular-nums text-white text-2xl sm:text-3xl font-extrabold">
                   {animWeight}
                 </span>
                 <span className="text-stone-300 text-xs">kg</span>
 
                 {projectedChange > 0 && (
-                  <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-mono tabular-nums font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="ml-1 px-2 py-0.5 rounded-full text-xs tabular-nums font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                     {goalDelta < 0 ? "▼" : "▲"}
                     {animWeightDelta}
                   </span>
                 )}
               </div>
             ) : (
-              <span className="text-xl font-black text-stone-400">Chưa có</span>
+              <span className="text-xl font-extrabold text-stone-400">Chưa có</span>
             )}
           </div>
 
@@ -263,7 +263,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
               <span className="text-xs font-semibold">Vòng eo</span>
               <Compass className="w-3.5 h-3.5 text-sky-400" />
             </div>
-            <span className="text-xl font-black text-stone-400">Chưa đo</span>
+            <span className="text-xl font-extrabold text-stone-400">Chưa đo</span>
           </div>
 
           <div className="mt-3 pt-2 border-t border-stone-800/80">
@@ -280,7 +280,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
               <span className="text-xs font-semibold">Tư thế</span>
               <Activity className="w-3.5 h-3.5 text-emerald-400" />
             </div>
-            <span className="text-xl font-black text-stone-400">Chưa chấm</span>
+            <span className="text-xl font-extrabold text-stone-400">Chưa chấm</span>
           </div>
 
           <div className="mt-3 pt-2 border-t border-stone-800/80">
@@ -303,9 +303,9 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
             <button
               type="button"
               onClick={() => setSelectedFocusTab("cervical")}
-              className={`px-3 py-1 rounded-lg transition-all font-medium ${
+              className={`min-h-11 px-3 rounded-lg transition-colors font-medium ${
                 selectedFocusTab === "cervical"
-                  ? "bg-[#FF5A36] text-white font-bold shadow-sm"
+                  ? "bg-brand-action text-white font-bold shadow-sm"
                   : "text-stone-400 hover:text-stone-200"
               }`}
             >
@@ -314,9 +314,9 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
             <button
               type="button"
               onClick={() => setSelectedFocusTab("waist")}
-              className={`px-3 py-1 rounded-lg transition-all font-medium ${
+              className={`min-h-11 px-3 rounded-lg transition-colors font-medium ${
                 selectedFocusTab === "waist"
-                  ? "bg-[#FF5A36] text-white font-bold shadow-sm"
+                  ? "bg-brand-action text-white font-bold shadow-sm"
                   : "text-stone-400 hover:text-stone-200"
               }`}
             >
@@ -325,9 +325,9 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
             <button
               type="button"
               onClick={() => setSelectedFocusTab("lifestyle")}
-              className={`px-3 py-1 rounded-lg transition-all font-medium ${
+              className={`min-h-11 px-3 rounded-lg transition-colors font-medium ${
                 selectedFocusTab === "lifestyle"
-                  ? "bg-[#FF5A36] text-white font-bold shadow-sm"
+                  ? "bg-brand-action text-white font-bold shadow-sm"
                   : "text-stone-400 hover:text-stone-200"
               }`}
             >
@@ -340,7 +340,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
         <div className="p-3.5 rounded-xl bg-stone-950/60 border border-stone-800/60 text-sm text-stone-200 leading-relaxed transition-all min-h-[56px] flex items-center">
           {selectedFocusTab === "cervical" && (
             <p className="flex items-start gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF5A36] mt-1.5 shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-brand-action mt-1.5 shrink-0" />
               <span>{current.cervicalText}</span>
             </p>
           )}
@@ -361,7 +361,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
 
       {/* 4. AI Coach Insight Box */}
       <div className="p-4 rounded-2xl bg-gradient-to-br from-stone-900 to-[#161413] border border-stone-800 text-sm">
-        <div className="flex items-center gap-2 mb-1.5 text-[#FF5A36] font-bold">
+        <div className="flex items-center gap-2 mb-1.5 text-brand font-bold">
           <UserCheck className="w-4 h-4" />
           <span>Lời khuyên của Huấn luyện viên AI</span>
         </div>

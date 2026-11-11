@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 interface GalleryItem {
   id: string;
@@ -89,11 +89,7 @@ export const DualAthleteGallery: React.FC = () => {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-6 border-b border-stone-800 gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-[11px] font-mono uppercase tracking-widest text-[#FF5A36] mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Pinterest Curated Aesthetic</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
               Vẻ Đẹp Vận Động & Tư Thế Chuẩn
             </h2>
             <p className="text-xs sm:text-sm text-stone-400 mt-1 max-w-xl">
@@ -101,32 +97,26 @@ export const DualAthleteGallery: React.FC = () => {
             </p>
           </div>
 
-          {/* Gallery Category Filter Tabs */}
-          <div className="flex items-center p-1 rounded-xl bg-stone-900 border border-stone-800 self-start md:self-auto">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors ${
-                filter === "all" ? "bg-white text-stone-900" : "text-stone-400 hover:text-white"
-              }`}
-            >
-              Tất Cả (All)
-            </button>
-            <button
-              onClick={() => setFilter("female")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors ${
-                filter === "female" ? "bg-[#FF5A36] text-white" : "text-stone-400 hover:text-white"
-              }`}
-            >
-              Nữ (Pilates)
-            </button>
-            <button
-              onClick={() => setFilter("male")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-mono font-medium transition-colors ${
-                filter === "male" ? "bg-[#10B981] text-white" : "text-stone-400 hover:text-white"
-              }`}
-            >
-              Nam (Strength)
-            </button>
+          {/* Gallery filter: one active style for every option. */}
+          <div role="tablist" aria-label="Lọc theo chương trình" className="flex items-center p-1 rounded-full bg-stone-900 border border-stone-800 self-start md:self-auto">
+            {([
+              ["all", "Tất cả"],
+              ["female", "Pilates"],
+              ["male", "Sức mạnh"],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={filter === value}
+                onClick={() => setFilter(value)}
+                className={`min-h-11 px-4 rounded-full text-sm font-medium transition-colors ${
+                  filter === value ? "bg-white text-stone-900" : "text-stone-300 hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -151,17 +141,17 @@ export const DualAthleteGallery: React.FC = () => {
 
               {/* Top Badges */}
               <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                <span className="text-[10px] font-mono tracking-wider px-2.5 py-1 rounded-full bg-stone-900/80 backdrop-blur-md border border-stone-700 text-stone-300">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-stone-900/80 backdrop-blur-md border border-stone-700 text-stone-300">
                   {item.category}
                 </span>
-                <span className="text-[10px] font-mono text-stone-400 px-2 py-0.5 rounded bg-black/40">
+                <span className="text-xs text-stone-400 px-2 py-0.5 rounded bg-black/40">
                   {item.targetMuscle}
                 </span>
               </div>
 
               {/* Bottom Content Card */}
               <div className="absolute bottom-4 left-4 right-4 space-y-1.5">
-                <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-[#FF5A36] transition-colors flex items-center justify-between">
+                <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-brand transition-colors flex items-center justify-between">
                   <span>{item.title}</span>
                   <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </h3>

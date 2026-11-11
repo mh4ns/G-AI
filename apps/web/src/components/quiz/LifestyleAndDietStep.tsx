@@ -83,7 +83,7 @@ export const LifestyleAndDietStep: React.FC<LifestyleAndDietStepProps> = ({
 
       {/* Activity Level */}
       <div className="mb-6">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2.5">
+        <label className="block text-xs font-semibold text-stone-500 mb-2.5">
           1. Mức độ vận động hàng ngày
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -106,7 +106,7 @@ export const LifestyleAndDietStep: React.FC<LifestyleAndDietStepProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-stone-800 text-xs sm:text-sm truncate">{act.title}</div>
-                  <div className="text-[11px] text-stone-400 truncate">{act.desc}</div>
+                  <div className="text-xs text-stone-500 truncate">{act.desc}</div>
                 </div>
               </div>
             );
@@ -116,7 +116,7 @@ export const LifestyleAndDietStep: React.FC<LifestyleAndDietStepProps> = ({
 
       {/* Diet Preference */}
       <div className="mb-8">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2.5">
+        <label className="block text-xs font-semibold text-stone-500 mb-2.5">
           2. Phong cách dinh dưỡng mong muốn
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -139,7 +139,7 @@ export const LifestyleAndDietStep: React.FC<LifestyleAndDietStepProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-stone-800 text-xs sm:text-sm truncate">{diet.title}</div>
-                  <div className="text-[11px] text-stone-400 truncate">{diet.desc}</div>
+                  <div className="text-xs text-stone-500 truncate">{diet.desc}</div>
                 </div>
               </div>
             );

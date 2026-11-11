@@ -211,7 +211,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     weeklyRoutine = [
       {
         dayNumber: 1,
-        title: isGym ? "Reformer & Mat Core Sculpt" : "Thảm Mat: Siết Eo & Phẳng Bụng",
+        title: isGym ? "Reformer & Mat Core Sculpt" : "Thảm: cơ lõi & bụng dưới",
         durationMin: 35,
         target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
         intensity: "moderate",
@@ -227,7 +227,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 3,
-        title: "Active Recovery: Decompression & Mở Khớp",
+        title: "Active Recovery: Decompression & mở khớp",
         durationMin: 25,
         target: "Giải phóng đốt sống lưng & giãn cơ toàn thân",
         intensity: "low",
@@ -235,9 +235,9 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 4,
-        title: isGym ? "Cable Core & Slender Tone" : "Pilates Toàn Thân & Cân Bằng Tư Thế",
+        title: isGym ? "Cable Core & Slender Tone" : "Pilates toàn thân & cân bằng tư thế",
         durationMin: 35,
-        target: "Đốt mỡ toàn diện & Định hình đường cong",
+        target: "Toàn thân & tư thế",
         intensity: "moderate",
         exerciseCount: 6,
       },
@@ -263,7 +263,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 3,
-        title: "Active Mobility & Phục Hồi Thần Kinh Cơ",
+        title: "Active mobility & phục hồi thần kinh cơ",
         durationMin: 30,
         target: "Giãn khớp hông, vai & giải tỏa axit lactic",
         intensity: "low",

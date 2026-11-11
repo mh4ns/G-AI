@@ -57,12 +57,12 @@ function ProductCard({ product }: { product: Product }) {
         {/* Product logo: the shared G mark plus the product name */}
         <div className="flex items-center gap-3">
           <BrandLogo isLight={!dark} size="lg" />
-          <span className="text-2xl font-black tracking-tight">
+          <span className="text-2xl font-extrabold tracking-tight">
             G-AI <span className="text-brand">{product.name}</span>
           </span>
         </div>
 
-        <p className={`mt-6 text-[11px] font-mono uppercase tracking-[0.2em] ${dark ? "text-stone-400" : "text-stone-500"}`}>
+        <p className={`mt-6 text-xs ${dark ? "text-stone-400" : "text-stone-500"}`}>
           {product.tagline}
         </p>
         <p className={`mt-3 max-w-md text-sm leading-relaxed ${dark ? "text-stone-300" : "text-stone-600"}`}>
@@ -100,7 +100,7 @@ export default function HubPage() {
         <BrandLogo isLight size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
         <a
           href={appUrl("/login")}
-          className="text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"
+          className="min-h-11 inline-flex items-center text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"
         >
           Đăng nhập
         </a>
@@ -108,8 +108,7 @@ export default function HubPage() {
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
         <section className="max-w-3xl">
-          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-brand">Hệ sinh thái G-AI</p>
-          <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
             Luyện tập đúng cách, theo đúng cơ thể bạn.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-stone-600">
@@ -128,9 +127,9 @@ export default function HubPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>© {new Date().getFullYear()} G-AI</span>
           <nav className="flex gap-5">
-            <a href={appUrl("/quiz")} className="hover:text-stone-900">Coach</a>
-            <a href={siteUrl("/")} className="hover:text-stone-900">Movement</a>
-            <a href={siteUrl("/#movement-goods")} className="hover:text-stone-900">Cửa hàng</a>
+            <a href={appUrl("/quiz")} className="min-h-11 inline-flex items-center hover:text-stone-900">Coach</a>
+            <a href={siteUrl("/")} className="min-h-11 inline-flex items-center hover:text-stone-900">Movement</a>
+            <a href={siteUrl("/#movement-goods")} className="min-h-11 inline-flex items-center hover:text-stone-900">Cửa hàng</a>
           </nav>
         </div>
       </footer>

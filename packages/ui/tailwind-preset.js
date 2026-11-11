@@ -16,10 +16,15 @@ module.exports = {
           DEFAULT: "#FAF8F5",
           dark: "#0A0908",
         },
+        // brand: the accent for fills, borders and orange text on dark grounds.
+        // brand-action: buttons and orange text on light grounds. White on it
+        // is 5.0:1 and it is 4.7:1 on the canvas; brand itself is only 3.1:1
+        // with white, so it never carries text.
         brand: {
           DEFAULT: "#FF5A36",
           soft: "#FF6B4A",
           deep: "#E04825",
+          action: { DEFAULT: "#C93E1A", hover: "#AE3A1C" },
         },
         cream: { 50: "#FDFCF7", 100: "#FAF7F0", 200: "#F4ECE1", 300: "#EADCCB" },
         peach: { 50: "#FFF5F2", 100: "#FFE8E2", 200: "#FFC8BA", 400: "#FF8A6E", 500: "#FF6542", 600: "#E64E2B" },
@@ -33,6 +38,8 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        // Headings. Loaded per app with next/font (Be Vietnam Pro).
+        display: ["var(--font-display)", "var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
         soft: "0 4px 20px -2px rgba(230, 78, 43, 0.08)",

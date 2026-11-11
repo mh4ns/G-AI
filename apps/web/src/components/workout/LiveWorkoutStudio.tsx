@@ -642,7 +642,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                 <div className="text-xs font-mono uppercase tracking-widest text-brand font-bold">
                   {currentExercise.holdSeconds ? "Thời gian giữ đúng tư thế" : "Số lần đã hoàn thành"}
                 </div>
-                <div className="text-5xl sm:text-6xl font-black font-mono tracking-tight my-2 text-white tabular-nums">
+                <div className="text-5xl sm:text-6xl font-extrabold font-mono tracking-tight my-2 text-white tabular-nums">
                   {count}{" "}
                   <span className="text-xl font-normal text-stone-500">
                     / {currentExercise.targetCount} {currentExercise.holdSeconds ? "giây" : "lần"}
@@ -662,7 +662,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                   <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 block">
                     Độ chuẩn form (bài này)
                   </span>
-                  <div className={`text-xl font-black font-mono mt-0.5 ${label.className}`}>
+                  <div className={`text-xl font-extrabold font-mono mt-0.5 ${label.className}`}>
                     {formScore == null ? "—" : `${formScore}%`} · {label.text}
                   </div>
                   <span className="text-[10px] text-stone-500">% khung hình nằm trong vùng góc mục tiêu</span>
@@ -719,9 +719,9 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>HOÀN THÀNH BUỔI TẬP</span>
+                <span>Hoàn thành buổi tập</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
                 {summary.repsCompleted > 0 ? "Xuất sắc! Bạn đã tập xong" : "Buổi tập đã kết thúc"}
               </h2>
               <p className="text-xs sm:text-sm text-stone-400 max-w-sm mx-auto">
@@ -737,7 +737,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                   <Flame className="w-3.5 h-3.5" />
                   <span>Calo</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-black text-white font-mono mt-1">~{summary.caloriesBurned}</div>
+                <div className="text-xl sm:text-2xl font-extrabold text-white font-mono mt-1">~{summary.caloriesBurned}</div>
                 <div className="text-[10px] text-stone-500">kcal (ước tính)</div>
               </div>
               <div className="p-3 rounded-2xl bg-black/40 border border-stone-800">
@@ -745,7 +745,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                   <Award className="w-3.5 h-3.5" />
                   <span>Form</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-black text-white font-mono mt-1">
+                <div className="text-xl sm:text-2xl font-extrabold text-white font-mono mt-1">
                   {summary.averageFormScore == null ? "—" : `${summary.averageFormScore}%`}
                 </div>
                 <div className={`text-[10px] ${summaryLabel.className}`}>{summaryLabel.text}</div>
@@ -755,14 +755,14 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                   <Activity className="w-3.5 h-3.5" />
                   <span>Rep</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-black text-white font-mono mt-1">{summary.repsCompleted}</div>
+                <div className="text-xl sm:text-2xl font-extrabold text-white font-mono mt-1">{summary.repsCompleted}</div>
                 <div className="text-[10px] text-stone-500">{summary.durationMinutes} phút</div>
               </div>
             </div>
 
             <button
               onClick={handleFinishAndSave}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand to-brand-deep hover:brightness-110 text-white font-bold font-mono text-sm shadow-xl shadow-brand/25 transition-[filter] active:scale-[0.98]"
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-brand to-brand-deep hover:brightness-110 text-white font-bold font-mono text-sm shadow-xl transition-[filter] active:scale-[0.98]"
             >
               Lưu kết quả & cập nhật Dashboard
             </button>

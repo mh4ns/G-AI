@@ -152,24 +152,20 @@ export const AssessmentQuizWizard: React.FC = () => {
     setStep(8);
   };
 
-  const isMaleTheme = responses.archetype === "male_strength";
 
   return (
     <div
-      className={`min-h-screen flex flex-col justify-between transition-colors duration-500 ${
-        isMaleTheme
-          ? "bg-canvas-dark text-white selection:bg-[#FF5A36]/30 selection:text-white"
-          : "bg-canvas text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
-      }`}
+      className="min-h-screen flex flex-col justify-between transition-colors duration-500 bg-canvas text-stone-900 selection:bg-brand/20 selection:text-brand-action"
     >
       {/* Header with progress line (shown for steps 2 to 6) */}
       {step >= 2 && step <= 6 && (
         <StepHeader
-          currentStep={step}
-          totalSteps={6}
+          // Steps 1-5 are the five questions (step 1 has no header); step 6 is the optional photo.
+          questionNumber={step <= 5 ? step : undefined}
+          totalQuestions={5}
+          progress={step / 6}
           onBack={handleBack}
           canGoBack={true}
-          archetype={responses.archetype}
         />
       )}
 
@@ -194,13 +190,9 @@ export const AssessmentQuizWizard: React.FC = () => {
             <div className="w-full max-w-4xl px-4 pb-8 flex justify-end">
               <button
                 onClick={handleNext}
-                className={`px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
-                  isMaleTheme
-                    ? "bg-[#FF5A36] hover:bg-[#ff461e] text-white shadow-[#FF5A36]/25"
-                    : "bg-[#FF6B4A] hover:bg-[#ff5530] text-white shadow-[#FF6B4A]/25"
-                }`}
+                className="px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-95 bg-brand-action hover:bg-brand-action-hover text-white"
               >
-                <span>Tiếp Tục</span>
+                <span>Tiếp tục</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -220,7 +212,6 @@ export const AssessmentQuizWizard: React.FC = () => {
 
         {step === 4 && (
           <BodyStatsStep
-            archetype={responses.archetype}
             heightCm={responses.heightCm}
             currentWeightKg={responses.currentWeightKg}
             targetWeightKg={responses.targetWeightKg}
@@ -231,7 +222,6 @@ export const AssessmentQuizWizard: React.FC = () => {
 
         {step === 5 && (
           <ObstaclesStep
-            archetype={responses.archetype}
             selectedObstacles={responses.obstacles}
             selectedInjuries={responses.injuries}
             onToggleObstacle={handleToggleObstacle}
@@ -252,7 +242,6 @@ export const AssessmentQuizWizard: React.FC = () => {
 
         {step === 6 && (
           <PhotoUploadStep
-            archetype={responses.archetype}
             onPhotoSubmit={handlePhotoSubmit}
             onSkip={handlePhotoSkip}
           />

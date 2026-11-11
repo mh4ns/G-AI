@@ -60,7 +60,7 @@ export const GenderAndGoalStep: React.FC<GenderAndGoalStepProps> = ({
 
       {/* Gender Selection */}
       <div className="mb-6">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2.5">
+        <label className="block text-xs font-semibold text-stone-500 mb-2.5">
           Giới tính sinh học (để tính chỉ số BMR chính xác)
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -95,7 +95,7 @@ export const GenderAndGoalStep: React.FC<GenderAndGoalStepProps> = ({
 
       {/* Goal Cards */}
       <div className="space-y-3 mb-8">
-        <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2.5">
+        <label className="block text-xs font-semibold text-stone-500 mb-2.5">
           Chọn mục tiêu ưu tiên
         </label>
         {goals.map((item) => {

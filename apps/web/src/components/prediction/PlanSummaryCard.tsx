@@ -76,9 +76,9 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
             }}
           >
             {isRecalculating ? (
-              <Loader2 className="w-4 h-4 text-[#FF5A36] animate-spin" />
+              <Loader2 className="w-4 h-4 text-brand animate-spin" />
             ) : (
-              <Dumbbell className="w-4 h-4 text-[#FF5A36]" />
+              <Dumbbell className="w-4 h-4 text-brand" />
             )}
           </div>
           <div>
@@ -87,7 +87,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 Kế hoạch mô phỏng vóc dáng:
               </span>
               {isRecalculating && (
-                <span className="text-[11px] font-semibold text-[#FF5A36] animate-pulse">
+                <span className="text-xs font-semibold text-brand animate-pulse">
                   Đang tính toán lại...
                 </span>
               )}
@@ -102,9 +102,9 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
           type="button"
           onClick={handleOpen}
           disabled={isRecalculating}
-          className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-stone-800/90 hover:bg-stone-700/90 text-stone-200 hover:text-white text-xs font-medium border border-stone-700/80 transition-all flex items-center gap-1.5 active:scale-95 shrink-0 shadow-sm disabled:opacity-50"
+          className="self-start sm:self-auto min-h-11 inline-flex items-center gap-1.5 px-4 rounded-full bg-stone-800/90 hover:bg-stone-700/90 text-stone-200 hover:text-white text-xs font-medium border border-stone-700/80 transition-all flex items-center gap-1.5 active:scale-95 shrink-0 shadow-sm disabled:opacity-50"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5 text-[#FF5A36]" />
+          <SlidersHorizontal className="w-3.5 h-3.5 text-brand" />
           <span>Đổi kế hoạch</span>
         </button>
       </div>
@@ -123,9 +123,9 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
 
             {/* Header */}
             <div className="space-y-1 mb-5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5A36]/15 border border-[#FF5A36]/30 text-xs font-semibold text-[#FF5A36]">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand/15 border border-brand/30 text-xs font-semibold text-brand">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>TÙY CHỈNH KẾ HOẠCH</span>
+                <span>Tùy chỉnh kế hoạch</span>
               </div>
               <h3 className="text-xl font-bold tracking-tight text-white">
                 Đổi Kế Hoạch Sinh Dự Đoán
@@ -150,12 +150,12 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       archetype === "female_pilates"
-                        ? "bg-[#FF5A36]/15 border-[#FF5A36] text-white"
+                        ? "bg-brand/15 border-brand text-white"
                         : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                     }`}
                   >
-                    <div className="font-bold text-sm mb-0.5 text-white">Pilates Siết Cơ Lõi</div>
-                    <p className="text-[11px] text-stone-400">Siết eo thon, phẳng bụng, thẳng lưng</p>
+                    <div className="font-bold text-sm mb-0.5 text-white">Pilates siết cơ lõi</div>
+                    <p className="text-xs text-stone-400">Siết eo thon, phẳng bụng, thẳng lưng</p>
                   </button>
 
                   <button
@@ -166,12 +166,12 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       archetype === "male_strength"
-                        ? "bg-[#FF5A36]/15 border-[#FF5A36] text-white"
+                        ? "bg-brand/15 border-brand text-white"
                         : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                     }`}
                   >
-                    <div className="font-bold text-sm mb-0.5 text-white">Calisthenics Cơ Xô</div>
-                    <p className="text-[11px] text-stone-400">Mở rộng ngực vai, săn chắc cơ lưng</p>
+                    <div className="font-bold text-sm mb-0.5 text-white">Calisthenics cơ xô</div>
+                    <p className="text-xs text-stone-400">Mở rộng ngực vai, săn chắc cơ lưng</p>
                   </button>
                 </div>
               </div>
@@ -206,7 +206,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
               {/* Option 3: Nutrition / Diet */}
               <div>
                 <label className="text-stone-300 font-semibold block mb-2 flex items-center gap-1.5">
-                  <Utensils className="w-3.5 h-3.5 text-[#FF5A36]" />
+                  <Utensils className="w-3.5 h-3.5 text-brand" />
                   <span>Chế độ dinh dưỡng kết hợp</span>
                 </label>
                 <div className="space-y-2">
@@ -246,7 +246,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 type="button"
                 onClick={handleApply}
                 disabled={saving}
-                className="px-5 py-2 rounded-full bg-[#FF5A36] hover:bg-[#E64E2B] text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2 rounded-full bg-brand-action hover:bg-brand-action-hover text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
               >
                 {saving ? (
                   <>
@@ -254,7 +254,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                     <span>Đang áp dụng...</span>
                   </>
                 ) : (
-                  <span>Áp Dụng Kế Hoạch</span>
+                  <span>Áp dụng kế hoạch</span>
                 )}
               </button>
             </div>

@@ -21,15 +21,15 @@ const GOALS: {
 }[] = [
   {
     id: "lose_weight",
-    title: "Giảm Cân & Phẳng Bụng",
+    title: "Giảm cân & phẳng bụng",
     desc: "Đốt mỡ toàn thân, siết eo thon và kích hoạt cơ bụng sâu với chuỗi bài Wall Pilates.",
     icon: Flame,
-    color: "text-[#FF5A36] bg-peach-50",
-    borderActive: "border-[#FF5A36] ring-2 ring-[#FF5A36]/20",
+    color: "text-brand-action bg-peach-50",
+    borderActive: "border-brand ring-2 ring-brand/20",
   },
   {
     id: "tone_glutes",
-    title: "Nâng Mông & Thon Đùi",
+    title: "Nâng mông & thon đùi",
     desc: "Định hình vòng 3 săn chắc, cải thiện độ căng tròn và làm thon gọn cơ đùi trong.",
     icon: Sparkles,
     color: "text-amber-500 bg-amber-50",
@@ -37,7 +37,7 @@ const GOALS: {
   },
   {
     id: "fix_posture",
-    title: "Sửa Tư Thế & Giảm Đau Lưng",
+    title: "Sửa tư thế & giảm đau lưng",
     desc: "Căn chỉnh cột sống, khắc phục võng lưng gù vai và giải tỏa căng thẳng sau giờ làm.",
     icon: Activity,
     color: "text-emerald-600 bg-emerald-50",
@@ -45,7 +45,7 @@ const GOALS: {
   },
   {
     id: "mindful_flexibility",
-    title: "Dẻo Dai & Thư Giãn Tinh Thần",
+    title: "Dẻo dai & thư giãn tinh thần",
     desc: "Tăng cường biên độ chuyển động khớp, điều hòa hơi thở và tìm lại năng lượng tích cực.",
     icon: Heart,
     color: "text-purple-600 bg-purple-50",
@@ -61,11 +61,11 @@ export const GoalSelectionStep: React.FC<GoalSelectionStepProps> = ({
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-6 animate-in fade-in duration-300">
       <div className="text-center mb-8">
-        <span className="text-xs font-bold tracking-widest text-stone-400 uppercase">
+        <span className="text-xs font-bold text-stone-500 ">
           Bước 2 / 5
         </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mt-1">
-          Mục Tiêu Trọng Tâm Của Bạn?
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight mt-1">
+          Mục tiêu trọng tâm của bạn?
         </h2>
         <p className="text-stone-500 text-sm mt-1">
           Giáo án Pilates 28 ngày sẽ được cá nhân hóa tập trung vào mong muốn này.
@@ -107,7 +107,7 @@ export const GoalSelectionStep: React.FC<GoalSelectionStepProps> = ({
                 className={cn(
                   "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors",
                   isSelected
-                    ? "border-[#FF5A36] bg-[#FF5A36] text-white"
+                    ? "border-brand bg-brand-action text-white"
                     : "border-stone-300 bg-stone-50"
                 )}
               >
