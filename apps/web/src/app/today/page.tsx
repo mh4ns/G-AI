@@ -270,7 +270,7 @@ export default function TodayDashboardPage() {
 
           <div className="flex items-center gap-1">
             <Link
-              href={siteUrl("/#movement-goods")}
+              href={siteUrl("/store")}
               className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
                 isLight
                   ? "text-stone-600 hover:text-stone-950 hover:bg-stone-100"

@@ -32,6 +32,7 @@ redeploy after changing them.
 |---|---|
 | `NEXT_PUBLIC_HUB_URL` | Public URL of `g-ai-hub`, e.g. `https://g-ai-hub.vercel.app` |
 | `NEXT_PUBLIC_SITE_URL` | Public URL of `g-ai-site`, e.g. `https://g-ai-site.vercel.app` |
+| `NEXT_PUBLIC_STORE_PRICES` | `g-ai-site` only. `true` shows store prices, the bag and checkout; anything else hides them ("Giá sẽ công bố"). |
 | `NEXT_PUBLIC_APP_URL` | Public URL of `g-ai-app`, e.g. `https://g-ai-app.vercel.app` |
 
 **`g-ai-app` only:**

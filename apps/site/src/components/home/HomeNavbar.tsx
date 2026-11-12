@@ -48,7 +48,7 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
           <Link href={appUrl("/prediction")} className={navLink}>
             Dự đoán vóc dáng
           </Link>
-          <Link href="/#movement-goods" className={navLink}>
+          <Link href="/store" className={navLink}>
             Dụng cụ tập
           </Link>
         </nav>

@@ -129,7 +129,7 @@ export default function HubPage() {
           <nav className="flex gap-5">
             <a href={appUrl("/quiz")} className="min-h-11 inline-flex items-center hover:text-stone-900">Coach</a>
             <a href={siteUrl("/")} className="min-h-11 inline-flex items-center hover:text-stone-900">Movement</a>
-            <a href={siteUrl("/#movement-goods")} className="min-h-11 inline-flex items-center hover:text-stone-900">Cửa hàng</a>
+            <a href={siteUrl("/store")} className="min-h-11 inline-flex items-center hover:text-stone-900">Cửa hàng</a>
           </nav>
         </div>
       </footer>
