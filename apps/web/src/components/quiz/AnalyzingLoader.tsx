@@ -18,18 +18,18 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
   const [percent, setPercent] = useState(12);
 
   const femaleSteps = [
-    "Phân tích tỷ lệ trao đổi chất cơ bản (BMR & TDEE phụ nữ)...",
-    "Thiết lập đường cong thâm hụt năng lượng an toàn (Deficit curve)...",
-    "Kiểm tra tiền sử cột sống & loại trừ động tác nén thắt lưng...",
-    "Khởi tạo giáo án Pilates & Kéo giãn phục hồi 28 ngày...",
+    "Tính lượng calo cơ thể bạn đốt mỗi ngày...",
+    "Đặt mức ăn giảm an toàn, không dưới ngưỡng tối thiểu...",
+    "Bỏ các bài không hợp với chấn thương bạn đã báo...",
+    "Xếp lịch Pilates và giãn cơ cho 28 ngày...",
     "Hoàn thiện dự đoán vóc dáng của bạn",
   ];
 
   const maleSteps = [
-    "Phân tích chuyển hóa năng lượng cơ bắp (BMR & TDEE nam giới)...",
-    "Tính toán tỷ lệ Calorie Surplus & hàm lượng Protein Hypertrophy...",
-    "Quét và bảo vệ khớp gối & cột sống khỏi rủi ro nén trục nặng...",
-    "Khởi tạo lịch phân bổ Push / Pull / Legs & Calisthenics 28 ngày...",
+    "Tính lượng calo cơ thể bạn đốt mỗi ngày...",
+    "Tính lượng calo và đạm cần cho mục tiêu của bạn...",
+    "Bỏ các bài không hợp với chấn thương bạn đã báo...",
+    "Xếp lịch đẩy, kéo, chân cho 28 ngày...",
     "Hoàn thiện dự đoán vóc dáng của bạn",
   ];
 

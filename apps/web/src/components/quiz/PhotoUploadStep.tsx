@@ -174,7 +174,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
             <div className="relative w-full h-full flex items-center justify-center bg-canvas-dark overflow-hidden">
               <Image
                 src={photoPreview}
-                alt="User Body Photo Preview"
+                alt="Ảnh thể trạng bạn vừa tải lên"
                 fill
                 className="object-contain transition-all duration-300 contrast-105"
               />

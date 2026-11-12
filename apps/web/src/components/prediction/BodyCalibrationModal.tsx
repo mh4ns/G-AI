@@ -276,7 +276,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
             Hiệu chỉnh chỉ số cá nhân
           </h3>
           <p className="text-xs text-stone-400">
-            Cập nhật số đo, ảnh thể trạng và tình trạng tư thế để mô hình tính toán lại lộ trình thích nghi sinh học chuẩn xác.
+            Cập nhật số đo, ảnh và tình trạng tư thế để tính lại lộ trình theo cơ thể hiện tại của bạn.
           </p>
         </div>
 
@@ -350,34 +350,34 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
           {/* Gender / Archetype Toggle */}
           <div>
             <label className="text-xs text-stone-400 block mb-2">
-              Giới tính & Giáo án tập luyện
+              Chương trình tập
             </label>
             <div className="grid grid-cols-2 gap-2 text-xs ">
               <button
                 type="button"
                 onClick={() => handleArchetypeToggle("female_pilates")}
-                aria-label="Chọn lộ trình Nữ Pilates"
+                aria-pressed={currentArchetype === "female_pilates"}
                 className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   currentArchetype === "female_pilates"
                     ? "bg-brand/10 border-brand text-white font-bold"
                     : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                 }`}
               >
-                <span>Nữ (Pilates & siết eo)</span>
+                <span>Pilates & cơ lõi</span>
                 {currentArchetype === "female_pilates" && <Check className="w-3.5 h-3.5 text-brand-action" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleArchetypeToggle("male_strength")}
-                aria-label="Chọn lộ trình Nam Calisthenics"
+                aria-pressed={currentArchetype === "male_strength"}
                 className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   currentArchetype === "male_strength"
                     ? "bg-brand/10 border-brand text-white font-bold"
                     : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                 }`}
               >
-                <span>Nam (Calisthenics & cơ xô)</span>
+                <span>Sức mạnh</span>
                 {currentArchetype === "male_strength" && <Check className="w-3.5 h-3.5 text-brand" />}
               </button>
             </div>

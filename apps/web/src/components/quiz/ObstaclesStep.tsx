@@ -29,19 +29,19 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
     {
       id: "busy_schedule",
       title: "Lịch trình bận rộn",
-      desc: "Chỉ dành được 25 – 35 phút/ngày, cần buổi tập cô đọng tối ưu thời gian.",
+      desc: "Chỉ có 25–35 phút mỗi ngày, cần buổi tập ngắn mà đủ.",
       emoji: "⏰",
     },
     {
       id: "sweet_cravings",
-      title: "Cơn Thèm Ăn Vặt & Đồ Ngọt",
+      title: "Hay thèm ăn vặt và đồ ngọt",
       desc: "Dễ ăn theo cảm xúc khi căng thẳng hoặc sau giờ làm việc mệt mỏi.",
       emoji: "🍫",
     },
     {
       id: "irregular_sleep",
       title: "Thiếu ngủ & thiếu năng lượng",
-      desc: "Ngủ không sâu giấc, cơ thể mệt mỏi và cần các bài tập phục hồi nhịp sinh học.",
+      desc: "Ngủ không sâu, hay mệt, cần buổi tập nhẹ hơn vào những ngày đuối sức.",
       emoji: "🌙",
     },
     {
@@ -70,13 +70,13 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
       id: "knee",
       title: "Khớp gối nhạy cảm / khô khớp",
       desc: "Đau gối khi lên xuống cầu thang hoặc khi gập gối biên độ sâu.",
-      actionNote: "AI sẽ thay thế các bài bật nhảy bằng động tác Low-Impact trên thảm hoặc kháng lực tĩnh.",
+      actionNote: "AI sẽ thay thế các bài bật nhảy bằng động tác nhẹ nhàng trên thảm hoặc kháng lực tĩnh.",
       emoji: "🦵",
     },
     {
       id: "neck_shoulder",
       title: "Đau mỏi cổ vai gáy",
-      desc: "Co cứng cơ thang và cơ trám do thói quen nhìn máy tính cúi đầu lâu.",
+      desc: "Cứng cổ và vai do cúi nhìn màn hình lâu.",
       actionNote: "AI sẽ ưu tiên bài tập giải phóng cơ cổ và mở rộng biên độ khớp vai.",
       emoji: "🧘",
     },
@@ -98,7 +98,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheck className="w-4 h-4 text-brand-action" />
           <h3 className="text-xs font-bold text-stone-700">
-            Cảnh báo vùng khớp cần bảo vệ (nếu có):
+            Vùng khớp cần bảo vệ (nếu có)
           </h3>
         </div>
 
@@ -151,7 +151,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
         <div className="flex items-center gap-2 mb-3">
           <Activity className="w-4 h-4 text-brand-action" />
           <h3 className="text-xs font-bold text-stone-700">
-            Thói quen & rào cản luyện tập:
+            Điều gì hay cản bạn tập đều?
           </h3>
         </div>
 

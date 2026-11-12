@@ -87,23 +87,23 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
   const femaleGoals: { id: PrimaryGoal; title: string; desc: string }[] = [
     {
       id: "tone_muscle",
-      title: "Siết eo & cơ lõi phẳng",
-      desc: "Làm phẳng bụng dưới, lộ rãnh số 11 và săn chắc eo",
+      title: "Bụng phẳng & eo săn chắc",
+      desc: "Tập cơ lõi sâu để bụng dưới gọn và eo chắc hơn",
     },
     {
       id: "tone_glutes",
       title: "Nâng mông & thon đùi",
-      desc: "Kích hoạt cơ mông quả đào, giảm mỡ đùi trong và săn đùi sau",
+      desc: "Tập cơ mông và đùi sau để hông chắc, đùi thon hơn",
     },
     {
       id: "fix_posture",
       title: "Thẳng lưng & chống gù",
-      desc: "Mở rộng khớp vai, giải phóng áp lực thắt lưng và cổ rùa",
+      desc: "Mở vai, giảm mỏi thắt lưng và cổ khi ngồi nhiều",
     },
     {
       id: "lose_weight",
-      title: "Đốt mỡ toàn thân bền vững",
-      desc: "Giảm 3 – 6 kg mỡ thừa với các bài tập nhịp thở Pilates kiểm soát",
+      title: "Giảm mỡ toàn thân",
+      desc: "Giảm cân đều đặn với Pilates và ăn ít hơn một chút mỗi ngày",
     },
   ];
 
@@ -111,22 +111,22 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
     {
       id: "hypertrophy",
       title: "Tăng cơ ngực, vai & lưng xô",
-      desc: "Xây dựng khối cơ nạc dày dặn, thân hình chữ V nam tính",
+      desc: "Tăng khối cơ thân trên với chống đẩy, kéo xà hoặc tạ",
     },
     {
       id: "lose_weight",
-      title: "Siết mỡ & lộ rãnh 6 múi",
-      desc: "Triệt tiêu mỡ bụng dưới, làm rõ nét cơ bụng thẳng và cơ liên sườn",
+      title: "Giảm mỡ bụng",
+      desc: "Giảm mỡ, giữ cơ, bụng gọn và rõ nét hơn",
     },
     {
       id: "explosive_power",
-      title: "Sức mạnh bùng nổ & Calisthenics",
-      desc: "Tăng sức kéo xà, chống đẩy biến thể và sức bật toàn thân",
+      title: "Sức mạnh với trọng lượng cơ thể",
+      desc: "Kéo xà, chống đẩy nhiều kiểu và bật nhảy tốt hơn",
     },
     {
       id: "cardio_stamina",
-      title: "Sức bền tim mạch & năng lượng cao",
-      desc: "Cải thiện VO2 Max, bền bỉ và không còn hụt hơi khi leo dốc",
+      title: "Sức bền & thể lực",
+      desc: "Tim phổi khỏe hơn, ít hụt hơi khi leo cầu thang",
     },
   ];
 
@@ -140,7 +140,7 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
         </h1>
 
         <p className="text-xs sm:text-sm max-w-md mx-auto text-stone-600">
-          Chọn nhóm tuổi để hệ thống hiệu chỉnh tốc độ chuyển hóa sinh học BMR và mật độ phục hồi khớp.
+          Tuổi giúp tính lượng calo cơ thể bạn đốt mỗi ngày và chọn bài tập vừa sức với khớp.
         </p>
       </div>
 
@@ -182,7 +182,7 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
       <div>
         <h3 className="text-sm sm:text-base font-bold tracking-tight mb-4 flex items-center gap-2 text-stone-900">
           <Sparkles className="w-4 h-4 text-brand-action" />
-          <span>Mục tiêu ưu tiên cao nhất:</span>
+          <span>Mục tiêu quan trọng nhất với bạn</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

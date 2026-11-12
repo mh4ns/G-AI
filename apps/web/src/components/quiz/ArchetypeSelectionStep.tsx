@@ -34,7 +34,7 @@ const PROGRAMMES: {
     title: "Sức mạnh & tăng cơ",
     description:
       "Xây cơ ngực, vai, lưng xô và cơ lõi với tạ đơn hoặc trọng lượng cơ thể. Tăng tải dần theo từng tuần.",
-    tags: ["Tăng cơ", "Calisthenics & tạ đơn", "Lưng xô & cơ lõi"],
+    tags: ["Tăng cơ", "Trọng lượng cơ thể & tạ đơn", "Lưng xô & cơ lõi"],
     image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=80",
     imageAlt: "Người tập sức mạnh với tạ",
   },

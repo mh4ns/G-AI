@@ -23,22 +23,22 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
 }) => {
   const isMale = archetype === "male_strength";
 
-  const femaleAreas: { id: BodyFocusArea; label: string; sub: string; emoji: string }[] = [
-    { id: "belly", label: "Bụng & cơ lõi (Core)", sub: "Làm phẳng mỡ bụng dưới, siết eo đồng hồ cát", emoji: "✨" },
-    { id: "glutes", label: "Mông & hông (glutes)", sub: "Nâng cao cơ mông, làm đầy hõm mông hai bên", emoji: "🍑" },
-    { id: "thighs", label: "Đùi & chân thon", sub: "Đốt mỡ đùi trong, làm thon gọn bắp chân", emoji: "🦵" },
-    { id: "back", label: "Lưng & cột sống", sub: "Khắc phục gù lưng, mở ngực và kéo giãn đốt sống", emoji: "🧘" },
-    { id: "arms", label: "Cánh tay & vai thon", sub: "Làm thon gọn bắp tay, săn chắc cơ vai", emoji: "💪" },
-    { id: "full_body", label: "Toàn thân toàn diện", sub: "Kích hoạt toàn bộ nhóm cơ chính và tăng trao đổi chất", emoji: "⚡" },
+  const femaleAreas: { id: BodyFocusArea; label: string; sub: string}[] = [
+    { id: "belly", label: "Bụng & cơ lõi", sub: "Bụng dưới gọn, eo săn chắc" },
+    { id: "glutes", label: "Mông & hông", sub: "Cơ mông chắc và tròn hơn" },
+    { id: "thighs", label: "Đùi & chân thon", sub: "Đùi trong và bắp chân thon gọn hơn" },
+    { id: "back", label: "Lưng & cột sống", sub: "Khắc phục gù lưng, mở ngực và kéo giãn đốt sống" },
+    { id: "arms", label: "Cánh tay & vai thon", sub: "Làm thon gọn bắp tay, săn chắc cơ vai" },
+    { id: "full_body", label: "Toàn thân", sub: "Tập đủ các nhóm cơ chính, đốt nhiều calo hơn" },
   ];
 
-  const maleAreas: { id: BodyFocusArea; label: string; sub: string; emoji: string }[] = [
-    { id: "chest", label: "Cơ ngực (chest)", sub: "Dày cơ ngực trên & ngực giữa, mở rộng khuôn ngực", emoji: "🛡️" },
-    { id: "back", label: "Lưng xô (v-Taper lat)", sub: "Mở rộng lưng xô hình chữ V, dày cơ trám & lưng giữa", emoji: "🦅" },
-    { id: "arms", label: "Cơ vai & tay (arms)", sub: "Dày cơ delta 3 góc, to bắp tay trước & tay sau", emoji: "💪" },
-    { id: "belly", label: "Bụng 6 múi & cơ liên sườn", sub: "Cắt nét cơ bụng thẳng, siết chặt rãnh bụng liên sườn", emoji: "⚡" },
-    { id: "thighs", label: "Cơ đùi & bắp chân", sub: "Tăng khối cơ tứ đầu đùi, đùi sau và sức mạnh trụ", emoji: "🦵" },
-    { id: "full_body", label: "Toàn thân Hypertrophy", sub: "Kích thích toàn diện chuỗi động tác Compound đa khớp", emoji: "🔥" },
+  const maleAreas: { id: BodyFocusArea; label: string; sub: string}[] = [
+    { id: "chest", label: "Ngực", sub: "Ngực dày và rộng hơn" },
+    { id: "back", label: "Lưng", sub: "Lưng rộng, chắc và đứng thẳng hơn" },
+    { id: "arms", label: "Vai & tay", sub: "Vai tròn, bắp tay trước và tay sau to hơn" },
+    { id: "belly", label: "Bụng", sub: "Giảm mỡ bụng, cơ bụng rõ nét hơn" },
+    { id: "thighs", label: "Đùi & bắp chân", sub: "Chân to khỏe, đứng trụ vững hơn" },
+    { id: "full_body", label: "Toàn thân", sub: "Bài nhiều khớp cùng lúc như squat, chống đẩy, kéo xà" },
   ];
 
   const bodyAreas = isMale ? maleAreas : femaleAreas;
@@ -115,9 +115,9 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
 
       {/* 2. Body Focus Areas Grid */}
       <div className="mb-8">
-        <label className="block text-xs font-bold mb-3 text-stone-700">
-          Vùng Cần Tập Trung (Chọn 1 hoặc nhiều):
-        </label>
+        <h2 className="text-sm font-bold mb-3 text-stone-700">
+          Vùng muốn tập trung (chọn một hoặc nhiều)
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {bodyAreas.map((area) => {
             const isSelected = selectedAreas.includes(area.id);
@@ -125,30 +125,28 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
               <button type="button" aria-pressed={isSelected}
                 key={area.id}
                 onClick={() => onToggleArea(area.id)}
-                className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 flex flex-col justify-between ${
+                className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
                   isSelected
                     ? "border-brand ring-2 ring-brand/20 bg-[#FFF5F0]"
                     : "border-stone-200 bg-white hover:border-stone-300"
                 }`}
               >
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-2xl">{area.emoji}</span>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm sm:text-base font-bold mb-0.5 text-stone-900">
+                      {area.label}
+                    </h4>
+                    <p className="text-xs text-stone-600">
+                      {area.sub}
+                    </p>
+                  </div>
+                  <div className={`w-5 h-5 mt-0.5 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
                     isSelected
                       ? "border-brand bg-brand-action text-white"
                       : "border-stone-300 bg-stone-50"
                   }`}>
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm sm:text-base font-bold mb-0.5 text-stone-900">
-                    {area.label}
-                  </h4>
-                  <p className="text-xs text-stone-600">
-                    {area.sub}
-                  </p>
                 </div>
               </button>
             );

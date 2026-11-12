@@ -139,11 +139,11 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                   Trường phái bài tập trọng tâm
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button
+                  <button aria-pressed={archetype === "female_pilates"}
                     type="button"
                     onClick={() => {
                       setArchetype("female_pilates");
-                      setWorkoutType("Pilates & Siết Cơ Lõi");
+                      setWorkoutType("Pilates & cơ lõi");
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       archetype === "female_pilates"
@@ -151,15 +151,15 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                         : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                     }`}
                   >
-                    <div className="font-bold text-sm mb-0.5 text-white">Pilates siết cơ lõi</div>
-                    <p className="text-xs text-stone-400">Siết eo thon, phẳng bụng, thẳng lưng</p>
+                    <div className="font-bold text-sm mb-0.5 text-white">Pilates & cơ lõi</div>
+                    <p className="text-xs text-stone-400">Cơ lõi, eo và tư thế</p>
                   </button>
 
-                  <button
+                  <button aria-pressed={archetype === "male_strength"}
                     type="button"
                     onClick={() => {
                       setArchetype("male_strength");
-                      setWorkoutType("Calisthenics & Cơ Xô");
+                      setWorkoutType("Sức mạnh");
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       archetype === "male_strength"
@@ -167,8 +167,8 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                         : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                     }`}
                   >
-                    <div className="font-bold text-sm mb-0.5 text-white">Calisthenics cơ xô</div>
-                    <p className="text-xs text-stone-400">Mở rộng ngực vai, săn chắc cơ lưng</p>
+                    <div className="font-bold text-sm mb-0.5 text-white">Sức mạnh</div>
+                    <p className="text-xs text-stone-400">Ngực, vai, lưng và chân</p>
                   </button>
                 </div>
               </div>
@@ -176,13 +176,13 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
               {/* Option 2: Volume / Sets per week */}
               <div>
                 <label className="text-stone-300 font-semibold block mb-2">
-                  Khối lượng bài tập / tuần
+                  Khối lượng tập mỗi tuần
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
-                    "12 set bài tập / tuần (Nhẹ nhàng)",
-                    "18 set bài tập / tuần (Tiêu chuẩn)",
-                    "24 set bài tập / tuần (Đẩy nhanh)",
+                    "12 hiệp mỗi tuần (nhẹ)",
+                    "18 hiệp mỗi tuần (vừa)",
+                    "24 hiệp mỗi tuần (nhanh)",
                   ].map((val) => (
                     <button
                       key={val}

@@ -77,8 +77,8 @@ export default function PredictionPage() {
 
   // Default plan configuration
   const [planConfig, setPlanConfig] = useState<PlanConfig>({
-    workoutType: "Pilates & Siết Cơ Lõi",
-    weeklySets: "16 set bài tập / tuần (Tiêu chuẩn)",
+    workoutType: "Pilates & cơ lõi",
+    weeklySets: "18 hiệp mỗi tuần (vừa)",
     dietStyle: NO_PLAN_CALORIES,
     archetype: "female_pilates",
   });
@@ -117,12 +117,9 @@ export default function PredictionPage() {
             archetype: parsed.archetype,
             workoutType:
               parsed.archetype === "male_strength"
-                ? "Calisthenics & Cơ Xô"
-                : "Pilates & Siết Cơ Lõi",
-            weeklySets:
-              parsed.archetype === "male_strength"
-                ? "18 set Calisthenics / tuần (Tiêu chuẩn)"
-                : "16 set Pilates / tuần (Tiêu chuẩn)",
+                ? "Sức mạnh"
+                : "Pilates & cơ lõi",
+            weeklySets: "18 hiệp mỗi tuần (vừa)",
           }));
         }
         if (parsed.userPhotoBase64) {
@@ -423,8 +420,8 @@ export default function PredictionPage() {
       archetype: updated.archetype,
       workoutType:
         updated.archetype === "male_strength"
-          ? "Calisthenics & Cơ Xô"
-          : "Pilates & Siết Cơ Lõi",
+          ? "Sức mạnh"
+          : "Pilates & cơ lõi",
     };
     setPlanConfig(updatedPlan);
 

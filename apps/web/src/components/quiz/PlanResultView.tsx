@@ -318,7 +318,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheck className="w-4 h-4 text-brand-action" />
           <h4 className="text-xs font-bold text-stone-700">
-            Biện pháp bảo vệ khớp & an toàn vận động:
+            Bảo vệ khớp & an toàn
           </h4>
         </div>
 
@@ -343,7 +343,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-brand-action" />
             <h4 className="text-xs font-bold text-stone-700">
-              Lịch tập tuần (4 buổi / tuần):
+              Lịch tập mỗi tuần (4 buổi)
             </h4>
           </div>
           <span className="text-xs text-stone-500">Chu kỳ 28 ngày</span>

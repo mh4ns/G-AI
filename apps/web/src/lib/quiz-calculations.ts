@@ -57,7 +57,7 @@ export function getBMICategory(bmi: number): { label: string; color: string; adv
   return {
     label: "Cần kiểm soát cân nặng",
     color: "border-rose-200 text-rose-700 bg-rose-50",
-    advice: "Ưu tiên các bài tập Low-Impact trên thảm để bảo vệ khớp gối và đốt mỡ bền vững.",
+    advice: "Ưu tiên các bài nhẹ nhàng trên thảm để bảo vệ khớp gối và đốt mỡ bền vững.",
   };
 }
 
@@ -176,7 +176,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
 
   if (injuries.includes("knee")) {
     safetyNotes.push(
-      "Đã bảo vệ khớp gối: Thay thế bài bật nhảy va đập cao bằng bài tập Low-Impact kiểm soát góc gập."
+      "Đã bảo vệ khớp gối: Thay thế bài bật nhảy va đập cao bằng bài nhẹ nhàng, gập gối vừa phải."
     );
     excludedExercises.push(
       "Jump Squat",
