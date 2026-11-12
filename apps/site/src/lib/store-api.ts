@@ -125,7 +125,7 @@ export function cartKey(productId: string, size: string): string {
 
 const CATEGORY_LABELS: Record<string, string> = {
   apparel: "Trang Phục",
-  equipment: "Dụng Cụ Studio",
+  equipment: "Dụng cụ tập",
   device: "Thiết Bị",
   supplement: "Dinh Dưỡng",
 };

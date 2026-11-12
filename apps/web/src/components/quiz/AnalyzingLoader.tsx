@@ -22,7 +22,7 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
     "Thiết lập đường cong thâm hụt năng lượng an toàn (Deficit curve)...",
     "Kiểm tra tiền sử cột sống & loại trừ động tác nén thắt lưng...",
     "Khởi tạo giáo án Pilates & Kéo giãn phục hồi 28 ngày...",
-    "Hoàn thiện mô hình Digital Twin cá nhân hóa của bạn!",
+    "Hoàn thiện dự đoán vóc dáng của bạn",
   ];
 
   const maleSteps = [
@@ -30,7 +30,7 @@ export const AnalyzingLoader: React.FC<AnalyzingLoaderProps> = ({
     "Tính toán tỷ lệ Calorie Surplus & hàm lượng Protein Hypertrophy...",
     "Quét và bảo vệ khớp gối & cột sống khỏi rủi ro nén trục nặng...",
     "Khởi tạo lịch phân bổ Push / Pull / Legs & Calisthenics 28 ngày...",
-    "Hoàn thiện mô hình Digital Twin sức mạnh của bạn!",
+    "Hoàn thiện dự đoán vóc dáng của bạn",
   ];
 
   const computationSteps = isMale ? maleSteps : femaleSteps;

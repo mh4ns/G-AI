@@ -135,7 +135,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-black disabled:opacity-60"
+            className="flex w-full min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-action px-4 text-base font-semibold text-white transition-colors hover:bg-brand-action-hover active:translate-y-px disabled:opacity-60"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             <span>{mode === "login" ? "Đăng nhập" : "Đăng ký"}</span>

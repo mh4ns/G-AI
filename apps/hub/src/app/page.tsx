@@ -24,7 +24,7 @@ const PRODUCTS: Product[] = [
     tagline: "Lộ trình 28 ngày cá nhân hóa",
     description:
       "Khảo sát thể trạng 2 phút, nhận kế hoạch calo và bài tập theo cơ thể bạn, xem dự đoán vóc dáng và theo dõi từng ngày.",
-    highlights: ["Khảo sát thể trạng", "Dự đoán vóc dáng (Digital Twin)", "Theo dõi hôm nay"],
+    highlights: ["Khảo sát thể trạng", "Dự đoán vóc dáng 28 ngày", "Theo dõi hôm nay"],
     href: appUrl("/quiz"),
     cta: "Bắt đầu khảo sát",
     tone: "dark",
@@ -32,7 +32,7 @@ const PRODUCTS: Product[] = [
   {
     key: "movement",
     name: "Movement",
-    tagline: "Thương hiệu & Movement Goods",
+    tagline: "Thương hiệu, chương trình & cửa hàng",
     description:
       "Câu chuyện thương hiệu, hai chương trình Pilates và Strength, cùng bộ sưu tập trang phục và dụng cụ tập luyện.",
     highlights: ["Chương trình Pilates & Strength", "Trang phục tập luyện", "Dụng cụ tập tại nhà"],

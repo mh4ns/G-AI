@@ -477,7 +477,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="AI Live PT Studio"
+      aria-label="Phòng tập với camera"
       className="fixed inset-0 z-50 bg-canvas-dark text-white flex flex-col select-none overflow-hidden"
     >
       <header className="h-16 px-3 sm:px-6 border-b border-stone-800/80 bg-stone-950/80 backdrop-blur-md flex items-center justify-between gap-2 z-20 shrink-0">
@@ -488,7 +488,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline text-xs font-bold text-brand">
-                AI Live PT Studio
+                Phòng tập với camera
               </span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold whitespace-nowrap">
                 Bài {Math.min(exerciseIndex + 1, exercises.length)}/{exercises.length}
@@ -675,7 +675,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
               <div className="p-4 rounded-2xl bg-stone-900 border border-stone-800 space-y-1.5">
                 <div className="flex items-center gap-2 text-xs text-brand font-bold">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Chỉ dẫn từ AI PT</span>
+                  <span>Lời nhắc của AI</span>
                 </div>
                 <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-medium">
                   &ldquo;{currentExercise.cue}&rdquo;

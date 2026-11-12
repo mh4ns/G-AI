@@ -359,7 +359,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
           className="w-full py-4 px-6 rounded-full font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl transition-all duration-300 hover:scale-[1.01] active:scale-98 bg-brand-action hover:bg-brand-action-hover text-white"
         >
           <Sparkles className="w-5 h-5 fill-white" />
-          <span>Khám phá mô hình dự đoán 28 ngày (Digital Twin)</span>
+          <span>Xem dự đoán vóc dáng 28 ngày</span>
           <ArrowRight className="w-5 h-5" />
         </Link>
 

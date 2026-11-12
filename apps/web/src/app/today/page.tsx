@@ -51,7 +51,7 @@ export default function TodayDashboardPage() {
     weeklyRoutine: [
       {
         dayNumber: 1,
-        title: "Thảm Mat: Siết eo & phẳng bụng",
+        title: "Thảm: cơ lõi & bụng dưới",
         durationMin: 35,
         target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
         intensity: "moderate",
@@ -59,7 +59,7 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 2,
-        title: "Glute Bridge & Hip Sculpting",
+        title: "Glute Bridge & tạo dáng hông",
         durationMin: 40,
         target: "Cơ mông lớn & Cơ đùi sau",
         intensity: "high",
@@ -67,7 +67,7 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 3,
-        title: "Active Recovery: Decompression & mở khớp",
+        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
         durationMin: 25,
         target: "Giải phóng đốt sống lưng",
         intensity: "low",
@@ -536,7 +536,7 @@ export default function TodayDashboardPage() {
               },
               {
                 key: "mindfulness",
-                label: "5 phút thở thư giãn Box Breathing giảm căng thẳng",
+                label: "5 phút thở hộp (hít 4 giây, giữ 4, thở 4, giữ 4) để thư giãn",
                 tag: "5 phút",
                 tagClass: "text-stone-700 bg-stone-100",
               },

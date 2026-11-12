@@ -211,7 +211,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     weeklyRoutine = [
       {
         dayNumber: 1,
-        title: isGym ? "Reformer & Mat Core Sculpt" : "Thảm: cơ lõi & bụng dưới",
+        title: isGym ? "Reformer & cơ lõi trên thảm" : "Thảm: cơ lõi & bụng dưới",
         durationMin: 35,
         target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
         intensity: "moderate",
@@ -219,7 +219,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 2,
-        title: isGym ? "Dây Kháng Lực & Hip Thrust" : "Glute Bridge & Hip Sculpting",
+        title: isGym ? "Dây kháng lực & Hip Thrust" : "Glute Bridge & tạo dáng hông",
         durationMin: 40,
         target: "Cơ mông lớn, Mông nhỡ & Cơ đùi sau",
         intensity: "high",
@@ -227,7 +227,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 3,
-        title: "Active Recovery: Decompression & mở khớp",
+        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
         durationMin: 25,
         target: "Giải phóng đốt sống lưng & giãn cơ toàn thân",
         intensity: "low",
@@ -235,7 +235,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 4,
-        title: isGym ? "Cable Core & Slender Tone" : "Pilates toàn thân & cân bằng tư thế",
+        title: isGym ? "Cơ lõi với máy cáp & săn chắc toàn thân" : "Pilates toàn thân & cân bằng tư thế",
         durationMin: 35,
         target: "Toàn thân & tư thế",
         intensity: "moderate",
@@ -247,7 +247,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     weeklyRoutine = [
       {
         dayNumber: 1,
-        title: isGym ? "Upper Hypertrophy: Ngực, Vai & Tay Sau" : "Push Power: Chống Đẩy Đa Góc & Dây Kháng Lực",
+        title: isGym ? "Thân trên: ngực, vai & tay sau" : "Sức đẩy: chống đẩy nhiều góc & dây kháng lực",
         durationMin: 45,
         target: "Cơ ngực, Cơ delta & Cơ tay sau",
         intensity: "high",
@@ -255,7 +255,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 2,
-        title: isGym ? "Pull Dominance: Lưng Xô & Tay Trước" : "Hít Xà & Kháng Lực Lưng Xô",
+        title: isGym ? "Sức kéo: lưng xô & tay trước" : "Hít xà & kéo dây cho lưng xô",
         durationMin: 45,
         target: "Cơ lưng xô, Cơ trám & Cơ tay trước",
         intensity: "high",
@@ -263,7 +263,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 3,
-        title: "Active mobility & phục hồi thần kinh cơ",
+        title: "Vận động khớp & phục hồi",
         durationMin: 30,
         target: "Giãn khớp hông, vai & giải tỏa axit lactic",
         intensity: "low",
@@ -271,7 +271,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 4,
-        title: isGym ? "Lower & Core: Chân, Đùi Sau & Bụng 6 Múi" : "Chân & Sức Mạnh Lõi Bùng Nổ",
+        title: isGym ? "Thân dưới & cơ lõi: chân, đùi sau & bụng" : "Chân & sức mạnh cơ lõi",
         durationMin: 50,
         target: "Cơ tứ đầu, Đùi sau & Cơ bụng thẳng",
         intensity: "high",

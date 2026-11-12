@@ -47,7 +47,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
     {
       id: "lack_of_motivation",
       title: "Dễ bỏ cuộc khi tập một mình",
-      desc: "Cần phản hồi khích lệ của AI Companion đếm rep và thúc đẩy mỗi ngày.",
+      desc: "Cần người nhắc và đếm rep để giữ nhịp mỗi ngày.",
       emoji: "🤍",
     },
   ];

@@ -304,7 +304,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
               </span>
             ) : (
               <>
-                <span>Xác nhận & tạo bản sao số</span>
+                <span>Xác nhận & tạo dự đoán</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
