@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Sparkles,
   Compass,
   ArrowRight,
   SlidersHorizontal,
@@ -12,6 +11,8 @@ import {
   MoreHorizontal,
   
   AlertTriangle,
+  ChevronDown,
+  X,
 } from "lucide-react";
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
@@ -28,6 +29,13 @@ import {
   saveJobRef,
   setPhotoConsent,
 } from "@/lib/prediction-client";
+
+const WEEKS = [
+  { day: 7, label: "Tuần 1 · Ngày 01 — 07", focus: "Trọng tâm: thở & cổ vai", title: "Đánh thức cơ hoành & giảm căng cứng cổ gáy", body: "Tập trung vào nhịp thở Pilates sâu và các động tác kéo giãn cột sống cạnh tường. Cơ hoành được kích hoạt giúp lồng ngực mở nhẹ, giải tỏa áp lực đè nặng vùng vai gáy." },
+  { day: 14, label: "Tuần 2 · Ngày 08 — 14", focus: "Trọng tâm: cơ bụng sâu", title: "Căn chỉnh cột sống & làm phẳng bụng dưới", body: "Kích hoạt cơ ngang bụng sâu (Transverse Abdominis). Nhóm cơ này giữ thân người vững khi bạn vận động, mà không cần nín thở hóp bụng." },
+  { day: 21, label: "Tuần 3 · Ngày 15 — 21", focus: "Trọng tâm: chuỗi cơ sau", title: "Cân bằng khung chậu & khắc phục võng lưng", body: "Các bài Glute Bridge và Bird Dog giúp giảm tư thế võng lưng do ngồi làm việc nhiều. Cơ mông được nâng đỡ, đưa trọng tâm cơ thể về vị trí cân bằng tự nhiên." },
+  { day: 28, label: "Tuần 4 · Ngày 22 — 28", focus: "Trọng tâm: đánh giá lại", title: "Đánh giá lại & giữ nhịp", body: "So sánh với Ngày 0: cân nặng, số đo vòng eo và cảm giác khi ngồi làm việc. Thói quen giữ thẳng lưng cần thời gian; tiếp tục chu kỳ sau để giữ nhịp." },
+];
 
 const NO_PLAN_CALORIES = "chưa có, làm khảo sát để G-AI tính";
 
@@ -49,6 +57,8 @@ export default function PredictionPage() {
   const [customMilestones, setCustomMilestones] = useState<string[] | null>(null);
   const [completedMilestones, setCompletedMilestones] = useState<Record<number, string>>({});
   const [userStats, setUserStats] = useState<{ height: number; weight: number; targetWeight: number } | null>(null);
+  // null until localStorage is read; false shows the "do the quiz first" state.
+  const [hasQuiz, setHasQuiz] = useState<boolean | null>(null);
   // TDEE minus the daily calorie target from the saved plan; drives the weight projection.
   const [dailyCalorieGap, setDailyCalorieGap] = useState<number | undefined>(undefined);
   const [isRecalculatingPlan, setIsRecalculatingPlan] = useState<boolean>(false);
@@ -77,6 +87,7 @@ export default function PredictionPage() {
   useEffect(() => {
     try {
       const savedQuiz = localStorage.getItem("g_ai_user_quiz");
+      setHasQuiz(!!savedQuiz);
       if (savedQuiz) {
         const parsedQuiz = JSON.parse(savedQuiz);
         if (parsedQuiz.heightCm && parsedQuiz.currentWeightKg && parsedQuiz.targetWeightKg) {
@@ -513,18 +524,39 @@ export default function PredictionPage() {
                 </div>
             </div>
 
-            {/* ONLY ONE Primary Header Button */}
+            {/* Primary header action, once there is a plan to start. */}
+            {hasQuiz && (
             <Link
               href="/today"
               className="min-h-11 inline-flex items-center px-4 sm:px-5 rounded-full bg-white hover:bg-stone-200 text-stone-900 text-sm font-semibold transition-colors active:translate-y-px"
             >
               Bắt đầu Ngày 1
             </Link>
+            )}
           </div>
         </div>
       </header>
 
+      {/* Before the quiz there is nothing to predict: one clear next step. */}
+      {hasQuiz === false && (
+        <main className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Dự đoán vóc dáng 28 ngày</h1>
+          <p className="mt-4 text-base text-stone-300 leading-relaxed">
+            G-AI dựng dự đoán từ chiều cao, cân nặng và mục tiêu của bạn. Làm khảo sát 2 phút để bắt đầu; bạn có thể thêm
+            ảnh sau để xem ảnh minh họa theo từng tuần.
+          </p>
+          <Link
+            href="/quiz"
+            className="mt-8 min-h-12 px-8 rounded-full bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center gap-2 transition-colors active:translate-y-px"
+          >
+            Làm khảo sát 2 phút
+            <ArrowRight className="w-4 h-4" aria-hidden />
+          </Link>
+        </main>
+      )}
+
       {/* 2. Main Visualizer & Telemetry View (Responsive & Sticky Scrubber) */}
+      {hasQuiz && (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-36 lg:pb-12">
         {/* Step 4: Gender Mismatch Warning Banner */}
         {genderMismatchWarning && (
@@ -537,9 +569,9 @@ export default function PredictionPage() {
             <button
               onClick={() => setGenderMismatchWarning(null)}
               aria-label="Đóng cảnh báo"
-              className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800/50 transition-colors"
+              className="w-11 h-11 -m-2 flex items-center justify-center rounded-lg text-stone-300 hover:text-white hover:bg-stone-800/50 transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" aria-hidden />
             </button>
           </div>
         )}
@@ -554,14 +586,10 @@ export default function PredictionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column (Sticky Pinned Visualizer on Desktop) */}
           <div className="lg:col-span-6 lg:sticky lg:top-24 flex flex-col items-center">
-            {/* Header info */}
-            <div className="w-full flex items-center justify-between mb-3 px-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-stone-300 text-xs">
-                <Sparkles className="w-3.5 h-3.5 text-brand" />
-                <span className="font-medium">Trục trọng tâm & dáng đứng 28 ngày</span>
-              </div>
-              <span className="text-xs text-stone-300 font-medium">
-                {archetype === "male_strength" ? "Nam · Calisthenics" : "Nữ · Pilates"}
+            <div className="w-full flex items-baseline justify-between gap-3 mb-4 px-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Dự đoán vóc dáng 28 ngày</h1>
+              <span className="text-sm text-stone-300 font-medium whitespace-nowrap">
+                {archetype === "male_strength" ? "Sức mạnh" : "Pilates & cơ lõi"}
               </span>
             </div>
 
@@ -684,96 +712,45 @@ export default function PredictionPage() {
               onJumpToTarget={() => setCurrentDay(28)}
             />
 
-            {/* 4-Week Physiological Adaptation Chapters */}
-            <div className="pt-2 space-y-3">
-              <span className="text-xs font-bold text-stone-300 tracking-normal block px-1">
-                Lộ trình thích nghi cơ sinh học
-              </span>
-
-              {/* Week 1 */}
-              <div
-                onClick={() => setCurrentDay(7)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 7
-                    ? "bg-stone-900 border-brand/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-brand font-bold">Tuần 1 · Ngày 01 — 07</span>
-                  <span className="text-xs text-stone-300">Trọng tâm: thở & cổ vai</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Đánh thức cơ hoành & giảm căng cứng cổ gáy
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Tập trung vào nhịp thở Pilates sâu và các động tác kéo giãn cột sống cạnh tường. Cơ hoành được kích hoạt giúp lồng ngực mở nhẹ, giải tỏa áp lực đè nặng vùng vai gáy.
-                </p>
+            {/* Week by week: one line each; the week in view opens. */}
+            <section aria-labelledby="weekly-plan-heading" className="pt-2">
+              <h2 id="weekly-plan-heading" className="text-sm font-bold text-stone-200 px-1 mb-3">
+                Lộ trình từng tuần
+              </h2>
+              <div className="space-y-2">
+                {WEEKS.map((w) => {
+                  const inView = currentDay === w.day;
+                  return (
+                    <details
+                      key={w.day}
+                      open={inView}
+                      className={`group rounded-2xl border transition-colors ${
+                        inView ? "bg-stone-900 border-brand/60" : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
+                      }`}
+                    >
+                      <summary
+                        onClick={(e) => {
+                          // Opening a week also moves the timeline to it.
+                          e.preventDefault();
+                          setCurrentDay(w.day);
+                        }}
+                        className="min-h-12 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+                      >
+                        <span>
+                          <span className="block text-xs font-semibold text-brand">{w.label}</span>
+                          <span className="block text-sm font-bold text-white">{w.title}</span>
+                        </span>
+                        <ChevronDown className="w-4 h-4 shrink-0 text-stone-400 transition-transform duration-[var(--duration-fast)] group-open:rotate-180" aria-hidden />
+                      </summary>
+                      <div className="px-4 pb-4 text-sm text-stone-300 leading-relaxed">
+                        <p className="text-xs text-stone-400 mb-1.5">{w.focus}</p>
+                        <p>{w.body}</p>
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
-
-              {/* Week 2 */}
-              <div
-                onClick={() => setCurrentDay(14)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 14
-                    ? "bg-stone-900 border-brand/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-emerald-400 font-bold">Tuần 2 · Ngày 08 — 14</span>
-                  <span className="text-xs text-stone-300">Trọng tâm: cơ bụng sâu</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Căn chỉnh cột sống & làm phẳng bụng dưới
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Kích hoạt cơ ngang bụng sâu (Transverse Abdominis). Nhóm cơ này giữ thân người vững khi bạn vận động, mà không cần nín thở hóp bụng.
-                </p>
-              </div>
-
-              {/* Week 3 */}
-              <div
-                onClick={() => setCurrentDay(21)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 21
-                    ? "bg-stone-900 border-brand/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-amber-400 font-bold">Tuần 3 · Ngày 15 — 21</span>
-                  <span className="text-xs text-stone-300">Trọng tâm: chuỗi cơ sau</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Cân bằng khung chậu & khắc phục võng lưng
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Các bài Glute Bridge và Bird Dog giúp giảm tư thế võng lưng do ngồi làm việc nhiều. Cơ mông được nâng đỡ, đưa trọng tâm cơ thể về vị trí cân bằng tự nhiên.
-                </p>
-              </div>
-
-              {/* Week 4 */}
-              <div
-                onClick={() => setCurrentDay(28)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 28
-                    ? "bg-stone-900 border-emerald-500/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-emerald-400 font-bold">Tuần 4 · Ngày 22 — 28</span>
-                  <span className="text-xs text-stone-300">Trọng tâm: đánh giá lại</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Đánh giá lại & giữ nhịp
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  So sánh với Ngày 0: cân nặng, số đo vòng eo và cảm giác khi ngồi làm việc. Thói quen giữ thẳng lưng cần thời gian; tiếp tục chu kỳ sau để giữ nhịp.
-                </p>
-              </div>
-            </div>
+            </section>
 
             {/* Bottom Call To Action */}
             <div className="pt-4 flex flex-col sm:flex-row gap-3">
@@ -785,7 +762,7 @@ export default function PredictionPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href={siteUrl("/#movement-goods")}
+                href={siteUrl("/store")}
                 className="px-6 py-3.5 sm:py-4 rounded-2xl border border-stone-800 text-stone-300 hover:text-white hover:border-stone-600 text-xs text-center transition-colors flex items-center justify-center font-medium"
               >
                 Dụng cụ khuyên dùng
@@ -805,6 +782,7 @@ export default function PredictionPage() {
           </div>
         </div>
       </main>
+      )}
 
       {/* 3. Personal Calibration Modal */}
       <BodyCalibrationModal

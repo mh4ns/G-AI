@@ -199,8 +199,8 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
     <div className="w-full flex flex-col items-center select-none font-sans">
       {/* 1. Top Controls Bar: View Mode Tabs (Nghiêng / Chính diện) + Actions */}
       <div className="w-full flex flex-wrap items-center justify-between gap-2.5 mb-3 px-1">
-        {/* View Mode Tabs (Small Pill Tabs) */}
-        {onViewModeChange && (
+        {/* View Mode Tabs: only offered once a side photo exists (one usable option is no choice). */}
+        {onViewModeChange && hasSidePhoto && (
           <div
             role="tablist"
             aria-label="Chọn góc nhìn cơ thể"

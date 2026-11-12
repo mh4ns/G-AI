@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Compass, Flame, UserCheck, ArrowRight, Target, Activity } from "lucide-react";
+import { Compass, Flame, UserCheck, ArrowRight, Target } from "lucide-react";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 interface TelemetryHudProps {
@@ -71,8 +71,6 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
   dailyCalorieGapKcal,
   onJumpToTarget,
 }) => {
-  // Step 8: Tabbed chips for 3 Focus Changes (cervical, waist, lifestyle)
-  const [selectedFocusTab, setSelectedFocusTab] = useState<"cervical" | "waist" | "lifestyle">("cervical");
 
   // Determine active milestone index (0: Day 0, 1: Day 7, 2: Day 14, 3: Day 28)
   const milestoneIdx =
@@ -218,7 +216,7 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
       </div>
 
       {/* 2. Step 4: Metric Area with Delta, Prediction Ranges & Circular Progress Ring */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Metric A: Weight, projected from the plan's calorie gap */}
         <div className="p-4 rounded-2xl bg-stone-900/80 border border-stone-800 flex flex-col justify-between">
           <div>
@@ -256,107 +254,35 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
           </div>
         </div>
 
-        {/* Metric B: Waistline. Nothing measures it yet, so no prediction. */}
-        <div className="p-4 rounded-2xl bg-stone-900/80 border border-stone-800 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-stone-300 mb-1.5">
-              <span className="text-xs font-semibold">Vòng eo</span>
-              <Compass className="w-3.5 h-3.5 text-sky-400" />
-            </div>
-            <span className="text-xl font-extrabold text-stone-400">Chưa đo</span>
+        {/* Waist and posture: nothing measures them yet, so one card says how to. */}
+        <div className="p-4 rounded-2xl bg-stone-900/80 border border-stone-800">
+          <div className="flex items-center justify-between text-stone-300 mb-2">
+            <span className="text-xs font-semibold">Vòng eo và tư thế</span>
+            <Compass className="w-3.5 h-3.5 text-sky-400" aria-hidden />
           </div>
-
-          <div className="mt-3 pt-2 border-t border-stone-800/80">
-            <span className="text-xs text-stone-300 block">
-              Đo ngang rốn mỗi tuần, cùng giờ, để thấy thay đổi thật của bạn.
-            </span>
-          </div>
-        </div>
-
-        {/* Metric C: Posture. Only a camera session measures form. */}
-        <div className="p-4 rounded-2xl bg-stone-900/80 border border-stone-800 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-stone-300 mb-1.5">
-              <span className="text-xs font-semibold">Tư thế</span>
-              <Activity className="w-3.5 h-3.5 text-emerald-400" />
-            </div>
-            <span className="text-xl font-extrabold text-stone-400">Chưa chấm</span>
-          </div>
-
-          <div className="mt-3 pt-2 border-t border-stone-800/80">
-            <span className="text-xs text-stone-300 block">
-              Tập với camera AI để có điểm form của từng buổi tập.
-            </span>
-          </div>
+          <p className="text-sm text-stone-200 leading-relaxed">Chưa đo. G-AI chỉ dự đoán những gì có số liệu.</p>
+          <ul className="mt-3 pt-2 border-t border-stone-800/80 space-y-1.5 text-xs text-stone-300 leading-relaxed">
+            <li>Vòng eo: đo ngang rốn mỗi tuần, cùng giờ.</li>
+            <li>Tư thế: tập với camera AI để có điểm form của từng buổi.</li>
+          </ul>
         </div>
       </div>
 
-      {/* 3. Step 8: Focus Changes converted into Tabbed Chips (Chỉ hiện mốc đang chọn) */}
-      <div className="p-4 rounded-2xl bg-stone-900/80 border border-stone-800 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span className="text-xs font-bold text-stone-300">
-            Trọng tâm cải thiện ở {current.stageName}:
-          </span>
-
-          {/* Tabbed Chips */}
-          <div className="inline-flex items-center gap-1.5 p-1 rounded-xl bg-stone-950/80 border border-stone-800/80 text-xs">
-            <button
-              type="button"
-              onClick={() => setSelectedFocusTab("cervical")}
-              className={`min-h-11 px-3 rounded-lg transition-colors font-medium ${
-                selectedFocusTab === "cervical"
-                  ? "bg-brand-action text-white font-bold shadow-sm"
-                  : "text-stone-400 hover:text-stone-200"
-              }`}
-            >
-              Cổ & vai gáy
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFocusTab("waist")}
-              className={`min-h-11 px-3 rounded-lg transition-colors font-medium ${
-                selectedFocusTab === "waist"
-                  ? "bg-brand-action text-white font-bold shadow-sm"
-                  : "text-stone-400 hover:text-stone-200"
-              }`}
-            >
-              Vòng bụng & eo
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedFocusTab("lifestyle")}
-              className={`min-h-11 px-3 rounded-lg transition-colors font-medium ${
-                selectedFocusTab === "lifestyle"
-                  ? "bg-brand-action text-white font-bold shadow-sm"
-                  : "text-stone-400 hover:text-stone-200"
-              }`}
-            >
-              Cảm nhận thực tế
-            </button>
-          </div>
-        </div>
-
-        {/* Selected Focus Content Detail */}
-        <div className="p-3.5 rounded-xl bg-stone-950/60 border border-stone-800/60 text-sm text-stone-200 leading-relaxed transition-all min-h-[56px] flex items-center">
-          {selectedFocusTab === "cervical" && (
-            <p className="flex items-start gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-action mt-1.5 shrink-0" />
-              <span>{current.cervicalText}</span>
-            </p>
-          )}
-          {selectedFocusTab === "waist" && (
-            <p className="flex items-start gap-2">
-              <span className="w-2 h-2 rounded-full bg-sky-400 mt-1.5 shrink-0" />
-              <span>{current.waistText}</span>
-            </p>
-          )}
-          {selectedFocusTab === "lifestyle" && (
-            <p className="flex items-start gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
-              <span>{current.lifestyleText}</span>
-            </p>
-          )}
-        </div>
+      {/* This stage's goals, as one list (no tabs). */}
+      <div className="p-4 rounded-2xl bg-stone-900/80 border border-stone-800">
+        <h3 className="text-sm font-bold text-stone-100">Mục tiêu ở {current.stageName}</h3>
+        <ul className="mt-3 space-y-2.5 text-sm text-stone-200 leading-relaxed">
+          {[
+            { color: "bg-brand", text: current.cervicalText },
+            { color: "bg-sky-400", text: current.waistText },
+            { color: "bg-emerald-400", text: current.lifestyleText },
+          ].map((goal) => (
+            <li key={goal.text} className="flex items-start gap-2.5">
+              <span className={`w-2 h-2 rounded-full mt-2 shrink-0 ${goal.color}`} aria-hidden />
+              <span>{goal.text}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* 4. AI Coach Insight Box */}
