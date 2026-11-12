@@ -7,7 +7,17 @@ Quy tắc đang áp dụng:
 
 - Thẻ sản phẩm **không** dùng ảnh tạm: chúng hiện màu thật của sản phẩm (`color_hex`) cho tới khi có ảnh chụp sản phẩm.
 - Ảnh tạm chỉ minh họa người tập, không gắn tên hay logo của thương hiệu khác.
-- Khối "Tập đúng form tại nhà" trên site dùng ảnh chụp màn hình thật của app: `apps/site/public/images/live-studio.webp` (camera tắt, chụp từ `apps/web`).
+- Hero và khối "Tập đúng form tại nhà" trên site dùng ảnh chụp màn hình thật của app, không phải ảnh tạm (xem mục bên dưới).
+
+## Ảnh chụp màn hình app (cần chụp lại khi giao diện đổi)
+
+| File | Nội dung | Cách chụp |
+|---|---|---|
+| `apps/site/public/images/plan-female.webp` | Trang kết quả kế hoạch, chương trình Pilates | Quiz trên `apps/web`, khổ 390×844 @2x: chọn "Pilates & cơ lõi", 165 cm, 62 kg → 57 kg, bỏ qua ảnh; chụp đầu trang kết quả sau khi pháo giấy tắt |
+| `apps/site/public/images/plan-male.webp` | Như trên, chương trình Sức mạnh | Như trên với "Sức mạnh & tăng cơ", 175 cm, 75 kg → 72 kg |
+| `apps/site/public/images/live-studio.webp` | Phòng tập với camera, camera tắt | Today → "Bắt đầu tập", khổ 1280×800 @2x |
+
+Ảnh kết quả có **ngày dự kiến cụ thể** (tính từ ngày chụp), nên cần chụp lại định kỳ để ngày không bị cũ.
 
 ## Ảnh đang hiển thị
 
@@ -17,8 +27,6 @@ Quy tắc đang áp dụng:
 | Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:15` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
 | Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:20` | [photo-1540497077202-7c8a3999166f](https://images.unsplash.com/photo-1540497077202-7c8a3999166f) |
 | Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:25` | [photo-1574680096145-d05b474e2155](https://images.unsplash.com/photo-1574680096145-d05b474e2155) |
-| Hero của site (2 chương trình) | `apps/site/src/components/home/DualAthleteHero.tsx:22` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
-| Hero của site (2 chương trình) | `apps/site/src/components/home/DualAthleteHero.tsx:30` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
 | Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:39` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
 | Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:46` | [photo-1545205597-3d9d02c29597](https://images.unsplash.com/photo-1545205597-3d9d02c29597) |
 | Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:53` | [photo-1506126613408-eca07ce68773](https://images.unsplash.com/photo-1506126613408-eca07ce68773) |

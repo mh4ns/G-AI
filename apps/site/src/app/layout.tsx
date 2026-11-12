@@ -30,6 +30,10 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} ${display.variable}`}>
       <body className={`${inter.className} font-sans antialiased bg-canvas text-stone-900 selection:bg-brand-action selection:text-white`}>
+        {/* Without JavaScript the hero's reveal never runs; show its text. */}
+        <noscript>
+          <style>{`.t-stagger-line{opacity:1!important;transform:none!important;filter:none!important}`}</style>
+        </noscript>
         {children}
       </body>
     </html>
