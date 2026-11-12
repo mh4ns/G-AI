@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sparkles, CheckCircle2, ShieldCheck, Activity } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { AthleticArchetype } from "@/types/quiz";
 
 interface AnalyzingLoaderProps {

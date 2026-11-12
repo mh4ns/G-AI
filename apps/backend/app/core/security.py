@@ -1,36 +1,70 @@
-import os
 import hashlib
 import hmac
-from typing import Tuple
+import os
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple
+
+import jwt
+
+from app.core.config import settings
+
+# OWASP 2023 guidance for PBKDF2-HMAC-SHA256.
+PBKDF2_ITERATIONS = 600_000
+_LEGACY_ITERATIONS = 100_000
+
+
+def _derive(password: str, salt: bytes, iterations: int) -> bytes:
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+
 
 def hash_password(password: str) -> str:
     """
-    Secure password hashing using PBKDF2-HMAC-SHA256 with 100,000 iterations and a 16-byte random salt.
-    Format: salt_hex$hash_hex
+    PBKDF2-HMAC-SHA256 with a 16-byte random salt.
+    Format: pbkdf2_sha256$<iterations>$<salt_hex>$<hash_hex>
     """
     salt = os.urandom(16)
-    key = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt,
-        100_000
-    )
-    return f"{salt.hex()}${key.hex()}"
+    key = _derive(password, salt, PBKDF2_ITERATIONS)
+    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt.hex()}${key.hex()}"
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verifies a plain text password against a stored PBKDF2 hash using constant-time comparison.
-    """
+    """Constant-time verification. Also accepts the legacy `salt$hash` format (100k iterations)."""
     try:
-        salt_hex, key_hex = hashed_password.split("$", 1)
-        salt = bytes.fromhex(salt_hex)
-        expected_key = bytes.fromhex(key_hex)
-        computed_key = hashlib.pbkdf2_hmac(
-            "sha256",
-            plain_password.encode("utf-8"),
-            salt,
-            100_000
-        )
-        return hmac.compare_digest(computed_key, expected_key)
-    except Exception:
+        parts = hashed_password.split("$")
+        if len(parts) == 4 and parts[0] == "pbkdf2_sha256":
+            iterations, salt_hex, key_hex = int(parts[1]), parts[2], parts[3]
+        elif len(parts) == 2:
+            iterations, (salt_hex, key_hex) = _LEGACY_ITERATIONS, parts
+        else:
+            return False
+        computed = _derive(plain_password, bytes.fromhex(salt_hex), iterations)
+        return hmac.compare_digest(computed, bytes.fromhex(key_hex))
+    except (ValueError, TypeError):
         return False
+
+
+def create_access_token(subject: str | int, token_version: int, expires_minutes: Optional[int] = None) -> str:
+    """`tv` must equal the user's current token_version for the token to be accepted (see api/deps.py)."""
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {"sub": str(subject), "tv": token_version, "iat": now, "exp": expire, "type": "access"}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_access_token(token: str) -> Optional[Tuple[int, int]]:
+    """Returns (user id, token version) of a valid, well-formed access token, or None."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+            options={"require": ["exp", "sub", "tv"]},
+        )
+    except jwt.PyJWTError:
+        return None
+    subject, version = payload.get("sub"), payload.get("tv")
+    if payload.get("type") != "access" or not isinstance(subject, str) or not subject.isdigit():
+        return None
+    if not isinstance(version, int) or isinstance(version, bool):
+        return None
+    return int(subject), version

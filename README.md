@@ -4,6 +4,32 @@
 
 ---
 
+## HIỆN TRẠNG TRIỂN KHAI (cập nhật 2026-11-09)
+
+> Phần còn lại của tài liệu này mô tả **tầm nhìn đầy đủ**. Bảng dưới đây cho biết phần nào đã chạy thật trong code.
+
+| Hạng mục | Trạng thái |
+|---|---|
+| Khảo sát thể trạng & tính kế hoạch (BMI/BMR/TDEE) | ✅ Web + lưu vào backend khi đăng nhập |
+| Đăng ký / đăng nhập (JWT, cookie httpOnly) | ✅ |
+| Trang Today: nước, thói quen, buổi tập | ✅ Đồng bộ backend khi đăng nhập; khách chỉ lưu trên trình duyệt |
+| Dự đoán ảnh cơ thể (Digital Twin, Gemini) | ✅ Lưu ảnh riêng tư, link có chữ ký, cần đồng ý · ⚠️ chưa chạy được trên serverless (ADR-0002) |
+| AI Live PT (chấm tư thế bằng MediaPipe) | 🚧 Giao diện có sẵn, điểm tư thế đang mô phỏng |
+| Cửa hàng | 🚧 API đặt hàng an toàn đã có; giao diện web vẫn dùng dữ liệu mẫu, chưa có cổng thanh toán |
+| Dinh dưỡng, IoT/BLE, CBT Journal, Premium, App mobile | 📝 Chưa bắt đầu |
+
+**Ba website, một nền thiết kế:** web chính `apps/hub` (cổng 3002) dẫn tới G-AI Movement `apps/site`
+(trang thương hiệu + cửa hàng, cổng 3001) và G-AI Coach `apps/web` (ứng dụng huấn luyện, cổng 3000); logo của
+mỗi sản phẩm quay về web chính. Cả ba dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
+`npm run dev:hub`, `npm run dev:site`, `npm run dev:app`. Deploy: 3 web lên Vercel (`docs/deploy-vercel.md`),
+backend lên Render + Supabase (`docs/deploy-render.md`, Blueprint `render.yaml`).
+
+**Chạy nhanh:** `docker compose up --build` (sao chép `.env.example` thành `.env` trước), hoặc chạy riêng
+từng app theo `apps/backend/README.md` và `apps/web/README.md`. Test e2e (Playwright, tự build và khởi động
+3 web + backend SQLite): `npm run e2e`. Quyết định kiến trúc: `docs/adr/`, thuật ngữ: `GLOSSARY.md`.
+
+---
+
 ## CẤU TRÚC THƯ MỤC DỰ ÁN (MONOREPO REPOSITORY LAYOUT)
 
 Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho nền tảng **Thuần Web & Mobile App (100% Software-Only)**:
@@ -11,11 +37,14 @@ Dự án được tổ chức theo kiến trúc Monorepo tinh gọn dành cho n�
 ```text
 G-ai/
 ├── apps/
-│   ├── web/                     # Ứng dụng Web (Next.js 15, React 19, Tailwind CSS, MediaPipe Pose)
+│   ├── hub/                     # Web chính: giới thiệu và dẫn tới từng sản phẩm (Next.js 15)
+│   ├── site/                    # G-AI Movement: trang thương hiệu + cửa hàng (Next.js 15)
+│   ├── web/                     # G-AI Coach: quiz, dự đoán ảnh, Today (Next.js 15)
 │   ├── mobile/                  # Ứng dụng Di động (React Native / Flutter)
 │   └── backend/                 # API Server & AI Core (Python FastAPI, Uvicorn, SQLAlchemy)
 │
 ├── packages/
+│   ├── ui/                      # Nền thiết kế chung cho 2 web: màu nền canvas, token, CSS gốc, logo
 │   └── shared-types/            # Kiểu dữ liệu & Schemas dùng chung giữa Web, Mobile và Backend
 │
 ├── docs/                        # Toàn bộ tài liệu kỹ thuật, slide, sơ đồ và use case
@@ -24,7 +53,9 @@ G-ai/
 │   ├── SEQUENCE_DIAGRAM.md      # Sơ đồ tuần tự tổng thể
 │   └── SLIDES.md                # 13 Slide trình chiếu đề án (Marp-ready)
 │
-├── docker-compose.yml           # Khởi chạy toàn bộ môi trường (PostgreSQL + Backend + Web)
+├── e2e/                         # Test end-to-end Playwright (hub → quiz → Today, đăng nhập, logo, mobile)
+├── render.yaml                  # Render Blueprint cho backend (DB: Supabase)
+├── docker-compose.yml           # Khởi chạy toàn bộ môi trường (PostgreSQL + Backend + hub/site/web)
 ├── README.md                    # Bản đặc tả tổng quan dự án
 └── .gitignore                   # Cấu hình bỏ qua file tạm, cache, .venv
 ```

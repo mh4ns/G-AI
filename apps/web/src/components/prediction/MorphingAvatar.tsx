@@ -12,6 +12,11 @@ import {
   Loader2,
   Lock,
 } from "lucide-react";
+
+/** User photos and generated predictions must not be copied into Next's shared image-optimizer cache. */
+function isPrivateImage(src: string | undefined): boolean {
+  return !!src && (src.startsWith("data:") || src.startsWith("/api/prediction/image/"));
+}
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 export interface MorphingAvatarProps {
@@ -30,6 +35,8 @@ export interface MorphingAvatarProps {
   generationError?: string | null;
   onRetryGeneration?: () => void;
   isMock?: boolean;
+  /** Photo-based AI predictions are off: milestones after Day 0 are illustrative presets. */
+  isIllustrative?: boolean;
   hasSidePhoto?: boolean;
   completedMilestones?: Record<number, string>;
 }
@@ -50,6 +57,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   generationError = null,
   onRetryGeneration,
   isMock = false,
+  isIllustrative = false,
   hasSidePhoto = false,
   completedMilestones,
 }) => {
@@ -58,7 +66,6 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const [comparePos, setComparePos] = useState<number>(50); // 0 to 100%
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showSkeleton, setShowSkeleton] = useState<boolean>(false); // Step 3 & 6: Default OFF
-  const [hasError, setHasError] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isMale = archetype === "male_strength";
@@ -305,6 +312,11 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             ẢNH MẪU · CHƯA PHẢI ẢNH THẬT
           </div>
         )}
+        {!isMock && isIllustrative && activeMilestoneDay > 0 && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-[11px] font-bold text-amber-300 shadow-md pointer-events-none whitespace-nowrap">
+            ẢNH MINH HỌA · CHƯA DỰ ĐOÁN TỪ ẢNH CỦA BẠN
+          </div>
+        )}
 
         {/* Subtle Radial Floor Glow */}
         <div
@@ -385,12 +397,12 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
                 >
                   <Image
                     src={imgSrc}
+                    unoptimized={isPrivateImage(imgSrc)}
                     alt={`Hình thể dự đoán mốc ngày ${day}`}
                     fill
                     sizes="(max-width: 768px) 100vw, 420px"
                     className="object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.85)] filter contrast-[1.04] brightness-105"
                     priority={day === 0 || day === activeMilestoneDay}
-                    onError={() => setHasError(true)}
                   />
                 </div>
               );
@@ -405,6 +417,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             <div className="absolute inset-0 p-4 pb-10">
               <Image
                 src={milestoneImages[0]}
+                unoptimized={isPrivateImage(milestoneImages[0])}
                 alt="Trước - Ngày 0"
                 fill
                 sizes="(max-width: 768px) 100vw, 420px"
@@ -421,6 +434,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             >
               <Image
                 src={milestoneImages[compareTargetDay as keyof typeof milestoneImages]}
+                unoptimized={isPrivateImage(milestoneImages[compareTargetDay as keyof typeof milestoneImages])}
                 alt={`Sau - ${compareTargetTitle}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 420px"

@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, ArrowRight, Home, Dumbbell, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, ArrowRight, Home, Dumbbell } from "lucide-react";
 import { BodyFocusArea, AthleticArchetype, EquipmentAccess } from "@/types/quiz";
 
 interface FocusAreaStepProps {

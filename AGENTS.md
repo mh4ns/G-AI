@@ -22,12 +22,21 @@ Single-context layout with root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/
 
 ## Architecture & Monorepo Layout
 
-- **`apps/web`**: Next.js 15 (App Router), React 19, Tailwind CSS, MediaPipe Pose, Lucide icons, Canvas Confetti. Deployed to Vercel.
-- **`apps/backend`**: Python FastAPI, Uvicorn, async SQLAlchemy 2.0 (`aiosqlite`/PostgreSQL), Pydantic v2 schemas.
-- **`packages/shared-types`**: Shared types and schema definitions between web, mobile, and backend.
+- **`apps/hub`**: Main website. Product cards link to each product site; every product's logo links back here via `hubUrl()`.
+- **`apps/site`**: Brand website (landing page + Movement Goods store). Next.js 15, deployed as its own Vercel project.
+- **`apps/web`**: Coaching app (quiz, prediction, Today, login). Next.js 15 (App Router), React 19, Tailwind CSS, Lucide icons, Canvas Confetti. Proxies `/api/v1/*` to the backend (see ADR-0001). MediaPipe Pose is planned, not yet integrated.
+- **`packages/ui`** (`@g-ai/ui`): Shared design foundation for both sites: Tailwind preset (`bg-canvas`, `bg-canvas-dark`, `brand` colours), base CSS, `BrandLogo`, and `hubUrl()` / `appUrl()` / `siteUrl()` for cross-site links. Change the shared background here, not in pages.
+- **`apps/backend`**: Python FastAPI, Uvicorn, async SQLAlchemy 2.0 (`aiosqlite`/PostgreSQL), Pydantic v2 schemas, Alembic migrations, JWT cookie sessions.
+- **`packages/shared-types`**: Shared types and `fixtures/plan-vectors.json`, the parity fixture both apps' plan maths is tested against.
 - **`docs/`**: Technical specs, use case breakdown (`USECASE_BREAKDOWN.md`), architecture designs, sequence diagrams, and agent configs (`docs/agents/`).
 
 ---
+
+## Commands (run before pushing)
+
+- Backend (`apps/backend`): `pip install -r requirements.txt`, `python -m pytest -q`, `alembic check` after model changes.
+- Web (npm workspaces, install from the repo root): `npm ci`, then in `apps/hub`, `apps/site` and `apps/web`: `npm run typecheck`, `npm run lint`, `npm test` (web), `npm run build`.
+- CI (`.github/workflows/ci.yml`) runs all of the above.
 
 ## Engineering Guidelines & Cybersecurity Rules
 

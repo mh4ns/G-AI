@@ -45,3 +45,12 @@ apps/web/public/generated/
 
 
 graphify-out/
+
+# Private runtime data (generated prediction images)
+.data/
+.pytest_cache/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/

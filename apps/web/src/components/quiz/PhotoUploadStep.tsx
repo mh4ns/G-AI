@@ -12,8 +12,6 @@ import {
   ArrowRight, 
   User, 
   AlertCircle,
-  Eye,
-  Sliders
 } from "lucide-react";
 import { AthleticArchetype } from "@/types/quiz";
 
@@ -33,18 +31,16 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [studioBackgroundCutout, setStudioBackgroundCutout] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Stop camera when unmounting
   useEffect(() => {
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     };
   }, []);
 
@@ -56,6 +52,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
       });
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -142,7 +139,7 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
       {/* Main Interactive Stage */}
       <div className="w-full max-w-xl flex flex-col items-center">
         {/* Visual Box / Camera Preview */}
-        <div className="w-full relative aspect-[3/4] sm:aspect-[4/5] rounded-3xl overflow-hidden border border-stone-800 bg-[#0A0908] shadow-2xl flex flex-col items-center justify-center text-white">
+        <div className="w-full relative aspect-[3/4] sm:aspect-[4/5] rounded-3xl overflow-hidden border border-stone-800 bg-canvas-dark shadow-2xl flex flex-col items-center justify-center text-white">
           {/* Subtle Grid Calibration Overlay */}
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
@@ -192,13 +189,13 @@ export const PhotoUploadStep: React.FC<PhotoUploadStepProps> = ({
 
           {/* Photo Preview Mode */}
           {photoPreview && !isCameraActive && (
-            <div className="relative w-full h-full flex items-center justify-center bg-[#0A0908] overflow-hidden">
+            <div className="relative w-full h-full flex items-center justify-center bg-canvas-dark overflow-hidden">
               <Image
                 src={photoPreview}
                 alt="User Body Photo Preview"
                 fill
                 className={`object-contain transition-all duration-300 ${
-                  studioBackgroundCutout ? "contrast-105" : ""
+                  "contrast-105"
                 }`}
               />
 

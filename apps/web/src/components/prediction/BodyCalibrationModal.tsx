@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Sparkles, X, Check, Activity, Heart, ArrowRight, Camera, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
+import { Sparkles, X, Check, ArrowRight, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
+import { deletePredictionOnServer, hasPhotoConsent, setPhotoConsent } from "@/lib/prediction-client";
 
 interface BodyCalibrationModalProps {
   isOpen: boolean;
@@ -66,7 +67,11 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
   const [targetWeight, setTargetWeight] = useState<string>(defaultTargetWeight);
   const [selectedIssue, setSelectedIssue] = useState<string>("Võng lưng & Gù vai cổ nhẹ");
   const [photoPreview, setPhotoPreview] = useState<string | null>(currentPhoto || null);
-  const [consentAccepted, setConsentAccepted] = useState<boolean>(true);
+  // Opt-in: never pre-checked. Restored from an earlier explicit acceptance.
+  const [consentAccepted, setConsentAccepted] = useState<boolean>(false);
+  useEffect(() => {
+    if (isOpen) setConsentAccepted(hasPhotoConsent());
+  }, [isOpen]);
   const [isDeletingCache, setIsDeletingCache] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -145,15 +150,15 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     }
     setIsDeletingCache(true);
     try {
-      await fetch("/api/prediction/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
+      const deleted = await deletePredictionOnServer();
+      if (!deleted) {
+        console.warn("Server-side prediction images could not be confirmed deleted.");
+      }
       setPhotoPreview(null);
       onPhotoChange?.(null);
       localStorage.removeItem("g_ai_user_twin_photo");
-      localStorage.removeItem("g_ai_prediction_job");
+      localStorage.removeItem("g_ai_twin_milestones");
+      setPhotoConsent(false);
     } catch (e) {
       console.warn("Failed to delete cache on server:", e);
     } finally {

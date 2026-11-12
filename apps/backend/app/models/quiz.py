@@ -13,6 +13,7 @@ class QuizAssessment(Base):
     session_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     
     # Demographic & Biometrics (Software calculated, zero hardware required)
+    age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     age_group: Mapped[str] = mapped_column(String(20), nullable=False)  # "18-29", "30-39", "40-49", "50+"
     gender: Mapped[str] = mapped_column(String(20), default="female")
     height_cm: Mapped[float] = mapped_column(Float, nullable=False)
@@ -24,6 +25,7 @@ class QuizAssessment(Base):
     focus_areas: Mapped[List[str]] = mapped_column(JSON, default=list)  # e.g. ["core", "glutes", "legs"]
     obstacles: Mapped[List[str]] = mapped_column(JSON, default=list)    # e.g. ["lack_time", "joint_pain"]
     fitness_level: Mapped[str] = mapped_column(String(30), default="beginner")
+    activity_level: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

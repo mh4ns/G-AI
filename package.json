@@ -1,0 +1,25 @@
+{
+  "name": "g-ai",
+  "private": true,
+  "description": "G-AI monorepo: main hub site, brand site, coaching app, shared UI package (backend is Python, see apps/backend).",
+  "workspaces": [
+    "packages/ui",
+    "apps/hub",
+    "apps/site",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:hub": "npm run dev -w g-ai-hub",
+    "dev:site": "npm run dev -w g-ai-site",
+    "dev:app": "npm run dev -w g-ai-web",
+    "build": "npm run build -w g-ai-hub && npm run build -w g-ai-site && npm run build -w g-ai-web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "e2e": "playwright test -c e2e/playwright.config.ts --trace off",
+    "e2e:report": "playwright show-report playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

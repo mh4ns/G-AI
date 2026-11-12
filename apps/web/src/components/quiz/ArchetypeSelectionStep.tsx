@@ -5,6 +5,14 @@ import Image from "next/image";
 import { Sparkles, ArrowRight, Flame, HeartPulse, CheckCircle2 } from "lucide-react";
 import { AthleticArchetype } from "@/types/quiz";
 
+/** Enter/Space activate a role="button" card like a native button. */
+function activateOnKey(e: React.KeyboardEvent, action: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    action();
+  }
+}
+
 interface ArchetypeSelectionStepProps {
   selectedArchetype: AthleticArchetype;
   onSelect: (archetype: AthleticArchetype) => void;
@@ -35,8 +43,11 @@ export const ArchetypeSelectionStep: React.FC<ArchetypeSelectionStepProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
         {/* Card 1: Female Pilates & Core */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => onSelect("female_pilates")}
-          className={`group relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 text-left p-6 sm:p-8 flex flex-col justify-between min-h-[460px] ${
+          onKeyDown={(e) => activateOnKey(e, () => onSelect("female_pilates"))}
+          className={`group relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 text-left outline-none focus-visible:ring-4 focus-visible:ring-brand/40 p-6 sm:p-8 flex flex-col justify-between min-h-[460px] ${
             selectedArchetype === "female_pilates"
               ? "border-[#FF6B4A] shadow-xl shadow-[#FF6B4A]/10 ring-4 ring-[#FF6B4A]/20 bg-gradient-to-b from-white to-[#FFF5F0]"
               : "border-stone-200 bg-white hover:border-[#FF6B4A]/50 hover:shadow-lg hover:-translate-y-1"
@@ -99,8 +110,11 @@ export const ArchetypeSelectionStep: React.FC<ArchetypeSelectionStepProps> = ({
 
         {/* Card 2: Male Strength & Hypertrophy */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => onSelect("male_strength")}
-          className={`group relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 text-left p-6 sm:p-8 flex flex-col justify-between min-h-[460px] ${
+          onKeyDown={(e) => activateOnKey(e, () => onSelect("male_strength"))}
+          className={`group relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 border-2 text-left outline-none focus-visible:ring-4 focus-visible:ring-brand/40 p-6 sm:p-8 flex flex-col justify-between min-h-[460px] ${
             selectedArchetype === "male_strength"
               ? "border-[#FF5A36] shadow-xl shadow-[#FF5A36]/20 ring-4 ring-[#FF5A36]/30 bg-gradient-to-b from-stone-900 to-black text-white"
               : "border-stone-800 bg-[#141312] text-white hover:border-[#FF5A36]/60 hover:shadow-lg hover:-translate-y-1"

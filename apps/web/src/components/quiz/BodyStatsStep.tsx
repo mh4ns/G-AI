@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowRight, Sparkles, Scale, Info, Plus, Minus } from "lucide-react";
+import { ArrowRight, Scale, Plus, Minus } from "lucide-react";
 import { calculateBMI, getBMICategory } from "@/lib/quiz-calculations";
 import { AthleticArchetype } from "@/types/quiz";
 
@@ -101,6 +101,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onChangeStats("heightCm", Math.max(130, heightCm - 1))}
+              aria-label="Giảm chiều cao 1 cm"
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
@@ -109,6 +110,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
             </button>
             <button
               onClick={() => onChangeStats("heightCm", Math.min(220, heightCm + 1))}
+              aria-label="Tăng chiều cao 1 cm"
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
@@ -136,6 +138,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onChangeStats("currentWeightKg", Math.max(35, currentWeightKg - 1))}
+              aria-label="Giảm cân nặng hiện tại 1 kg"
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
@@ -144,6 +147,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
             </button>
             <button
               onClick={() => onChangeStats("currentWeightKg", Math.min(180, currentWeightKg + 1))}
+              aria-label="Tăng cân nặng hiện tại 1 kg"
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
@@ -180,6 +184,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onChangeStats("targetWeightKg", Math.max(35, targetWeightKg - 1))}
+              aria-label="Giảm cân nặng mục tiêu 1 kg"
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
@@ -188,6 +193,7 @@ export const BodyStatsStep: React.FC<BodyStatsStepProps> = ({
             </button>
             <button
               onClick={() => onChangeStats("targetWeightKg", Math.min(180, targetWeightKg + 1))}
+              aria-label="Tăng cân nặng mục tiêu 1 kg"
               className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
                 isMale ? "bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700" : "bg-stone-100 border-stone-200 text-stone-700 hover:bg-stone-200"
               }`}
