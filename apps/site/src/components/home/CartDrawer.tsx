@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState, useLayoutEffect } from "react";
 import Image from "next/image";
 import {
   X,
@@ -100,7 +100,30 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   }, [isOpen, step]);
 
-  if (!isOpen) return null;
+  // Panel reveal (transitions.dev 07): stay mounted while the close plays.
+  // Opening flips data-open only after the closed state has been laid out,
+  // so the transition always has a start state.
+  const [mounted, setMounted] = useState(isOpen);
+  const [shown, setShown] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      return;
+    }
+    setShown(false);
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--panel-close-dur")) || 350;
+    const id = setTimeout(() => setMounted(false), ms);
+    return () => clearTimeout(id);
+  }, [isOpen]);
+  useLayoutEffect(() => {
+    if (!mounted || !isOpen) return;
+    void panelRef.current?.offsetHeight; // commit the closed state first
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, [mounted, isOpen]);
+
+  if (!mounted) return null;
 
   const rows = lines.map((line) => {
     const item = catalog.get(line.productId);
@@ -143,10 +166,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const muted = isLight ? "text-stone-500" : "text-stone-400";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label="Giỏ hàng">
-      <div onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div
+      className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? "" : "pointer-events-none"}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Giỏ hàng"
+    >
+      <div onClick={onClose} data-open={shown} className="t-backdrop absolute inset-0 bg-black/60" />
 
-      <div className="absolute inset-y-0 right-0 w-full max-w-lg flex">
+      <div ref={panelRef} data-open={shown} className="t-panel-slide t-panel--drawer absolute inset-y-0 right-0 w-full max-w-lg flex">
         <div className={`w-full flex flex-col shadow-2xl border-l ${panel}`}>
           {/* Top bar */}
           <div
@@ -174,12 +202,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {step === "checkout" ? "Thông tin giao hàng" : step === "done" ? "Đã nhận đơn" : "Giỏ hàng"}
                   </h2>
                   {step === "cart" && totalCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-brand text-white">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-brand text-white">
                       {totalCount}
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] font-mono text-stone-400">G-AI Movement Goods</p>
+                <p className="text-xs text-muted">G-AI Movement · cửa hàng</p>
               </div>
             </div>
             <button
@@ -204,8 +232,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold">Đơn hàng đã được tạo</h3>
                   <p className={`text-sm ${muted}`}>
-                    Mã đơn <strong className="font-mono">{order.id}</strong> · Tổng{" "}
-                    <strong className="font-mono">{formatPrice(order.total_amount)}</strong>
+                    Mã đơn <strong className="">{order.id}</strong> · Tổng{" "}
+                    <strong className="">{formatPrice(order.total_amount)}</strong>
                   </p>
                   <p className={`text-xs max-w-xs mx-auto ${muted}`}>
                     Đơn đang <strong>chờ thanh toán</strong>; chưa có khoản nào bị trừ. Chúng tôi sẽ liên hệ qua{" "}
@@ -214,25 +242,25 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-full bg-brand hover:bg-brand-deep text-white font-mono text-xs font-bold transition-colors"
+                  className="px-6 py-2.5 rounded-full bg-brand hover:bg-brand-deep text-white text-xs font-bold transition-colors"
                 >
                   Tiếp tục xem sản phẩm
                 </button>
               </div>
             ) : lines.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-stone-500/10 text-stone-400 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-stone-500/10 text-muted flex items-center justify-center">
                   <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-base font-bold">Giỏ hàng đang trống</h3>
-                  <p className="text-xs text-stone-400 max-w-xs">
+                  <p className="text-xs text-muted max-w-xs">
                     Khám phá dụng cụ và trang phục hỗ trợ lộ trình 28 ngày.
                   </p>
                 </div>
                 <button
                   onClick={onClose}
-                  className={`px-5 py-2.5 rounded-full border text-xs font-mono font-semibold transition-colors hover:border-brand ${
+                  className={`px-5 py-2.5 rounded-full border text-xs font-semibold transition-colors hover:border-brand ${
                     isLight ? "border-stone-300" : "border-stone-700"
                   }`}
                 >
@@ -285,7 +313,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       <span className="min-w-0 truncate">
                         {line.quantity} × {item!.name} <span className={muted}>({line.size})</span>
                       </span>
-                      <span className="font-mono shrink-0">{formatPrice(item!.price * line.quantity)}</span>
+                      <span className=" shrink-0">{formatPrice(item!.price * line.quantity)}</span>
                     </div>
                   ))}
                 </div>
@@ -315,21 +343,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider truncate">
+                        <span className="text-xs text-muted truncate">
                           {item?.categoryLabel ?? "—"} · Size {line.size}
                         </span>
                         <button
                           onClick={() => onRemoveItem(line.key)}
-                          className="text-stone-400 hover:text-rose-500 p-1 transition-colors"
+                          className="text-muted hover:text-rose-500 p-1 transition-colors"
                           aria-label={`Xoá ${item?.name ?? "sản phẩm"}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                       <h4 className="font-bold text-xs sm:text-sm truncate">{item?.name ?? line.productId}</h4>
-                      {problem && <p className="text-[11px] text-rose-500 font-semibold">{problem}</p>}
+                      {problem && <p className="text-xs text-rose-500 font-semibold">{problem}</p>}
                       <div className="flex items-center justify-between pt-1">
-                        <span className="font-mono font-bold text-sm text-brand">
+                        <span className="font-bold text-sm text-accent">
                           {item ? formatPrice(item.price * line.quantity) : "—"}
                         </span>
                         <div
@@ -339,12 +367,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         >
                           <button
                             onClick={() => onUpdateQuantity(line.key, -1)}
-                            className="p-1.5 text-stone-400 hover:text-current transition-colors"
+                            className="p-1.5 text-muted hover:text-current transition-colors"
                             aria-label="Giảm số lượng"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="px-2.5 font-mono text-xs font-bold" aria-live="polite">
+                          <span className="px-2.5 text-xs font-bold" aria-live="polite">
                             {line.quantity}
                           </span>
                           <button
@@ -353,7 +381,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               line.quantity >= MAX_QUANTITY_PER_LINE ||
                               (item?.stock != null && line.quantity >= item.stock)
                             }
-                            className="p-1.5 text-stone-400 hover:text-current transition-colors disabled:opacity-30"
+                            className="p-1.5 text-muted hover:text-current transition-colors disabled:opacity-30"
                             aria-label="Tăng số lượng"
                           >
                             <Plus className="w-3 h-3" />
@@ -376,20 +404,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             >
               <div className="flex justify-between items-baseline text-sm">
                 <span className="font-bold">Tạm tính</span>
-                <span className="text-xl font-bold font-mono text-brand">{formatPrice(subtotal)}</span>
+                <span className="text-xl font-bold text-accent">{formatPrice(subtotal)}</span>
               </div>
-              <p className={`text-[11px] ${muted}`}>
+              <p className={`text-xs ${muted}`}>
                 Giá cuối cùng do máy chủ xác nhận khi tạo đơn. Đơn ở trạng thái chờ thanh toán — chưa thu tiền.
               </p>
 
               {source === "sample" && (
-                <p className="flex items-start gap-2 text-[11px] text-amber-600">
+                <p className="flex items-start gap-2 text-xs text-amber-600">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span>Cửa hàng chưa kết nối máy chủ nên tạm thời chưa thể đặt hàng.</span>
                 </p>
               )}
               {source === "server" && hasProblems && step === "cart" && (
-                <p className="flex items-start gap-2 text-[11px] text-rose-500">
+                <p className="flex items-start gap-2 text-xs text-rose-500">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   <span>Hãy xoá hoặc điều chỉnh các sản phẩm được đánh dấu trước khi đặt hàng.</span>
                 </p>
@@ -402,7 +430,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     setStep("checkout");
                   }}
                   disabled={!canCheckout}
-                  className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-deep text-white text-sm font-bold font-mono transition-colors flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-deep text-white text-sm font-bold transition-colors flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span>Tiến hành đặt hàng</span>
                   <ArrowRight className="w-4 h-4" />
@@ -412,7 +440,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   type="submit"
                   form={formId}
                   disabled={!canCheckout || submitting}
-                  className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-deep text-white text-sm font-bold font-mono transition-colors flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                  className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-deep text-white text-sm font-bold transition-colors flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
                 >
                   {submitting ? (
                     <>
@@ -425,7 +453,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </button>
               )}
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-stone-400">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Đổi trả miễn phí 30 ngày</span>
               </div>

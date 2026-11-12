@@ -61,7 +61,7 @@ function LoginForm() {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20";
+    "w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20";
 
   return (
     <div className="min-h-screen bg-canvas flex flex-col items-center justify-center px-4 py-12">
@@ -135,7 +135,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-black disabled:opacity-60"
+            className="flex w-full min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-action px-4 text-base font-semibold text-white transition-colors hover:bg-brand-action-hover active:translate-y-px disabled:opacity-60"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             <span>{mode === "login" ? "Đăng nhập" : "Đăng ký"}</span>
@@ -148,7 +148,7 @@ function LoginForm() {
             setMode(mode === "login" ? "register" : "login");
             setError(null);
           }}
-          className="mt-4 w-full text-center text-xs font-semibold text-[#FF5A36] hover:underline"
+          className="mt-4 w-full text-center text-xs font-semibold text-brand-action hover:underline"
         >
           {mode === "login" ? "Chưa có tài khoản? Đăng ký" : "Đã có tài khoản? Đăng nhập"}
         </button>

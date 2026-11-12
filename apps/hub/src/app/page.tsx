@@ -21,10 +21,10 @@ const PRODUCTS: Product[] = [
   {
     key: "coach",
     name: "Coach",
-    tagline: "Lộ trình 28 ngày cá nhân hóa",
+    tagline: "Ứng dụng huấn luyện",
     description:
       "Khảo sát thể trạng 2 phút, nhận kế hoạch calo và bài tập theo cơ thể bạn, xem dự đoán vóc dáng và theo dõi từng ngày.",
-    highlights: ["Khảo sát thể trạng", "Dự đoán vóc dáng (Digital Twin)", "Theo dõi hôm nay"],
+    highlights: ["Khảo sát thể trạng", "Dự đoán vóc dáng 28 ngày", "Theo dõi hôm nay"],
     href: appUrl("/quiz"),
     cta: "Bắt đầu khảo sát",
     tone: "dark",
@@ -32,12 +32,12 @@ const PRODUCTS: Product[] = [
   {
     key: "movement",
     name: "Movement",
-    tagline: "Thương hiệu & Movement Goods",
+    tagline: "Chương trình & cửa hàng",
     description:
-      "Câu chuyện thương hiệu, hai chương trình Pilates và Strength, cùng bộ sưu tập trang phục và dụng cụ tập luyện.",
-    highlights: ["Chương trình Pilates & Strength", "Trang phục tập luyện", "Dụng cụ tập tại nhà"],
+      "Hai chương trình tập tại nhà, Pilates và sức mạnh, cùng trang phục và dụng cụ dùng được với lộ trình 28 ngày.",
+    highlights: ["Pilates & sức mạnh", "Trang phục tập", "Dụng cụ tập tại nhà"],
     href: siteUrl("/"),
-    cta: "Khám phá",
+    cta: "Xem chương trình",
     tone: "light",
   },
 ];
@@ -57,12 +57,12 @@ function ProductCard({ product }: { product: Product }) {
         {/* Product logo: the shared G mark plus the product name */}
         <div className="flex items-center gap-3">
           <BrandLogo isLight={!dark} size="lg" />
-          <span className="text-2xl font-black tracking-tight">
+          <span className="text-2xl font-extrabold tracking-tight">
             G-AI <span className="text-brand">{product.name}</span>
           </span>
         </div>
 
-        <p className={`mt-6 text-[11px] font-mono uppercase tracking-[0.2em] ${dark ? "text-stone-400" : "text-stone-500"}`}>
+        <p className={`mt-6 text-xs ${dark ? "text-stone-400" : "text-stone-500"}`}>
           {product.tagline}
         </p>
         <p className={`mt-3 max-w-md text-sm leading-relaxed ${dark ? "text-stone-300" : "text-stone-600"}`}>
@@ -97,10 +97,10 @@ export default function HubPage() {
   return (
     <div className="min-h-screen bg-canvas text-stone-900">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <BrandLogo isLight size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
+        <BrandLogo isLight size="md" />
         <a
           href={appUrl("/login")}
-          className="text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"
+          className="min-h-11 inline-flex items-center text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"
         >
           Đăng nhập
         </a>
@@ -108,12 +108,11 @@ export default function HubPage() {
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
         <section className="max-w-3xl">
-          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-brand">Hệ sinh thái G-AI</p>
-          <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">
-            Luyện tập đúng cách, theo đúng cơ thể bạn.
+          <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+            Huấn luyện tại nhà với AI, theo đúng cơ thể bạn
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-stone-600">
-            Chọn nơi bạn muốn bắt đầu. Mỗi sản phẩm là một trang riêng, dùng chung một ngôn ngữ thiết kế.
+            Làm khảo sát 2 phút để nhận lộ trình calo và bài tập 28 ngày, hoặc xem các chương trình và dụng cụ tập của G-AI.
           </p>
         </section>
 
@@ -128,9 +127,9 @@ export default function HubPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>© {new Date().getFullYear()} G-AI</span>
           <nav className="flex gap-5">
-            <a href={appUrl("/quiz")} className="hover:text-stone-900">Coach</a>
-            <a href={siteUrl("/")} className="hover:text-stone-900">Movement</a>
-            <a href={siteUrl("/#movement-goods")} className="hover:text-stone-900">Cửa hàng</a>
+            <a href={appUrl("/quiz")} className="min-h-11 inline-flex items-center hover:text-stone-900">Coach</a>
+            <a href={siteUrl("/")} className="min-h-11 inline-flex items-center hover:text-stone-900">Movement</a>
+            <a href={siteUrl("/store")} className="min-h-11 inline-flex items-center hover:text-stone-900">Cửa hàng</a>
           </nav>
         </div>
       </footer>

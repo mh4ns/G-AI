@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dumbbell, SlidersHorizontal, X, Check, Loader2, Sparkles, Utensils } from "lucide-react";
+import { Dumbbell, SlidersHorizontal, X, Loader2, Sparkles, Utensils } from "lucide-react";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
 export interface PlanConfig {
@@ -25,7 +25,6 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [workoutType, setWorkoutType] = useState(currentPlan.workoutType);
   const [weeklySets, setWeeklySets] = useState(currentPlan.weeklySets);
-  const [dietStyle, setDietStyle] = useState(currentPlan.dietStyle);
   const [archetype, setArchetype] = useState<"female_pilates" | "male_strength">(
     currentPlan.archetype
   );
@@ -34,7 +33,6 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
   const handleOpen = () => {
     setWorkoutType(currentPlan.workoutType);
     setWeeklySets(currentPlan.weeklySets);
-    setDietStyle(currentPlan.dietStyle);
     setArchetype(currentPlan.archetype);
     setIsOpen(true);
   };
@@ -44,7 +42,6 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
     const isUnchanged =
       workoutType === currentPlan.workoutType &&
       weeklySets === currentPlan.weeklySets &&
-      dietStyle === currentPlan.dietStyle &&
       archetype === currentPlan.archetype;
 
     if (isUnchanged) {
@@ -56,7 +53,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
     await onUpdatePlan({
       workoutType,
       weeklySets,
-      dietStyle,
+      dietStyle: currentPlan.dietStyle,
       archetype,
     });
     setSaving(false);
@@ -76,9 +73,9 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
             }}
           >
             {isRecalculating ? (
-              <Loader2 className="w-4 h-4 text-[#FF5A36] animate-spin" />
+              <Loader2 className="w-4 h-4 text-brand animate-spin" />
             ) : (
-              <Dumbbell className="w-4 h-4 text-[#FF5A36]" />
+              <Dumbbell className="w-4 h-4 text-brand" />
             )}
           </div>
           <div>
@@ -87,7 +84,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 Kế hoạch mô phỏng vóc dáng:
               </span>
               {isRecalculating && (
-                <span className="text-[11px] font-semibold text-[#FF5A36] animate-pulse">
+                <span className="text-xs font-semibold text-brand animate-pulse">
                   Đang tính toán lại...
                 </span>
               )}
@@ -102,16 +99,16 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
           type="button"
           onClick={handleOpen}
           disabled={isRecalculating}
-          className="self-start sm:self-auto px-3.5 py-1.5 rounded-full bg-stone-800/90 hover:bg-stone-700/90 text-stone-200 hover:text-white text-xs font-medium border border-stone-700/80 transition-all flex items-center gap-1.5 active:scale-95 shrink-0 shadow-sm disabled:opacity-50"
+          className="self-start sm:self-auto min-h-11 inline-flex items-center gap-1.5 px-4 rounded-full bg-stone-800/90 hover:bg-stone-700/90 text-stone-200 hover:text-white text-xs font-medium border border-stone-700/80 transition-all flex items-center gap-1.5 active:scale-95 shrink-0 shadow-sm disabled:opacity-50"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5 text-[#FF5A36]" />
+          <SlidersHorizontal className="w-3.5 h-3.5 text-brand" />
           <span>Đổi kế hoạch</span>
         </button>
       </div>
 
       {/* 2. Plan Customization Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="relative w-full max-w-lg rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-7 shadow-2xl text-stone-100">
             {/* Close Button */}
             <button
@@ -123,9 +120,9 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
 
             {/* Header */}
             <div className="space-y-1 mb-5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5A36]/15 border border-[#FF5A36]/30 text-xs font-semibold text-[#FF5A36]">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand/15 border border-brand/30 text-xs font-semibold text-brand">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>TÙY CHỈNH KẾ HOẠCH</span>
+                <span>Tùy chỉnh kế hoạch</span>
               </div>
               <h3 className="text-xl font-bold tracking-tight text-white">
                 Đổi Kế Hoạch Sinh Dự Đoán
@@ -142,36 +139,36 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                   Trường phái bài tập trọng tâm
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button
+                  <button aria-pressed={archetype === "female_pilates"}
                     type="button"
                     onClick={() => {
                       setArchetype("female_pilates");
-                      setWorkoutType("Pilates & Siết Cơ Lõi");
+                      setWorkoutType("Pilates & cơ lõi");
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       archetype === "female_pilates"
-                        ? "bg-[#FF5A36]/15 border-[#FF5A36] text-white"
+                        ? "bg-brand/15 border-brand text-white"
                         : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                     }`}
                   >
-                    <div className="font-bold text-sm mb-0.5 text-white">Pilates Siết Cơ Lõi</div>
-                    <p className="text-[11px] text-stone-400">Siết eo thon, phẳng bụng, thẳng lưng</p>
+                    <div className="font-bold text-sm mb-0.5 text-white">Pilates & cơ lõi</div>
+                    <p className="text-xs text-stone-400">Cơ lõi, eo và tư thế</p>
                   </button>
 
-                  <button
+                  <button aria-pressed={archetype === "male_strength"}
                     type="button"
                     onClick={() => {
                       setArchetype("male_strength");
-                      setWorkoutType("Calisthenics & Cơ Xô");
+                      setWorkoutType("Sức mạnh");
                     }}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       archetype === "male_strength"
-                        ? "bg-[#FF5A36]/15 border-[#FF5A36] text-white"
+                        ? "bg-brand/15 border-brand text-white"
                         : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                     }`}
                   >
-                    <div className="font-bold text-sm mb-0.5 text-white">Calisthenics Cơ Xô</div>
-                    <p className="text-[11px] text-stone-400">Mở rộng ngực vai, săn chắc cơ lưng</p>
+                    <div className="font-bold text-sm mb-0.5 text-white">Sức mạnh</div>
+                    <p className="text-xs text-stone-400">Ngực, vai, lưng và chân</p>
                   </button>
                 </div>
               </div>
@@ -179,13 +176,13 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
               {/* Option 2: Volume / Sets per week */}
               <div>
                 <label className="text-stone-300 font-semibold block mb-2">
-                  Khối lượng bài tập / tuần
+                  Khối lượng tập mỗi tuần
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {[
-                    "12 set bài tập / tuần (Nhẹ nhàng)",
-                    "18 set bài tập / tuần (Tiêu chuẩn)",
-                    "24 set bài tập / tuần (Đẩy nhanh)",
+                    "12 hiệp mỗi tuần (nhẹ)",
+                    "18 hiệp mỗi tuần (vừa)",
+                    "24 hiệp mỗi tuần (nhanh)",
                   ].map((val) => (
                     <button
                       key={val}
@@ -203,33 +200,13 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 </div>
               </div>
 
-              {/* Option 3: Nutrition / Diet */}
-              <div>
-                <label className="text-stone-300 font-semibold block mb-2 flex items-center gap-1.5">
-                  <Utensils className="w-3.5 h-3.5 text-[#FF5A36]" />
-                  <span>Chế độ dinh dưỡng kết hợp</span>
-                </label>
-                <div className="space-y-2">
-                  {[
-                    "Thâm hụt calo sinh học lành mạnh (-350 kcal/ngày)",
-                    "Dinh dưỡng cân bằng giàu đạm (High-Protein 1.8g/kg)",
-                    "Chế độ Low-Carb kiểm soát mỡ nội tạng",
-                  ].map((diet) => (
-                    <button
-                      key={diet}
-                      type="button"
-                      onClick={() => setDietStyle(diet)}
-                      className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between ${
-                        dietStyle === diet
-                          ? "bg-emerald-500/10 border-emerald-500/50 text-white font-semibold"
-                          : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
-                      }`}
-                    >
-                      <span>{diet}</span>
-                      {dietStyle === diet && <Check className="w-3.5 h-3.5 text-emerald-400" />}
-                    </button>
-                  ))}
-                </div>
+              {/* Calories come from the quiz plan; nothing here changes them. */}
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-stone-900 border border-stone-800">
+                <Utensils className="w-4 h-4 mt-0.5 shrink-0 text-brand" aria-hidden />
+                <p className="text-stone-300 leading-relaxed">
+                  <span className="font-semibold text-stone-100">Lượng calo:</span> {currentPlan.dietStyle}. Con số
+                  này lấy từ khảo sát; làm lại khảo sát nếu cân nặng hoặc mục tiêu của bạn thay đổi.
+                </p>
               </div>
             </div>
 
@@ -246,7 +223,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 type="button"
                 onClick={handleApply}
                 disabled={saving}
-                className="px-5 py-2 rounded-full bg-[#FF5A36] hover:bg-[#E64E2B] text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
+                className="px-5 py-2 rounded-full bg-brand-action hover:bg-brand-action-hover text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
               >
                 {saving ? (
                   <>
@@ -254,7 +231,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                     <span>Đang áp dụng...</span>
                   </>
                 ) : (
-                  <span>Áp Dụng Kế Hoạch</span>
+                  <span>Áp dụng kế hoạch</span>
                 )}
               </button>
             </div>

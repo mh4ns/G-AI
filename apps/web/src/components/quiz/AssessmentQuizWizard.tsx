@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { 
   QuizResponses, 
   PersonalizedPlanResult, 
@@ -9,7 +9,7 @@ import {
   FitnessObstacle, 
   AthleticArchetype 
 } from "@/types/quiz";
-import { calculatePersonalizedPlan } from "@/lib/quiz-calculations";
+import { calculatePersonalizedPlan, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
 import { StepHeader } from "./StepHeader";
 import { ArchetypeSelectionStep } from "./ArchetypeSelectionStep";
 import { AgeGoalStep } from "./AgeGoalStep";
@@ -28,6 +28,46 @@ export const AssessmentQuizWizard: React.FC = () => {
   // Step 1: Archetype, 2: Age & Goal, 3: Focus & Equipment, 4: Body Stats, 5: Lifestyle & Injuries, 6: Photo Scan, 7: Analyzing, 8: Result
   const [step, setStep] = useState<number>(1);
 
+  // Page slide (transitions.dev 08): keep the step being left on screen while
+  // it slides out. Forward moves exit left, back moves exit right.
+  const [pages, setPages] = useState<{ current: number; previous: number | null; forward: boolean }>({
+    current: 1,
+    previous: null,
+    forward: true,
+  });
+  const [settled, setSettled] = useState(true);
+  const currentRef = useRef(1);
+
+  useEffect(() => {
+    if (step === currentRef.current) return;
+    const forward = step > currentRef.current;
+    setPages({ current: step, previous: currentRef.current, forward });
+    currentRef.current = step;
+    setSettled(false);
+    window.scrollTo({ top: 0 });
+  }, [step]);
+
+  // One frame on the old data-page, then flip it so the CSS transitions run.
+  useEffect(() => {
+    if (settled) return;
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setSettled(true));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [settled]);
+
+  // Drop the outgoing page once its slide is over.
+  useEffect(() => {
+    if (!settled || pages.previous === null) return;
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--page-slide-dur")) || 250;
+    const id = setTimeout(() => setPages((p) => ({ ...p, previous: null })), ms);
+    return () => clearTimeout(id);
+  }, [settled, pages.previous]);
+
   // Form State
   const [responses, setResponses] = useState<QuizResponses>({
     archetype: "female_pilates",
@@ -37,7 +77,9 @@ export const AssessmentQuizWizard: React.FC = () => {
     age: 26,
     heightCm: 165,
     currentWeightKg: 58,
-    targetWeightKg: 50,
+    // Start the target at the current weight: the quiz suggests no weight change
+    // until the person chooses one.
+    targetWeightKg: 58,
     activityLevel: "lightly_active",
     dietPreference: "balanced",
     obstacles: ["sweet_cravings", "sore_back"],
@@ -79,7 +121,12 @@ export const AssessmentQuizWizard: React.FC = () => {
     field: "heightCm" | "currentWeightKg" | "targetWeightKg",
     val: number
   ) => {
-    setResponses((prev) => ({ ...prev, [field]: val }));
+    setResponses((prev) => {
+      const next = { ...prev, [field]: val };
+      // A taller height raises the healthy floor; lift the target to it if needed.
+      next.targetWeightKg = Math.max(next.targetWeightKg, minSafeTargetWeightKg(next.heightCm));
+      return next;
+    });
   };
 
   const handleToggleObstacle = (obstacleId: FitnessObstacle) => {
@@ -145,37 +192,18 @@ export const AssessmentQuizWizard: React.FC = () => {
     setStep(8);
   };
 
-  const isMaleTheme = responses.archetype === "male_strength";
 
-  return (
-    <div
-      className={`min-h-screen flex flex-col justify-between transition-colors duration-500 ${
-        isMaleTheme
-          ? "bg-canvas-dark text-white selection:bg-[#FF5A36]/30 selection:text-white"
-          : "bg-canvas text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
-      }`}
-    >
-      {/* Header with progress line (shown for steps 2 to 6) */}
-      {step >= 2 && step <= 6 && (
-        <StepHeader
-          currentStep={step}
-          totalSteps={6}
-          onBack={handleBack}
-          canGoBack={true}
-          archetype={responses.archetype}
-        />
-      )}
 
-      {/* Main Wizard Step Content */}
-      <main className="flex-1 flex flex-col justify-center">
-        {step === 1 && (
+  const renderStep = (n: number) => (
+    <>
+        {n === 1 && (
           <ArchetypeSelectionStep
             selectedArchetype={responses.archetype}
             onSelect={handleSelectArchetype}
           />
         )}
 
-        {step === 2 && (
+        {n === 2 && (
           <div className="flex flex-col items-center">
             <AgeGoalStep
               archetype={responses.archetype}
@@ -187,20 +215,16 @@ export const AssessmentQuizWizard: React.FC = () => {
             <div className="w-full max-w-4xl px-4 pb-8 flex justify-end">
               <button
                 onClick={handleNext}
-                className={`px-8 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${
-                  isMaleTheme
-                    ? "bg-[#FF5A36] hover:bg-[#ff461e] text-white shadow-[#FF5A36]/25"
-                    : "bg-[#FF6B4A] hover:bg-[#ff5530] text-white shadow-[#FF6B4A]/25"
-                }`}
+                className="min-h-12 px-8 rounded-full font-semibold text-base flex items-center gap-2 transition-colors active:translate-y-px bg-brand-action hover:bg-brand-action-hover text-white"
               >
-                <span>Tiếp Tục</span>
+                <span>Tiếp tục</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
-        {step === 3 && (
+        {n === 3 && (
           <FocusAreaStep
             archetype={responses.archetype}
             selectedAreas={responses.focusAreas}
@@ -211,9 +235,8 @@ export const AssessmentQuizWizard: React.FC = () => {
           />
         )}
 
-        {step === 4 && (
+        {n === 4 && (
           <BodyStatsStep
-            archetype={responses.archetype}
             heightCm={responses.heightCm}
             currentWeightKg={responses.currentWeightKg}
             targetWeightKg={responses.targetWeightKg}
@@ -222,9 +245,8 @@ export const AssessmentQuizWizard: React.FC = () => {
           />
         )}
 
-        {step === 5 && (
+        {n === 5 && (
           <ObstaclesStep
-            archetype={responses.archetype}
             selectedObstacles={responses.obstacles}
             selectedInjuries={responses.injuries}
             onToggleObstacle={handleToggleObstacle}
@@ -243,28 +265,69 @@ export const AssessmentQuizWizard: React.FC = () => {
           />
         )}
 
-        {step === 6 && (
+        {n === 6 && (
           <PhotoUploadStep
-            archetype={responses.archetype}
             onPhotoSubmit={handlePhotoSubmit}
             onSkip={handlePhotoSkip}
           />
         )}
 
-        {step === 7 && (
+        {n === 7 && (
           <AnalyzingLoader
             archetype={responses.archetype}
             onComplete={handleAnalysisComplete}
           />
         )}
 
-        {step === 8 && planResult && (
+        {n === 8 && planResult && (
           <PlanResultView
             responses={responses}
             result={planResult}
             onGoToDashboard={() => router.push("/today")}
           />
         )}
+    </>
+  );
+
+  const inId = pages.forward ? "2" : "1";
+  const outId = pages.forward ? "1" : "2";
+
+  return (
+    <div
+      className="min-h-screen flex flex-col justify-between transition-colors duration-500 bg-canvas text-stone-900 selection:bg-brand/20 selection:text-brand-action"
+    >
+      {/* Header with progress line (shown for steps 2 to 6) */}
+      {step >= 2 && step <= 6 && (
+        <StepHeader
+          // Steps 1-5 are the five questions (step 1 has no header); step 6 is the optional photo.
+          questionNumber={step <= 5 ? step : undefined}
+          totalQuestions={5}
+          progress={step / 6}
+          onBack={handleBack}
+          canGoBack={true}
+        />
+      )}
+
+      {/* Main Wizard Step Content */}
+      <main className="flex-1 flex flex-col justify-center">
+        <div className="t-page-slide w-full" data-page={settled ? inId : outId}>
+          {[pages.previous, pages.current]
+            .filter((n): n is number => n !== null)
+            .map((n) => {
+              const isCurrent = n === pages.current;
+              return (
+                <section
+                  key={n}
+                  className={`t-page${isCurrent ? " t-page--in-flow" : ""}`}
+                  data-page-id={isCurrent ? inId : outId}
+                  aria-hidden={!isCurrent || undefined}
+                  inert={!isCurrent || undefined}
+                >
+                  {renderStep(n)}
+                </section>
+              );
+            })}
+        </div>
       </main>
     </div>
   );

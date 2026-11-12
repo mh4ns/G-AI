@@ -8,7 +8,6 @@ import {
   
   Play,
   Plus,
-  CheckCircle2,
   
   Sparkles,
   
@@ -16,10 +15,12 @@ import {
   Clock,
   ArrowRight,
   TrendingUp,
-  Lightbulb,
+  Moon,
+  ShoppingBag,
+  Sun,
 } from "lucide-react";
 import { PersonalizedPlanResult } from "@/types/quiz";
-import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
+import { BrandLogo, SubtleNumber, siteUrl, hubUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
 
@@ -50,7 +51,7 @@ export default function TodayDashboardPage() {
     weeklyRoutine: [
       {
         dayNumber: 1,
-        title: "Thảm Mat: Siết Eo & Phẳng Bụng",
+        title: "Thảm: cơ lõi & bụng dưới",
         durationMin: 35,
         target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
         intensity: "moderate",
@@ -58,7 +59,7 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 2,
-        title: "Glute Bridge & Hip Sculpting",
+        title: "Glute Bridge & tạo dáng hông",
         durationMin: 40,
         target: "Cơ mông lớn & Cơ đùi sau",
         intensity: "high",
@@ -66,7 +67,7 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 3,
-        title: "Active Recovery: Decompression & Mở Khớp",
+        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
         durationMin: 25,
         target: "Giải phóng đốt sống lưng",
         intensity: "low",
@@ -74,22 +75,30 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 4,
-        title: "Pilates Toàn Thân & Cân Bằng Tư Thế",
+        title: "Pilates toàn thân & cân bằng tư thế",
         durationMin: 35,
-        target: "Đốt mỡ toàn diện & Định hình đường cong",
+        target: "Toàn thân & tư thế",
         intensity: "moderate",
         exerciseCount: 6,
       },
     ],
   });
 
-  const [waterDrunkMl, setWaterDrunkMl] = useState<number>(750);
-  const [caloriesBurned, setCaloriesBurned] = useState<number>(180);
-  const [caloriesEaten, setCaloriesEaten] = useState<number>(620);
+  // Everyone starts the day at zero; signed-in users get their saved numbers below.
+  const [waterDrunkMl, setWaterDrunkMl] = useState<number>(0);
+  const [caloriesBurned, setCaloriesBurned] = useState<number>(0);
+  const [caloriesEaten, setCaloriesEaten] = useState<number>(0);
+  // Clock for the 16:8 card, refreshed each minute.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({
     water: false,
     workout: false,
-    mindfulness: true,
+    mindfulness: false,
     fasting: false,
   });
 
@@ -128,7 +137,7 @@ export default function TodayDashboardPage() {
     }
   };
 
-  // Signed-in users get real, persisted numbers; guests keep the local demo values.
+  // Signed-in users get real, persisted numbers; guests log on this device only.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -192,7 +201,26 @@ export default function TodayDashboardPage() {
   const isLight = theme === "light";
 
   const remainingCalories = plan.dailyCalorieTarget - caloriesEaten + caloriesBurned;
+  const calorieGap = Math.round(plan.tdee - plan.dailyCalorieTarget);
+  const calorieGoalLine =
+    Math.abs(calorieGap) < 10
+      ? "Ăn bằng mức tiêu hao để giữ cân"
+      : calorieGap > 0
+        ? `Ăn ít hơn mức tiêu hao khoảng ${calorieGap.toLocaleString("vi-VN")} kcal để giảm cân từ từ`
+        : `Ăn nhiều hơn mức tiêu hao khoảng ${Math.abs(calorieGap).toLocaleString("vi-VN")} kcal để tăng cân từ từ`;
   const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
+
+  // 16:8 from the clock: eating 12:00-20:00, fasting 20:00-12:00.
+  const fasting = (() => {
+    if (!now) return null;
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const fmt = (m: number) => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+    if (minutes >= 12 * 60 && minutes < 20 * 60) {
+      return { eating: true, value: fmt(20 * 60 - minutes), caption: "còn lại trong giờ ăn" };
+    }
+    const elapsed = minutes >= 20 * 60 ? minutes - 20 * 60 : minutes + 4 * 60;
+    return { eating: false, value: fmt(elapsed), caption: "/ 16 giờ nhịn" };
+  })();
 
   const addWater = () => {
     if (sessionUser) {
@@ -225,7 +253,7 @@ export default function TodayDashboardPage() {
   const todayLabel = new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 pb-16 ${
+    <div data-theme={theme} className={`min-h-screen transition-colors duration-300 pb-16 ${
       isLight ? "bg-canvas text-stone-800" : "bg-canvas-dark text-stone-100"
     }`}>
       {/* Top Navbar */}
@@ -234,7 +262,7 @@ export default function TodayDashboardPage() {
       }`}>
         <div className="w-full max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href={hubUrl("/")} className="hover:opacity-80 transition-opacity flex items-center">
+            <Link href={hubUrl("/")} className="min-h-11 min-w-11 hover:opacity-80 transition-opacity flex items-center" aria-label="G-AI – trang chính">
               <BrandLogo variant="horizontal" isLight={isLight} size="sm" />
             </Link>
             <div className={`border-l pl-3 ${isLight ? "border-stone-200" : "border-stone-800"}`}>
@@ -243,121 +271,141 @@ export default function TodayDashboardPage() {
               }`}>
                 Hôm nay, {todayLabel}
               </h1>
-              <p className="text-[11px] text-stone-400 font-medium">Lộ trình 28 ngày • Tuần 1, Ngày 3</p>
+              <p className={`text-xs font-medium ${isLight ? "text-stone-500" : "text-stone-400"}`}>Lộ trình 28 ngày</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link
-              href={siteUrl("/#movement-goods")}
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+              href={siteUrl("/store")}
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
                 isLight
-                  ? "text-stone-600 hover:text-[#FF5A36] bg-stone-100 hover:bg-stone-200"
-                  : "text-stone-300 hover:text-white bg-stone-900 hover:bg-stone-800"
+                  ? "text-stone-600 hover:text-stone-950 hover:bg-stone-100"
+                  : "text-stone-300 hover:text-white hover:bg-stone-800"
               }`}
+              aria-label="Dụng cụ tập"
+              title="Dụng cụ tập"
             >
-              🛍️ Dụng Cụ
+              <ShoppingBag className="w-[18px] h-[18px]" aria-hidden />
             </Link>
 
-            {/* Streak Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-bold shadow-sm">
-              <span className="text-sm">🔥</span>
-              <span>3 Ngày Chuỗi</span>
-            </div>
-
-            {/* Theme Toggle */}
             <button
+              type="button"
               onClick={handleToggleTheme}
-              className={`p-2 rounded-xl transition-colors ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
                 isLight
-                  ? "text-amber-500 hover:bg-stone-100"
-                  : "text-stone-400 hover:text-amber-400 hover:bg-stone-800"
+                  ? "text-stone-600 hover:text-stone-950 hover:bg-stone-100"
+                  : "text-stone-300 hover:text-white hover:bg-stone-800"
               }`}
-              title="Đổi Giao Diện Sáng / Tối"
-              aria-label="Toggle Theme"
+              aria-label={isLight ? "Chuyển sang giao diện tối" : "Chuyển sang giao diện sáng"}
+              title={isLight ? "Giao diện tối" : "Giao diện sáng"}
             >
-              <Lightbulb className={`w-4 h-4 ${isLight ? "fill-amber-400 text-amber-500" : "text-stone-400"}`} />
+              {isLight ? <Moon className="w-[18px] h-[18px]" aria-hidden /> : <Sun className="w-[18px] h-[18px]" aria-hidden />}
             </button>
 
-            <a
+            <Link
               href="/quiz"
-              className={`p-2 rounded-xl transition-colors ${
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
                 isLight
-                  ? "text-stone-400 hover:text-stone-700 hover:bg-stone-100"
-                  : "text-stone-400 hover:text-stone-200 hover:bg-stone-800"
+                  ? "text-stone-600 hover:text-stone-950 hover:bg-stone-100"
+                  : "text-stone-300 hover:text-white hover:bg-stone-800"
               }`}
-              title="Khảo sát lại kế hoạch"
+              aria-label="Làm lại khảo sát"
+              title="Làm lại khảo sát"
             >
-              <RotateCcw className="w-4 h-4" />
-            </a>
+              <RotateCcw className="w-[18px] h-[18px]" aria-hidden />
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Demo Mode / Missing Quiz Alert Banner */}
-      {!hasCustomPlan && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-peach-500/10 to-amber-500/10 border-b border-amber-200/80 px-4 py-3">
-          <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5 text-stone-700">
-              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-mono font-bold text-[10px]">
-                LỘ TRÌNH MẪU
-              </span>
-              <span>
-                Bạn đang xem lộ trình mẫu chưa cá nhân hóa. Hãy làm bài khảo sát thể trạng 2 phút để thuật toán AI tối ưu riêng cho bạn.
-              </span>
+      {/* One notice: sample plan and/or where the numbers are kept. Sync errors stand apart. */}
+      {syncError ? (
+        <div role="alert" className="border-b px-4 py-2.5 text-sm bg-rose-50 border-rose-200 text-rose-800">
+          <div className="w-full max-w-4xl mx-auto">{syncError}</div>
+        </div>
+      ) : (
+        (!hasCustomPlan || !sessionUser) && (
+          <div
+            className={`border-b px-4 py-3 text-sm ${
+              isLight ? "bg-amber-50 border-amber-200 text-stone-800" : "bg-amber-500/10 border-amber-500/30 text-stone-100"
+            }`}
+          >
+            <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p>
+                {!hasCustomPlan
+                  ? "Đây là lộ trình mẫu. Làm khảo sát 2 phút để có lộ trình theo cơ thể bạn."
+                  : "Số liệu hôm nay chỉ lưu trên trình duyệt này."}
+                {!sessionUser && (
+                  <>
+                    {" "}
+                    <Link href="/login?next=/today" className="font-semibold text-accent underline underline-offset-2">
+                      Đăng nhập để lưu tiến trình
+                    </Link>
+                  </>
+                )}
+              </p>
+              {!hasCustomPlan && (
+                <Link
+                  href="/quiz"
+                  className="min-h-11 px-5 rounded-full bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-sm shrink-0 inline-flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  Làm khảo sát
+                  <ArrowRight className="w-4 h-4" aria-hidden />
+                </Link>
+              )}
             </div>
-            <Link
-              href="/quiz"
-              className="px-4 py-1.5 rounded-full bg-stone-900 hover:bg-black text-white font-mono font-bold text-xs shrink-0 transition-all shadow-sm flex items-center gap-1.5"
-            >
-              <span>Làm Khảo Sát Ngay</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
-        </div>
-      )}
-
-      {/* Account sync status */}
-      {(!sessionUser || syncError) && (
-        <div className={`border-b px-4 py-2.5 text-xs ${
-          syncError
-            ? "bg-rose-50 border-rose-200 text-rose-700"
-            : isLight ? "bg-white border-stone-200 text-stone-600" : "bg-[#11100F] border-stone-800 text-stone-300"
-        }`}>
-          <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-3">
-            <span role={syncError ? "alert" : undefined}>
-              {syncError ?? "Số liệu bên dưới chỉ lưu trên trình duyệt này."}
-            </span>
-            {!sessionUser && (
-              <Link href="/login?next=/today" className="font-bold text-[#FF5A36] hover:underline shrink-0">
-                Đăng nhập để lưu tiến trình
-              </Link>
-            )}
-          </div>
-        </div>
+        )
       )}
 
       {/* Main Dashboard Body */}
       <main className="w-full max-w-4xl mx-auto px-4 py-6 space-y-5">
+        {/* Today's workout: the day's main action, first */}
+        <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-soft relative overflow-hidden">
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <h3 className="text-xl sm:text-2xl font-bold">
+                Pilates siết cơ bụng & thẳng vai
+              </h3>
+              <p className="text-xs sm:text-sm text-stone-300 max-w-md">
+                18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsStudioOpen(true)}
+              className={`min-h-12 px-6 rounded-2xl font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px w-full sm:w-auto ${
+                // On the sample plan the quiz is the one primary action above.
+                hasCustomPlan ? "bg-brand-action hover:bg-brand-action-hover text-white" : "bg-white text-stone-950 hover:bg-stone-200"
+              }`}
+            >
+              <Play className={`w-4 h-4 ${hasCustomPlan ? "fill-white" : "fill-stone-950"}`} aria-hidden />
+              <span>Bắt đầu tập</span>
+            </button>
+          </div>
+        </section>
+
         {/* Calorie Balance Hero Widget */}
         <section className="p-5 sm:p-6 rounded-3xl bg-white border border-stone-200 shadow-card">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-bold text-stone-800 text-lg">Ngân Sách Năng Lượng Hôm Nay</h2>
-              <p className="text-xs text-stone-400">Duy trì thâm hụt an toàn để đạt mốc cân mục tiêu</p>
+              <h2 className="font-bold text-stone-800 text-lg">Ngân sách năng lượng hôm nay</h2>
+              <p className="text-xs text-muted">{calorieGoalLine}</p>
             </div>
-            <div className="text-right">
-              <span className="text-xs text-stone-400 font-medium block">Mục tiêu ngày</span>
-              <span className="text-sm font-bold text-stone-700">{plan.dailyCalorieTarget} kcal</span>
+            <div className="text-right shrink-0">
+              <span className="text-xs text-muted font-medium block whitespace-nowrap">Mục tiêu ngày</span>
+              <span className="text-sm font-bold text-stone-700 whitespace-nowrap">{plan.dailyCalorieTarget.toLocaleString("vi-VN")} kcal</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
             {/* Remaining Highlight Box */}
             <div className="p-4 rounded-2xl bg-gradient-to-br from-peach-50 via-cream-100 to-peach-100 border border-peach-200/80 text-center sm:text-left">
-              <div className="text-xs text-peach-700 font-semibold uppercase tracking-wider">Calo Còn Lại</div>
-              <div className="text-3xl sm:text-4xl font-black text-peach-600 mt-1">{remainingCalories}</div>
-              <div className="text-[11px] text-stone-500 mt-0.5">kcal có thể nạp thêm</div>
+              <div className="text-xs text-peach-700 font-semibold ">Calo còn lại</div>
+              <div className="text-3xl sm:text-4xl font-extrabold text-peach-600 mt-1"><SubtleNumber value={remainingCalories} /></div>
+              <div className="text-xs text-stone-600 mt-0.5">kcal có thể nạp thêm</div>
             </div>
 
             {/* In / Out Details */}
@@ -365,70 +413,19 @@ export default function TodayDashboardPage() {
               <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/70">
                 <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
                   <Flame className="w-3.5 h-3.5 text-amber-500" />
-                  Đã Nạp Vào
+                  Đã nạp vào
                 </div>
-                <div className="text-xl font-bold text-stone-800 mt-1">{caloriesEaten} <span className="text-xs font-normal text-stone-400">kcal</span></div>
-                <div className="text-[10px] text-stone-400 mt-0.5">Bữa sáng + Cà phê</div>
+                <div className="text-xl font-bold text-stone-800 mt-1"><SubtleNumber value={caloriesEaten} /> <span className="text-xs font-normal text-muted">kcal</span></div>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/70">
                 <div className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                  Đã Đốt Cháy
+                  Đã đốt
                 </div>
-                <div className="text-xl font-bold text-stone-800 mt-1">{caloriesBurned} <span className="text-xs font-normal text-stone-400">kcal</span></div>
-                <div className="text-[10px] text-emerald-600 font-medium mt-0.5">+ Đi bộ 3,200 bước</div>
+                <div className="text-xl font-bold text-stone-800 mt-1"><SubtleNumber value={caloriesBurned} /> <span className="text-xs font-normal text-muted">kcal</span></div>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Digital Twin AI Prediction Teaser Banner */}
-        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 border border-stone-800 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#FF5A36]/20 border border-[#FF5A36]/30 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-[#FF5A36]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-white">Mô Hình Nhân Vật Biến Đổi 28 Ngày (Digital Twin)</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-semibold">MỚI</span>
-              </div>
-              <p className="text-xs text-stone-400 mt-0.5">Kéo thanh timeline để xem mô phỏng gù lưng giảm dần và siết eo tự nhiên.</p>
-            </div>
-          </div>
-          <Link
-            href="/prediction"
-            className="px-5 py-2.5 rounded-full bg-white text-stone-900 hover:bg-stone-200 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all shadow-sm"
-          >
-            <span>Xem Mô Phỏng</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </section>
-        <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-soft relative overflow-hidden">
-          <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 w-48 h-48 rounded-full bg-peach-500/10 blur-2xl pointer-events-none" />
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-peach-500/20 border border-peach-500/30 text-peach-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-peach-400 animate-pulse" />
-                Bài Tập Hôm Nay • Sẵn Sàng Với AI Live PT
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold">
-                Pilates Siết Cơ Bụng & Thẳng Vai
-              </h3>
-              <p className="text-xs sm:text-sm text-stone-400 max-w-md">
-                18 phút • 4 bài tập • Bật webcam để AI Companion quan sát cột sống và sửa tư thế gù lưng thời gian thực.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsStudioOpen(true)}
-              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-peach-500 to-peach-600 hover:from-peach-600 hover:to-peach-700 text-white font-bold text-sm shadow-glow transition-all duration-200 active:scale-[0.98] flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-center"
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span>Bắt Đầu Tập Ngay (AI Studio)</span>
-            </button>
           </div>
         </section>
 
@@ -442,28 +439,28 @@ export default function TodayDashboardPage() {
                   <Droplets className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-stone-800 text-sm">Nước Uống Trong Ngày</h3>
-                  <p className="text-[11px] text-stone-400">Mục tiêu: {(plan.recommendedWaterMl / 1000).toFixed(1)}L</p>
+                  <h3 className="font-bold text-stone-800 text-sm">Nước uống trong ngày</h3>
+                  <p className="text-xs text-muted">Mục tiêu: {(plan.recommendedWaterMl / 1000).toFixed(1)}L</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
-                {waterPercent}%
+              <span className="text-xs font-bold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-100">
+                <SubtleNumber value={waterPercent} />%
               </span>
             </div>
 
             {/* Progress Bar */}
             <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 my-2">
               <div
-                className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full transition-[width] duration-[var(--duration-slow)] ease-[var(--ease-smooth-out)] motion-reduce:transition-none"
                 style={{ width: `${waterPercent}%` }}
               />
             </div>
 
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-100">
-              <span className="text-xs font-semibold text-stone-700">{waterDrunkMl} / {plan.recommendedWaterMl} ml</span>
+              <span className="text-xs font-semibold text-stone-700"><SubtleNumber value={waterDrunkMl} /> / {plan.recommendedWaterMl.toLocaleString("vi-VN")} ml</span>
               <button
                 onClick={addWater}
-                className="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold flex items-center gap-1 transition-colors active:scale-95"
+                className="min-h-11 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold flex items-center gap-1 transition-colors active:scale-95"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+250ml</span>
@@ -479,97 +476,114 @@ export default function TodayDashboardPage() {
                   <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-stone-800 text-sm">Nhịn Ăn Gián Đoạn 16:8</h3>
-                  <p className="text-[11px] text-stone-400">Khung giờ ăn: 12:00 - 20:00</p>
+                  <h3 className="font-bold text-stone-800 text-sm">Nhịn ăn gián đoạn 16:8</h3>
+                  <p className="text-xs text-muted">Khung giờ ăn: 12:00 - 20:00</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                Đang Nhịn
-              </span>
+              {fasting && (
+                <span className="text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  {fasting.eating ? "Trong giờ ăn" : "Đang nhịn"}
+                </span>
+              )}
             </div>
 
             <div className="flex items-baseline gap-2 my-2">
-              <span className="text-2xl font-black text-stone-800">14h 25m</span>
-              <span className="text-xs text-stone-400">/ 16 giờ mục tiêu</span>
+              <span className="text-2xl font-extrabold text-stone-800">{fasting ? fasting.value : "--"}</span>
+              <span className="text-xs text-muted">{fasting ? fasting.caption : ""}</span>
             </div>
 
-            <div className="text-[11px] text-stone-500 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/60 flex items-center gap-2">
-              <span className="text-sm">🔥</span>
-              <span>Cơ thể đang ở giai đoạn <strong>đốt mỡ tự nhiên</strong> và thanh lọc tế bào.</span>
-            </div>
+            <p className="text-xs text-stone-600 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/60">
+              Tính theo khung giờ ăn 12:00–20:00. Trong lúc nhịn, bạn vẫn uống được nước, trà hoặc cà phê không đường.
+            </p>
           </section>
         </div>
 
         {/* Daily Habits Checklist */}
         <section className="p-5 rounded-3xl bg-white border border-stone-200 shadow-card">
           <h3 className="font-bold text-stone-800 text-base mb-3 flex items-center justify-between">
-            <span>Nhiệm Vụ Giữ Phong Độ Hôm Nay</span>
-            <span className="text-xs font-normal text-stone-400">
+            <span>Nhiệm vụ giữ phong độ hôm nay</span>
+            <span className="text-xs font-normal text-muted">
               {Object.values(checklist).filter(Boolean).length} / {Object.keys(checklist).length} hoàn thành
             </span>
           </h3>
 
-          <div className="space-y-2.5">
-            <div
-              onClick={() => toggleChecklist("workout")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-peach-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.workout ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.workout ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
-                  Hoàn thành 18 phút bài tập Pilates bụng
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-peach-600 bg-peach-50 px-2.5 py-0.5 rounded-full">+180 kcal</span>
+          <ul className="space-y-2.5">
+            {[
+              {
+                key: "workout",
+                label: "Hoàn thành 18 phút bài tập Pilates bụng",
+                tag: "18 phút",
+                tagClass: "text-brand-action bg-peach-50",
+              },
+              {
+                key: "water",
+                label: `Uống đủ ${(plan.recommendedWaterMl / 1000).toFixed(1)}L nước lọc trong ngày`,
+                tag: `${waterDrunkMl.toLocaleString("vi-VN")} ml`,
+                tagClass: "text-sky-800 bg-sky-50",
+              },
+              {
+                key: "mindfulness",
+                label: "5 phút thở hộp (hít 4 giây, giữ 4, thở 4, giữ 4) để thư giãn",
+                tag: "5 phút",
+                tagClass: "text-stone-700 bg-stone-100",
+              },
+              {
+                key: "fasting",
+                label: "Không ăn vặt sau 20:00 tối",
+                tag: "Tối nay",
+                tagClass: "text-amber-800 bg-amber-50",
+              },
+            ].map((task) => {
+              const done = !!checklist[task.key];
+              return (
+                <li key={task.key}>
+                  {/* Checkbox check (transitions.dev 25): the box fills, then the tick draws. */}
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={done}
+                    onClick={() => toggleChecklist(task.key)}
+                    className="t-check group w-full min-h-12 p-3 rounded-2xl border border-stone-200 hover:border-stone-300 bg-stone-50/50 flex items-center justify-between gap-3 text-left transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="w-5 h-5 shrink-0 rounded-md border-2 border-stone-300 bg-white flex items-center justify-center transition-colors duration-[var(--check-box)] group-aria-checked:bg-emerald-600 group-aria-checked:border-emerald-600">
+                        <svg viewBox="0 0 10.1668 10.1668" className="w-3 h-3" aria-hidden>
+                          <path d="M1 5.52L3.92 9.17L9.17 1" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span className={`text-sm ${done ? "line-through text-muted" : "font-medium text-stone-700"}`}>
+                        {task.label}
+                      </span>
+                    </span>
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${task.tagClass}`}>
+                      {task.tag}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+        {/* Prediction teaser: secondary, so it comes last */}
+        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 border border-stone-800 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-brand/20 border border-brand/30 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-brand-action" />
             </div>
-
-            <div
-              onClick={() => toggleChecklist("water")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-sky-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.water ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.water ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
-                  Uống đủ {(plan.recommendedWaterMl / 1000).toFixed(1)}L nước lọc trong ngày
-                </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-white">Dự đoán vóc dáng 28 ngày</h3>
               </div>
-              <span className="text-xs font-semibold text-sky-600 bg-sky-50 px-2.5 py-0.5 rounded-full">{waterDrunkMl}ml</span>
-            </div>
-
-            <div
-              onClick={() => toggleChecklist("mindfulness")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-lavender-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.mindfulness ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.mindfulness ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
-                  5 phút thở thư giãn Box Breathing giảm căng thẳng
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-lavender-600 bg-lavender-50 px-2.5 py-0.5 rounded-full">Đã xong</span>
-            </div>
-
-            <div
-              onClick={() => toggleChecklist("fasting")}
-              className="p-3 rounded-2xl border border-stone-200 hover:border-amber-200 cursor-pointer flex items-center justify-between transition-colors bg-stone-50/50"
-            >
-              <div className="flex items-center gap-3">
-                <CheckCircle2
-                  className={`w-5 h-5 ${checklist.fasting ? "text-emerald-500" : "text-stone-300"}`}
-                />
-                <span className={`text-sm ${checklist.fasting ? "line-through text-stone-400" : "font-medium text-stone-700"}`}>
-                  Không ăn vặt sau 20:00 tối
-                </span>
-              </div>
-              <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">Tối nay</span>
+              <p className="text-xs text-stone-300 mt-0.5">Kéo thanh thời gian để xem lộ trình 28 ngày theo từng tuần.</p>
             </div>
           </div>
+          <Link
+            href="/prediction"
+            className="min-h-11 px-5 py-2.5 rounded-full bg-white text-stone-900 hover:bg-stone-200 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <span>Xem mô phỏng</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </section>
       </main>
 

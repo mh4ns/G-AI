@@ -46,6 +46,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           alt="G"
           width={width}
           height={height}
+          // Both dimensions set together so no CSS can stretch the mark.
+          style={{ width, height }}
           className="object-contain transition-transform duration-300 group-hover:scale-105"
           priority
         />
@@ -54,7 +56,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       {/* Optional Subtitle (e.g., / Biometric Kinetic Lab) */}
       {showSubtitle && (
         <span
-          className={`text-[10px] font-mono tracking-widest uppercase hidden sm:inline ml-0.5 ${
+          className={`text-xs hidden sm:inline ml-0.5 ${
             isLight ? "text-stone-400" : "text-stone-500"
           }`}
         >

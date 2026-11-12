@@ -10,6 +10,28 @@ export function calculateBMI(weightKg: number, heightCm: number): number {
   return parseFloat((weightKg / (heightM * heightM)).toFixed(1));
 }
 
+/** WHO adult BMI band treated as healthy: 18.5 to 24.9. */
+export const HEALTHY_BMI_MIN = 18.5;
+export const HEALTHY_BMI_MAX = 24.9;
+
+/**
+ * Whole-kilogram weights inside the healthy BMI band for a height. The quiz
+ * never lets a target weight go below `min`: a coaching app must not hand
+ * someone a plan that ends underweight.
+ */
+export function healthyWeightRangeKg(heightCm: number): { min: number; max: number } {
+  const heightM2 = (heightCm / 100) ** 2;
+  return {
+    min: Math.ceil(HEALTHY_BMI_MIN * heightM2),
+    max: Math.floor(HEALTHY_BMI_MAX * heightM2),
+  };
+}
+
+/** Lowest target weight the quiz accepts for this height. */
+export function minSafeTargetWeightKg(heightCm: number): number {
+  return healthyWeightRangeKg(heightCm).min;
+}
+
 export function getBMICategory(bmi: number): { label: string; color: string; advice: string } {
   if (bmi < 18.5) {
     return {
@@ -35,7 +57,7 @@ export function getBMICategory(bmi: number): { label: string; color: string; adv
   return {
     label: "Cần kiểm soát cân nặng",
     color: "border-rose-200 text-rose-700 bg-rose-50",
-    advice: "Ưu tiên các bài tập Low-Impact trên thảm để bảo vệ khớp gối và đốt mỡ bền vững.",
+    advice: "Ưu tiên các bài nhẹ nhàng trên thảm để bảo vệ khớp gối và đốt mỡ bền vững.",
   };
 }
 
@@ -154,7 +176,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
 
   if (injuries.includes("knee")) {
     safetyNotes.push(
-      "Đã bảo vệ khớp gối: Thay thế bài bật nhảy va đập cao bằng bài tập Low-Impact kiểm soát góc gập."
+      "Đã bảo vệ khớp gối: Thay thế bài bật nhảy va đập cao bằng bài nhẹ nhàng, gập gối vừa phải."
     );
     excludedExercises.push(
       "Jump Squat",
@@ -176,7 +198,9 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   }
 
   if (safetyNotes.length === 0) {
-    safetyNotes.push("Thể trạng cơ khớp hoàn hảo: Giáo án mở khóa 100% bài tập với biên độ chuyển động đầy đủ.");
+    safetyNotes.push(
+      "Bạn không báo chấn thương nào, nên giáo án dùng đủ các bài tập. Dừng lại khi thấy đau, và hỏi ý kiến bác sĩ nếu cơn đau kéo dài."
+    );
   }
 
   // 10. Generate 4-day workout routine tailored to Archetype & Equipment
@@ -187,7 +211,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     weeklyRoutine = [
       {
         dayNumber: 1,
-        title: isGym ? "Reformer & Mat Core Sculpt" : "Thảm Mat: Siết Eo & Phẳng Bụng",
+        title: isGym ? "Reformer & cơ lõi trên thảm" : "Thảm: cơ lõi & bụng dưới",
         durationMin: 35,
         target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
         intensity: "moderate",
@@ -195,7 +219,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 2,
-        title: isGym ? "Dây Kháng Lực & Hip Thrust" : "Glute Bridge & Hip Sculpting",
+        title: isGym ? "Dây kháng lực & Hip Thrust" : "Glute Bridge & tạo dáng hông",
         durationMin: 40,
         target: "Cơ mông lớn, Mông nhỡ & Cơ đùi sau",
         intensity: "high",
@@ -203,7 +227,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 3,
-        title: "Active Recovery: Decompression & Mở Khớp",
+        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
         durationMin: 25,
         target: "Giải phóng đốt sống lưng & giãn cơ toàn thân",
         intensity: "low",
@@ -211,9 +235,9 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 4,
-        title: isGym ? "Cable Core & Slender Tone" : "Pilates Toàn Thân & Cân Bằng Tư Thế",
+        title: isGym ? "Cơ lõi với máy cáp & săn chắc toàn thân" : "Pilates toàn thân & cân bằng tư thế",
         durationMin: 35,
-        target: "Đốt mỡ toàn diện & Định hình đường cong",
+        target: "Toàn thân & tư thế",
         intensity: "moderate",
         exerciseCount: 6,
       },
@@ -223,7 +247,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     weeklyRoutine = [
       {
         dayNumber: 1,
-        title: isGym ? "Upper Hypertrophy: Ngực, Vai & Tay Sau" : "Push Power: Chống Đẩy Đa Góc & Dây Kháng Lực",
+        title: isGym ? "Thân trên: ngực, vai & tay sau" : "Sức đẩy: chống đẩy nhiều góc & dây kháng lực",
         durationMin: 45,
         target: "Cơ ngực, Cơ delta & Cơ tay sau",
         intensity: "high",
@@ -231,7 +255,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 2,
-        title: isGym ? "Pull Dominance: Lưng Xô & Tay Trước" : "Hít Xà & Kháng Lực Lưng Xô",
+        title: isGym ? "Sức kéo: lưng xô & tay trước" : "Hít xà & kéo dây cho lưng xô",
         durationMin: 45,
         target: "Cơ lưng xô, Cơ trám & Cơ tay trước",
         intensity: "high",
@@ -239,7 +263,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 3,
-        title: "Active Mobility & Phục Hồi Thần Kinh Cơ",
+        title: "Vận động khớp & phục hồi",
         durationMin: 30,
         target: "Giãn khớp hông, vai & giải tỏa axit lactic",
         intensity: "low",
@@ -247,7 +271,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
       },
       {
         dayNumber: 4,
-        title: isGym ? "Lower & Core: Chân, Đùi Sau & Bụng 6 Múi" : "Chân & Sức Mạnh Lõi Bùng Nổ",
+        title: isGym ? "Thân dưới & cơ lõi: chân, đùi sau & bụng" : "Chân & sức mạnh cơ lõi",
         durationMin: 50,
         target: "Cơ tứ đầu, Đùi sau & Cơ bụng thẳng",
         intensity: "high",

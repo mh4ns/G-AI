@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Sparkles,
   Compass,
   ArrowRight,
   SlidersHorizontal,
@@ -12,6 +11,8 @@ import {
   MoreHorizontal,
   
   AlertTriangle,
+  ChevronDown,
+  X,
 } from "lucide-react";
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
@@ -29,6 +30,22 @@ import {
   setPhotoConsent,
 } from "@/lib/prediction-client";
 
+const WEEKS = [
+  { day: 7, label: "Tuần 1 · Ngày 01 — 07", focus: "Trọng tâm: thở & cổ vai", title: "Đánh thức cơ hoành & giảm căng cứng cổ gáy", body: "Tập trung vào nhịp thở Pilates sâu và các động tác kéo giãn cột sống cạnh tường. Cơ hoành được kích hoạt giúp lồng ngực mở nhẹ, giải tỏa áp lực đè nặng vùng vai gáy." },
+  { day: 14, label: "Tuần 2 · Ngày 08 — 14", focus: "Trọng tâm: cơ bụng sâu", title: "Căn chỉnh cột sống & làm phẳng bụng dưới", body: "Kích hoạt cơ ngang bụng sâu (Transverse Abdominis). Nhóm cơ này giữ thân người vững khi bạn vận động, mà không cần nín thở hóp bụng." },
+  { day: 21, label: "Tuần 3 · Ngày 15 — 21", focus: "Trọng tâm: chuỗi cơ sau", title: "Cân bằng khung chậu & khắc phục võng lưng", body: "Các bài Glute Bridge và Bird Dog giúp giảm tư thế võng lưng do ngồi làm việc nhiều. Cơ mông được nâng đỡ, đưa trọng tâm cơ thể về vị trí cân bằng tự nhiên." },
+  { day: 28, label: "Tuần 4 · Ngày 22 — 28", focus: "Trọng tâm: đánh giá lại", title: "Đánh giá lại & giữ nhịp", body: "So sánh với Ngày 0: cân nặng, số đo vòng eo và cảm giác khi ngồi làm việc. Thói quen giữ thẳng lưng cần thời gian; tiếp tục chu kỳ sau để giữ nhịp." },
+];
+
+const NO_PLAN_CALORIES = "chưa có, làm khảo sát để G-AI tính";
+
+/** The plan's real calorie line, e.g. "1415 kcal/ngày (ít hơn mức tiêu hao khoảng 400 kcal)". */
+function calorieLine(tdee: number, target: number): string {
+  const gap = Math.round(tdee - target);
+  if (Math.abs(gap) < 10) return `${target} kcal/ngày (giữ mức tiêu hao)`;
+  return `${target} kcal/ngày (${gap > 0 ? "ít" : "nhiều"} hơn mức tiêu hao khoảng ${Math.abs(gap)} kcal)`;
+}
+
 export default function PredictionPage() {
   const [currentDay, setCurrentDay] = useState<number>(0);
   const [viewMode, setViewMode] = useState<"profile" | "front" | "threeQuarter">("front");
@@ -40,6 +57,10 @@ export default function PredictionPage() {
   const [customMilestones, setCustomMilestones] = useState<string[] | null>(null);
   const [completedMilestones, setCompletedMilestones] = useState<Record<number, string>>({});
   const [userStats, setUserStats] = useState<{ height: number; weight: number; targetWeight: number } | null>(null);
+  // null until localStorage is read; false shows the "do the quiz first" state.
+  const [hasQuiz, setHasQuiz] = useState<boolean | null>(null);
+  // TDEE minus the daily calorie target from the saved plan; drives the weight projection.
+  const [dailyCalorieGap, setDailyCalorieGap] = useState<number | undefined>(undefined);
   const [isRecalculatingPlan, setIsRecalculatingPlan] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number; stageMessage: string } | undefined>(undefined);
@@ -56,9 +77,9 @@ export default function PredictionPage() {
 
   // Default plan configuration
   const [planConfig, setPlanConfig] = useState<PlanConfig>({
-    workoutType: "Pilates & Siết Cơ Lõi",
-    weeklySets: "16 set bài tập / tuần (Tiêu chuẩn)",
-    dietStyle: "Thâm hụt calo sinh học lành mạnh (-350 kcal/ngày)",
+    workoutType: "Pilates & cơ lõi",
+    weeklySets: "18 hiệp mỗi tuần (vừa)",
+    dietStyle: NO_PLAN_CALORIES,
     archetype: "female_pilates",
   });
 
@@ -66,6 +87,7 @@ export default function PredictionPage() {
   useEffect(() => {
     try {
       const savedQuiz = localStorage.getItem("g_ai_user_quiz");
+      setHasQuiz(!!savedQuiz);
       if (savedQuiz) {
         const parsedQuiz = JSON.parse(savedQuiz);
         if (parsedQuiz.heightCm && parsedQuiz.currentWeightKg && parsedQuiz.targetWeightKg) {
@@ -77,9 +99,17 @@ export default function PredictionPage() {
         }
       }
 
+      // Calories always come from the quiz plan, never from an older saved preset.
+      let planCalories: string | null = null;
       const savedPlan = localStorage.getItem("g_ai_user_plan");
       if (savedPlan) {
         const parsed = JSON.parse(savedPlan);
+        if (typeof parsed.tdee === "number" && typeof parsed.dailyCalorieTarget === "number") {
+          setDailyCalorieGap(Math.abs(parsed.tdee - parsed.dailyCalorieTarget));
+          planCalories = calorieLine(parsed.tdee, parsed.dailyCalorieTarget);
+          const calories = planCalories;
+          setPlanConfig((prev) => ({ ...prev, dietStyle: calories }));
+        }
         if (parsed.archetype) {
           setArchetype(parsed.archetype);
           setPlanConfig((prev) => ({
@@ -87,12 +117,9 @@ export default function PredictionPage() {
             archetype: parsed.archetype,
             workoutType:
               parsed.archetype === "male_strength"
-                ? "Calisthenics & Cơ Xô"
-                : "Pilates & Siết Cơ Lõi",
-            weeklySets:
-              parsed.archetype === "male_strength"
-                ? "18 set Calisthenics / tuần (Tiêu chuẩn)"
-                : "16 set Pilates / tuần (Tiêu chuẩn)",
+                ? "Sức mạnh"
+                : "Pilates & cơ lõi",
+            weeklySets: "18 hiệp mỗi tuần (vừa)",
           }));
         }
         if (parsed.userPhotoBase64) {
@@ -128,7 +155,7 @@ export default function PredictionPage() {
 
       const savedCustomPlan = localStorage.getItem("g_ai_prediction_plan");
       if (savedCustomPlan) {
-        setPlanConfig(JSON.parse(savedCustomPlan));
+        setPlanConfig({ ...JSON.parse(savedCustomPlan), dietStyle: planCalories ?? NO_PLAN_CALORIES });
       }
     } catch {
       // LocalStorage safety fallback
@@ -160,6 +187,31 @@ export default function PredictionPage() {
       }
     };
   }, []);
+
+  // Menu dropdown (transitions.dev 05): play the close before resting.
+  const [menuClosing, setMenuClosing] = useState(false);
+  const menuWasOpen = useRef(false);
+  useEffect(() => {
+    if (isMoreMenuOpen) {
+      menuWasOpen.current = true;
+      setMenuClosing(false);
+      return;
+    }
+    if (!menuWasOpen.current) return;
+    menuWasOpen.current = false;
+    setMenuClosing(true);
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dropdown-close-dur")) || 150;
+    const id = setTimeout(() => setMenuClosing(false), ms);
+    return () => clearTimeout(id);
+  }, [isMoreMenuOpen]);
+
+  // Close the menu on Escape too.
+  useEffect(() => {
+    if (!isMoreMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setIsMoreMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isMoreMenuOpen]);
 
   // Close more menu when clicking outside
   useEffect(() => {
@@ -368,8 +420,8 @@ export default function PredictionPage() {
       archetype: updated.archetype,
       workoutType:
         updated.archetype === "male_strength"
-          ? "Calisthenics & Cơ Xô"
-          : "Pilates & Siết Cơ Lõi",
+          ? "Sức mạnh"
+          : "Pilates & cơ lõi",
     };
     setPlanConfig(updatedPlan);
 
@@ -404,20 +456,20 @@ export default function PredictionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas-dark text-stone-100 font-sans selection:bg-[#FF5A36]/30 selection:text-white">
+    <div className="min-h-screen bg-canvas-dark text-stone-100 font-sans selection:bg-brand/30 selection:text-white">
       {/* 1. Step 8: Header with ONLY ONE Primary Button ("Bắt đầu Ngày 1") + More Menu ("⋯") */}
       <header className="sticky top-0 z-40 bg-canvas-dark/90 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/today"
-              className="p-2 -ml-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800/60 transition-colors"
-              title="Quay lại Today Hub"
+              className="w-11 h-11 -ml-2 rounded-xl text-stone-300 hover:text-white hover:bg-stone-800/60 transition-colors flex items-center justify-center"
+              aria-label="Quay lại trang Hôm nay"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" aria-hidden />
             </Link>
-            <Link href={hubUrl("/")} className="flex items-center group">
-              <BrandLogo isLight={false} size="sm" showSubtitle subtitle="Dự đoán vóc dáng 28 ngày" />
+            <Link href={hubUrl("/")} className="min-h-11 flex items-center" aria-label="G-AI – trang chính">
+              <BrandLogo isLight={false} size="sm" />
             </Link>
           </div>
 
@@ -427,56 +479,85 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setIsMoreMenuOpen((prev) => !prev)}
-                className="w-9 h-9 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
+                className="w-11 h-11 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 title="Tùy chọn khác"
-                aria-label="Menu tùy chọn bổ sung"
+                aria-label="Tùy chọn khác"
+                aria-haspopup="menu"
+                aria-expanded={isMoreMenuOpen}
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
 
               {/* Popover Dropdown */}
-              {isMoreMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#141210] border border-stone-800 shadow-2xl py-2 z-50 text-xs text-stone-200 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div
+                  role="menu"
+                  data-origin="top-right"
+                  inert={!isMoreMenuOpen || undefined}
+                  aria-hidden={!isMoreMenuOpen || undefined}
+                  className={`t-dropdown absolute right-0 mt-2 w-60 rounded-2xl bg-[#141210] border border-stone-800 shadow-2xl py-2 z-50 text-sm text-stone-200${
+                    isMoreMenuOpen ? " is-open" : menuClosing ? " is-closing" : ""
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => {
                       setIsMoreMenuOpen(false);
                       setIsModalOpen(true);
                     }}
-                    className="w-full px-4 py-2.5 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer"
+                    className="w-full min-h-11 px-4 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer"
                   >
-                    <SlidersHorizontal className="w-4 h-4 text-[#FF5A36]" />
+                    <SlidersHorizontal className="w-4 h-4 text-brand" />
                     <span>Hiệu chỉnh chỉ số thể trạng</span>
                   </button>
 
                   <Link
                     href="/quiz"
                     onClick={() => setIsMoreMenuOpen(false)}
-                    className="w-full px-4 py-2.5 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors"
+                    className="w-full min-h-11 px-4 text-left flex items-center gap-2.5 hover:bg-stone-900 hover:text-white transition-colors"
                   >
                     <Compass className="w-4 h-4 text-sky-400" />
                     <span>Khảo sát lại từ đầu</span>
                   </Link>
                 </div>
-              )}
             </div>
 
-            {/* ONLY ONE Primary Header Button */}
+            {/* Primary header action, once there is a plan to start. */}
+            {hasQuiz && (
             <Link
               href="/today"
-              className="px-4 sm:px-5 py-2 rounded-full bg-white hover:bg-stone-200 text-stone-900 text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95"
+              className="min-h-11 inline-flex items-center px-4 sm:px-5 rounded-full bg-white hover:bg-stone-200 text-stone-900 text-sm font-semibold transition-colors active:translate-y-px"
             >
               Bắt đầu Ngày 1
             </Link>
+            )}
           </div>
         </div>
       </header>
 
+      {/* Before the quiz there is nothing to predict: one clear next step. */}
+      {hasQuiz === false && (
+        <main className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Dự đoán vóc dáng 28 ngày</h1>
+          <p className="mt-4 text-base text-stone-300 leading-relaxed">
+            G-AI dựng dự đoán từ chiều cao, cân nặng và mục tiêu của bạn. Làm khảo sát 2 phút để bắt đầu; bạn có thể thêm
+            ảnh sau để xem ảnh minh họa theo từng tuần.
+          </p>
+          <Link
+            href="/quiz"
+            className="mt-8 min-h-12 px-8 rounded-full bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center gap-2 transition-colors active:translate-y-px"
+          >
+            Làm khảo sát 2 phút
+            <ArrowRight className="w-4 h-4" aria-hidden />
+          </Link>
+        </main>
+      )}
+
       {/* 2. Main Visualizer & Telemetry View (Responsive & Sticky Scrubber) */}
+      {hasQuiz && (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-36 lg:pb-12">
         {/* Step 4: Gender Mismatch Warning Banner */}
         {genderMismatchWarning && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200 animate-in fade-in duration-200">
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200">
             <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div className="flex-1 space-y-1">
               <p className="font-bold text-amber-300">Thông báo đối soát hình thể</p>
@@ -485,9 +566,9 @@ export default function PredictionPage() {
             <button
               onClick={() => setGenderMismatchWarning(null)}
               aria-label="Đóng cảnh báo"
-              className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800/50 transition-colors"
+              className="w-11 h-11 -m-2 flex items-center justify-center rounded-lg text-stone-300 hover:text-white hover:bg-stone-800/50 transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" aria-hidden />
             </button>
           </div>
         )}
@@ -502,14 +583,10 @@ export default function PredictionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column (Sticky Pinned Visualizer on Desktop) */}
           <div className="lg:col-span-6 lg:sticky lg:top-24 flex flex-col items-center">
-            {/* Header info */}
-            <div className="w-full flex items-center justify-between mb-3 px-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-stone-300 text-xs">
-                <Sparkles className="w-3.5 h-3.5 text-[#FF5A36]" />
-                <span className="font-medium">Trục trọng tâm & dáng đứng 28 ngày</span>
-              </div>
-              <span className="text-xs text-stone-300 font-medium">
-                {archetype === "male_strength" ? "Nam · Calisthenics" : "Nữ · Pilates"}
+            <div className="w-full flex items-baseline justify-between gap-3 mb-4 px-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Dự đoán vóc dáng 28 ngày</h1>
+              <span className="text-sm text-stone-300 font-medium whitespace-nowrap">
+                {archetype === "male_strength" ? "Sức mạnh" : "Pilates & cơ lõi"}
               </span>
             </div>
 
@@ -542,9 +619,9 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("cervical")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "cervical"
-                    ? "bg-[#FF5A36]/15 border-[#FF5A36] text-white font-bold"
+                    ? "bg-brand/15 border-brand text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
                 }`}
               >
@@ -558,7 +635,7 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("thoracic")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "thoracic"
                     ? "bg-sky-500/15 border-sky-400 text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
@@ -574,7 +651,7 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("core")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "core"
                     ? "bg-emerald-500/15 border-emerald-400 text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
@@ -590,7 +667,7 @@ export default function PredictionPage() {
               <button
                 type="button"
                 onClick={() => setActiveHotspot("pelvis")}
-                className={`flex items-center gap-1.5 transition-all px-3 py-1.5 rounded-xl border ${
+                className={`min-h-11 flex items-center gap-1.5 transition-colors px-3 rounded-xl border ${
                   activeHotspot === "pelvis"
                     ? "bg-amber-500/15 border-amber-400 text-white font-bold"
                     : "bg-stone-950 border-stone-800/80 text-stone-300 hover:text-white"
@@ -628,111 +705,61 @@ export default function PredictionPage() {
               activeHotspot={activeHotspot}
               userWeight={userStats?.weight}
               targetWeight={userStats?.targetWeight}
+              dailyCalorieGapKcal={dailyCalorieGap}
               onJumpToTarget={() => setCurrentDay(28)}
             />
 
-            {/* 4-Week Physiological Adaptation Chapters */}
-            <div className="pt-2 space-y-3">
-              <span className="text-xs font-bold text-stone-300 uppercase tracking-normal block px-1">
-                Lộ trình thích nghi cơ sinh học
-              </span>
-
-              {/* Week 1 */}
-              <div
-                onClick={() => setCurrentDay(7)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 7
-                    ? "bg-stone-900 border-[#FF5A36]/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-[#FF5A36] font-bold">Tuần 1 · Ngày 01 — 07</span>
-                  <span className="text-xs text-stone-300">Giảm ~0.6kg (Thải nước mô)</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Đánh thức cơ hoành & giảm căng cứng cổ gáy
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Tập trung vào nhịp thở Pilates sâu và các động tác kéo giãn cột sống cạnh tường. Cơ hoành được kích hoạt giúp lồng ngực mở nhẹ, giải tỏa áp lực đè nặng vùng vai gáy.
-                </p>
+            {/* Week by week: one line each; the week in view opens. */}
+            <section aria-labelledby="weekly-plan-heading" className="pt-2">
+              <h2 id="weekly-plan-heading" className="text-sm font-bold text-stone-200 px-1 mb-3">
+                Lộ trình từng tuần
+              </h2>
+              <div className="space-y-2">
+                {WEEKS.map((w) => {
+                  const inView = currentDay === w.day;
+                  return (
+                    <details
+                      key={w.day}
+                      open={inView}
+                      className={`group rounded-2xl border transition-colors ${
+                        inView ? "bg-stone-900 border-brand/60" : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
+                      }`}
+                    >
+                      <summary
+                        onClick={(e) => {
+                          // Opening a week also moves the timeline to it.
+                          e.preventDefault();
+                          setCurrentDay(w.day);
+                        }}
+                        className="min-h-12 px-4 py-3 flex items-center justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+                      >
+                        <span>
+                          <span className="block text-xs font-semibold text-brand">{w.label}</span>
+                          <span className="block text-sm font-bold text-white">{w.title}</span>
+                        </span>
+                        <ChevronDown className="w-4 h-4 shrink-0 text-stone-400 transition-transform duration-[var(--duration-fast)] group-open:rotate-180" aria-hidden />
+                      </summary>
+                      <div className="px-4 pb-4 text-sm text-stone-300 leading-relaxed">
+                        <p className="text-xs text-stone-400 mb-1.5">{w.focus}</p>
+                        <p>{w.body}</p>
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
-
-              {/* Week 2 */}
-              <div
-                onClick={() => setCurrentDay(14)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 14
-                    ? "bg-stone-900 border-[#FF5A36]/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-emerald-400 font-bold">Tuần 2 · Ngày 08 — 14</span>
-                  <span className="text-xs text-stone-300">Giảm ~1.4kg (Siết cơ bụng sâu)</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Căn chỉnh cột sống & làm phẳng bụng dưới
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Kích hoạt cơ ngang bụng sâu (Transverse Abdominis). Nhóm cơ này đóng vai trò như đai nịt tự nhiên kéo phẳng thành bụng dưới mà không cần nín thở hóp bụng.
-                </p>
-              </div>
-
-              {/* Week 3 */}
-              <div
-                onClick={() => setCurrentDay(21)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 21
-                    ? "bg-stone-900 border-[#FF5A36]/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-amber-400 font-bold">Tuần 3 · Ngày 15 — 21</span>
-                  <span className="text-xs text-stone-300">Giảm ~1.8kg (Săn chắc chuỗi cơ sau)</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Cân bằng khung chậu & khắc phục võng lưng
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Các bài Glute Bridge và Bird Dog điều chỉnh triệt để tật võng lưng do ngồi làm việc nhiều. Cơ mông được nâng đỡ, đưa trọng tâm cơ thể về vị trí cân bằng tự nhiên.
-                </p>
-              </div>
-
-              {/* Week 4 */}
-              <div
-                onClick={() => setCurrentDay(28)}
-                className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
-                  currentDay === 28
-                    ? "bg-stone-900 border-emerald-500/70 shadow-lg"
-                    : "bg-stone-950/70 border-stone-800/80 hover:border-stone-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs text-emerald-400 font-bold">Tuần 4 · Ngày 22 — 28</span>
-                  <span className="text-xs text-stone-300">Mục tiêu ~2.5kg & Eo -3.8cm</span>
-                </div>
-                <h5 className="text-sm sm:text-base font-bold text-white mb-1">
-                  Vóc dáng chuẩn mực & bước đi tự tin
-                </h5>
-                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                  Điểm tư thế đạt 88/100. Vai mở rộng thanh thoát, thắt lưng khỏe mạnh, thói quen giữ thẳng lưng đã trở thành phản xạ tự nhiên suốt cả ngày.
-                </p>
-              </div>
-            </div>
+            </section>
 
             {/* Bottom Call To Action */}
             <div className="pt-4 flex flex-col sm:flex-row gap-3">
               <Link
                 href="/today"
-                className="flex-1 py-3.5 sm:py-4 rounded-2xl bg-[#FF5A36] hover:bg-[#e04825] text-white font-bold text-sm text-center transition-all shadow-xl shadow-[#FF5A36]/25 flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 sm:py-4 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-bold text-sm text-center transition-all shadow-xl flex items-center justify-center gap-2"
               >
                 <span>Bắt đầu kế hoạch tập Ngày 1</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href={siteUrl("/#movement-goods")}
+                href={siteUrl("/store")}
                 className="px-6 py-3.5 sm:py-4 rounded-2xl border border-stone-800 text-stone-300 hover:text-white hover:border-stone-600 text-xs text-center transition-colors flex items-center justify-center font-medium"
               >
                 Dụng cụ khuyên dùng
@@ -752,6 +779,7 @@ export default function PredictionPage() {
           </div>
         </div>
       </main>
+      )}
 
       {/* 3. Personal Calibration Modal */}
       <BodyCalibrationModal

@@ -9,7 +9,7 @@ export interface StoreProduct {
   price: number;
   originalPrice?: number;
   discountPercent?: number;
-  badge?: "New" | "Bestseller" | "35% OFF" | "Most gifted";
+  badge?: "Mới";
   imageFront: string;
   imageBack?: string;
   sizes: string[];
