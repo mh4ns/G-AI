@@ -28,9 +28,7 @@ const SAMPLE_CATALOG: StoreItem[] = STORE_PRODUCTS.map(fromMockProduct);
 import { appUrl } from "@g-ai/ui";
 
 export default function HomePage() {
-  const [athleteMode, setAthleteMode] = useState<"female" | "male">("female");
   const [theme, setTheme] = useState<"dark" | "light">("light");
-  const [isManualTheme, setIsManualTheme] = useState<boolean>(false);
   const [cartLines, setCartLines] = useState<CartLine[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [catalog, setCatalog] = useState<StoreItem[]>([]);
@@ -42,7 +40,6 @@ export default function HomePage() {
       const savedManual = localStorage.getItem("g_ai_theme_manual");
       const savedTheme = localStorage.getItem("g_ai_theme") as "dark" | "light" | null;
       if (savedManual === "true" && savedTheme) {
-        setIsManualTheme(true);
         setTheme(savedTheme);
       }
       setCartLines(parseStoredCart(localStorage.getItem(CART_STORAGE_KEY)));
@@ -126,18 +123,9 @@ export default function HomePage() {
 
   const totalCartCount = cartLines.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleSelectAthlete = (mode: "female" | "male") => {
-    setAthleteMode(mode);
-    // Only apply automatic color default if the user hasn't chosen a manual theme
-    if (!isManualTheme) {
-      setTheme(mode === "male" ? "dark" : "light");
-    }
-  };
-
   const handleToggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
-    setIsManualTheme(true);
     try {
       localStorage.setItem("g_ai_theme", nextTheme);
       localStorage.setItem("g_ai_theme_manual", "true");
@@ -150,6 +138,7 @@ export default function HomePage() {
 
   return (
     <div
+      data-theme={theme}
       className={`min-h-screen font-sans transition-colors duration-500 ${
         isLight
           ? "bg-canvas text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
@@ -164,13 +153,8 @@ export default function HomePage() {
         onOpenCart={() => setIsCartOpen(true)}
       />
 
-      {/* 2. Interactive Dual-Athlete Hero Stage with Lightbulb Switcher */}
-      <DualAthleteHero
-        athleteMode={athleteMode}
-        theme={theme}
-        onSelectAthlete={handleSelectAthlete}
-        onToggleTheme={handleToggleTheme}
-      />
+      {/* 2. Hero: one headline, one action; follows data-theme above */}
+      <DualAthleteHero />
 
       {/* 3. Physics-Driven Dynamic Velocity Marquee */}
       <VelocityMarquee />

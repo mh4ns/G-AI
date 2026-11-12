@@ -6,8 +6,23 @@
  *   bg-canvas-dark  dark pages (espresso black)
  * Change it here to restyle both sites at once.
  *
+ * Semantic tokens (page, surface, sunken, ink, line, brand-text, positive,
+ * danger) follow the theme: they read CSS variables from styles.css, which
+ * switch under `data-theme="dark"`. New UI should use these plus `brand`,
+ * and nothing else, so light and dark stay in step:
+ *   bg-page / bg-surface / bg-sunken    backgrounds, back to front
+ *   text-ink / -ink-muted / -ink-faint  text, strongest to weakest
+ *   border-line                         hairlines and control borders
+ *   bg-brand + text-brand-contrast      the one primary action on a screen
+ *   text-brand-text                     brand-coloured text that passes AA
+ *
+ * The named palettes below `brand` (cream, peach, sage, ...) are legacy:
+ * existing pages still use them, new work should not.
+ *
  * @type {import('tailwindcss').Config}
  */
+const themed = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 module.exports = {
   theme: {
     extend: {
@@ -16,10 +31,24 @@ module.exports = {
           DEFAULT: "#FAF8F5",
           dark: "#0A0908",
         },
+        page: themed("page"),
+        surface: themed("surface"),
+        sunken: themed("sunken"),
+        ink: {
+          DEFAULT: themed("ink"),
+          muted: themed("ink-muted"),
+          faint: themed("ink-faint"),
+        },
+        line: themed("line"),
+        positive: themed("positive"),
+        danger: themed("danger"),
         brand: {
           DEFAULT: "#FF5A36",
           soft: "#FF6B4A",
           deep: "#E04825",
+          // Text on a brand fill. White on #FF5A36 is only 3.1:1; this is 5.5:1.
+          contrast: "#1F0F0A",
+          text: themed("brand-text"),
         },
         cream: { 50: "#FDFCF7", 100: "#FAF7F0", 200: "#F4ECE1", 300: "#EADCCB" },
         peach: { 50: "#FFF5F2", 100: "#FFE8E2", 200: "#FFC8BA", 400: "#FF8A6E", 500: "#FF6542", 600: "#E64E2B" },
@@ -33,6 +62,13 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        // Headlines only: one per screen in the app, freely on marketing pages.
+        // Each app loads the face as --font-display (Archivo, width axis);
+        // without it this falls back to Inter.
+        display: /** @type {[string[], { fontVariationSettings: string }]} */ ([
+          ["var(--font-display)", "var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+          { fontVariationSettings: '"wdth" 78' },
+        ]),
       },
       boxShadow: {
         soft: "0 4px 20px -2px rgba(230, 78, 43, 0.08)",

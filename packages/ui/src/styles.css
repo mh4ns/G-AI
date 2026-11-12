@@ -10,6 +10,36 @@
   --foreground: #111827;
   --primary: #ff5a36;
   --primary-light: #fff5f2;
+
+  /*
+   * Themed tokens, as RGB channels so Tailwind can apply opacity.
+   * Exposed as bg-page, text-ink, border-line, ... in tailwind-preset.js.
+   */
+  --page: 250 248 245;
+  --surface: 255 255 255;
+  --sunken: 243 239 233;
+  --ink: 28 25 23;
+  --ink-muted: 87 83 78;
+  --ink-faint: 115 108 101;
+  --line: 229 223 214;
+  --brand-text: 196 64 28;
+  --positive: 24 122 80;
+  --danger: 180 35 24;
+}
+
+/* Put data-theme="dark" on any wrapper to switch everything inside it. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --page: 10 9 8;
+  --surface: 21 19 17;
+  --sunken: 31 28 25;
+  --ink: 245 242 236;
+  --ink-muted: 181 174 165;
+  --ink-faint: 143 135 125;
+  --line: 44 40 36;
+  --brand-text: 255 122 92;
+  --positive: 95 211 154;
+  --danger: 255 138 122;
 }
 
 body {
