@@ -376,9 +376,12 @@ export default function TodayDashboardPage() {
 
             <button
               onClick={() => setIsStudioOpen(true)}
-              className="min-h-12 px-6 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px w-full sm:w-auto"
+              className={`min-h-12 px-6 rounded-2xl font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px w-full sm:w-auto ${
+                // On the sample plan the quiz is the one primary action above.
+                hasCustomPlan ? "bg-brand-action hover:bg-brand-action-hover text-white" : "bg-white text-stone-950 hover:bg-stone-200"
+              }`}
             >
-              <Play className="w-4 h-4 fill-white" />
+              <Play className={`w-4 h-4 ${hasCustomPlan ? "fill-white" : "fill-stone-950"}`} aria-hidden />
               <span>Bắt đầu tập</span>
             </button>
           </div>
@@ -391,9 +394,9 @@ export default function TodayDashboardPage() {
               <h2 className="font-bold text-stone-800 text-lg">Ngân sách năng lượng hôm nay</h2>
               <p className="text-xs text-muted">{calorieGoalLine}</p>
             </div>
-            <div className="text-right">
-              <span className="text-xs text-muted font-medium block">Mục tiêu ngày</span>
-              <span className="text-sm font-bold text-stone-700">{plan.dailyCalorieTarget.toLocaleString("vi-VN")} kcal</span>
+            <div className="text-right shrink-0">
+              <span className="text-xs text-muted font-medium block whitespace-nowrap">Mục tiêu ngày</span>
+              <span className="text-sm font-bold text-stone-700 whitespace-nowrap">{plan.dailyCalorieTarget.toLocaleString("vi-VN")} kcal</span>
             </div>
           </div>
 
