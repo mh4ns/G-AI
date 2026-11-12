@@ -18,7 +18,7 @@ const display = Be_Vietnam_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "G-AI | Hệ sinh thái sức khỏe với AI",
+  title: "G-AI | Huấn luyện tại nhà với AI",
   description: "Trang chính của G-AI: chọn sản phẩm để bắt đầu, từ lộ trình luyện tập cá nhân hóa đến dụng cụ tập luyện.",
 };
 

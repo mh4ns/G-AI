@@ -21,7 +21,7 @@ const PRODUCTS: Product[] = [
   {
     key: "coach",
     name: "Coach",
-    tagline: "Lộ trình 28 ngày cá nhân hóa",
+    tagline: "Ứng dụng huấn luyện",
     description:
       "Khảo sát thể trạng 2 phút, nhận kế hoạch calo và bài tập theo cơ thể bạn, xem dự đoán vóc dáng và theo dõi từng ngày.",
     highlights: ["Khảo sát thể trạng", "Dự đoán vóc dáng 28 ngày", "Theo dõi hôm nay"],
@@ -32,12 +32,12 @@ const PRODUCTS: Product[] = [
   {
     key: "movement",
     name: "Movement",
-    tagline: "Thương hiệu, chương trình & cửa hàng",
+    tagline: "Chương trình & cửa hàng",
     description:
-      "Câu chuyện thương hiệu, hai chương trình Pilates và Strength, cùng bộ sưu tập trang phục và dụng cụ tập luyện.",
-    highlights: ["Chương trình Pilates & Strength", "Trang phục tập luyện", "Dụng cụ tập tại nhà"],
+      "Hai chương trình tập tại nhà, Pilates và sức mạnh, cùng trang phục và dụng cụ dùng được với lộ trình 28 ngày.",
+    highlights: ["Pilates & sức mạnh", "Trang phục tập", "Dụng cụ tập tại nhà"],
     href: siteUrl("/"),
-    cta: "Khám phá",
+    cta: "Xem chương trình",
     tone: "light",
   },
 ];
@@ -109,10 +109,10 @@ export default function HubPage() {
       <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
         <section className="max-w-3xl">
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-            Luyện tập đúng cách, theo đúng cơ thể bạn.
+            Huấn luyện tại nhà với AI, theo đúng cơ thể bạn
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-stone-600">
-            Chọn nơi bạn muốn bắt đầu. Mỗi sản phẩm là một trang riêng, dùng chung một ngôn ngữ thiết kế.
+            Làm khảo sát 2 phút để nhận lộ trình calo và bài tập 28 ngày, hoặc xem các chương trình và dụng cụ tập của G-AI.
           </p>
         </section>
 
