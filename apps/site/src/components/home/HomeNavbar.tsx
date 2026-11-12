@@ -2,16 +2,23 @@
 
 import React from "react";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Lightbulb, ShoppingBag } from "lucide-react";
-import { FlipTextHover } from "@/components/home/KineticText";
+import { Lightbulb, ShoppingBag } from "lucide-react";
 import { BrandLogo, appUrl, hubUrl } from "@g-ai/ui";
 
 interface HomeNavbarProps {
+  /** Picks the black or white logo artwork; colours follow `data-theme`. */
   isLight?: boolean;
   onToggleTheme?: () => void;
   cartCount?: number;
   onOpenCart?: () => void;
 }
+
+const FOCUS_RING =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+
+const ICON_BUTTON = `relative flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
+
+const NAV_LINK = `rounded text-sm font-medium text-ink-muted underline-offset-8 transition-colors duration-200 hover:text-ink hover:underline ${FOCUS_RING}`;
 
 export const HomeNavbar: React.FC<HomeNavbarProps> = ({
   isLight = false,
@@ -20,93 +27,69 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
   onOpenCart,
 }) => {
   return (
-    <header className={`sticky top-0 z-50 backdrop-blur-md border-b select-none transition-colors duration-300 ${
-      isLight 
-        ? "bg-white/90 border-stone-200 text-stone-900" 
-        : "bg-canvas-dark/90 border-stone-800 text-white"
-    }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-        {/* Brand Typographic Identity (Pure Geometric G Monogram) */}
-        <div className="flex items-center gap-3">
-          <Link href={hubUrl("/")} className="flex items-center group" aria-label="G-AI – trang chính">
-            <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
-          </Link>
-        </div>
+    <header className="sticky top-0 z-50 border-b border-line bg-page/85 text-ink backdrop-blur-md transition-colors duration-300">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link
+          href={hubUrl("/")}
+          aria-label="G-AI – trang chính"
+          className={`group flex shrink-0 items-center rounded-lg ${FOCUS_RING}`}
+        >
+          <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
+        </Link>
 
-        {/* Streamlined Desktop Navigation (Only 2 Core Links - No Duplicates) */}
-        <nav className={`hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider ${
-          isLight ? "text-stone-700" : "text-stone-300"
-        }`}>
-          <Link href={appUrl("/prediction")} className={`flex items-center gap-1.5 transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
-            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-            <FlipTextHover text="Bản Sao Số (Digital Twin)" activeClassName="text-emerald-500" />
+        <nav aria-label="Điều hướng chính" className="hidden items-center gap-8 md:flex">
+          <Link href={appUrl("/prediction")} className={NAV_LINK}>
+            Bản sao số (Digital Twin)
           </Link>
-
-          <Link href="/#movement-goods" className={`flex items-center gap-1.5 transition-colors ${isLight ? "hover:text-black" : "hover:text-white"}`}>
-            <ShoppingBag className="w-3.5 h-3.5 text-[#FF5A36]" />
-            <FlipTextHover text="Dụng Cụ Tập" activeClassName={isLight ? "text-stone-950" : "text-white"} />
+          <Link href="/#movement-goods" className={NAV_LINK}>
+            Dụng cụ tập
           </Link>
         </nav>
 
-        {/* Action Controls: Cart + Theme Switcher + Single Primary CTA */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          {/* Shopping Bag Cart Drawer Trigger */}
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {onOpenCart && (
             <button
+              type="button"
               onClick={onOpenCart}
-              className={`relative p-2.5 rounded-full border transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 ${
-                isLight
-                  ? "bg-stone-100 border-stone-300 text-stone-700 hover:text-[#FF5A36] hover:border-stone-400"
-                  : "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-stone-700"
-              }`}
-              title="Mở Giỏ Hàng"
-              aria-label="Mở giỏ hàng"
+              title="Mở giỏ hàng"
+              aria-label={cartCount > 0 ? `Mở giỏ hàng, ${cartCount} sản phẩm` : "Mở giỏ hàng"}
+              className={ICON_BUTTON}
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="h-[18px] w-[18px]" aria-hidden />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF5A36] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-sm animate-pulse">
+                <span
+                  aria-hidden
+                  className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-bold tabular-nums leading-none text-brand-contrast"
+                >
                   {cartCount}
                 </span>
               )}
             </button>
           )}
 
-          {/* Lightbulb Theme Toggle Button */}
           {onToggleTheme && (
             <button
+              type="button"
               onClick={onToggleTheme}
-              className={`p-2.5 rounded-full border transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95 ${
-                isLight
-                  ? "bg-stone-100 border-stone-300 text-amber-500 hover:border-amber-400"
-                  : "bg-stone-900 border-stone-800 text-stone-400 hover:text-amber-400 hover:border-amber-400/50"
-              }`}
-              title={isLight ? "Chuyển sang Chế độ Tối (Dark Mode)" : "Chuyển sang Chế độ Sáng (Light Mode)"}
-              aria-label="Toggle Theme"
+              title="Đổi giao diện sáng / tối"
+              aria-label="Đổi giao diện sáng / tối"
+              aria-pressed={!isLight}
+              className={ICON_BUTTON}
             >
-              <Lightbulb className={`w-4 h-4 transition-colors ${isLight ? "fill-amber-400 text-amber-500" : "text-stone-400"}`} />
+              <Lightbulb className="h-[18px] w-[18px]" aria-hidden />
             </button>
           )}
 
-          <Link
-            href={appUrl("/login")}
-            className={`hidden sm:inline text-xs font-semibold transition-colors ${
-              isLight ? "text-stone-600 hover:text-black" : "text-stone-300 hover:text-white"
-            }`}
-          >
+          <Link href={appUrl("/login")} className={`mx-2 hidden sm:inline ${NAV_LINK}`}>
             Đăng nhập
           </Link>
 
-          {/* Single High-Impact CTA Button */}
+          {/* Ink, not brand: the hero button is the one brand-coloured action. */}
           <Link
             href={appUrl("/quiz")}
-            className={`px-5 py-2.5 rounded-full text-white text-xs font-bold font-mono transition-all shadow-lg active:scale-[0.98] flex items-center gap-1.5 ${
-              isLight
-                ? "bg-[#FF6B4A] hover:bg-[#ff5530] shadow-[#FF6B4A]/25"
-                : "bg-[#FF5A36] hover:bg-[#e04825] shadow-[#FF5A36]/20"
-            }`}
+            className={`ml-1 inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-semibold text-page transition-[opacity,transform] duration-200 hover:opacity-85 active:scale-[0.98] ${FOCUS_RING}`}
           >
-            <span>Bắt Đầu Khảo Sát</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            Bắt đầu khảo sát
           </Link>
         </div>
       </div>
