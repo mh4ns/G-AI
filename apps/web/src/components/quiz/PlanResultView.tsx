@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   
   
-  Activity
+  Activity,
+  ChevronDown,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { syncQuizForSignedInUser } from "@/lib/api-client";
@@ -81,7 +82,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
         </h1>
 
         <p className="text-xs sm:text-sm max-w-lg mx-auto text-stone-600">
-          Dành riêng cho {responses.gender === "male" ? "Nam giới" : "Nữ giới"} • {responses.age} tuổi • Không gian tập:{" "}
+          {isMale ? "Sức mạnh & tăng cơ" : "Pilates & cơ lõi"} · {responses.age} tuổi · Nơi tập:{" "}
           <strong className={"text-stone-900"}>
             {responses.equipmentAccess === "gym" ? "Phòng gym" : "Tại nhà (thảm & dây kháng lực)"}
           </strong>
@@ -228,51 +229,68 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
         </div>
       </div>
 
-      {/* 3. Golden Metabolic Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="p-4 rounded-2xl border text-center bg-white border-stone-200/90 shadow-soft">
-          <span className="text-xs font-bold block text-stone-500">BMI</span>
-          <span className="text-xl sm:text-2xl font-extrabold block mt-0.5 text-stone-900">
-            {result.bmi}
-          </span>
-          <span className="text-xs text-emerald-700 font-semibold">{result.bmiCategory}</span>
-        </div>
-
-        <div className="p-4 rounded-2xl border text-center bg-white border-stone-200/90 shadow-soft">
-          <span className="text-xs font-bold block text-stone-500">Calo mỗi ngày</span>
-          <span className="text-xl sm:text-2xl font-extrabold block mt-0.5 text-brand-action">
-            {result.dailyCalorieTarget}
-          </span>
-          <span className="text-xs text-stone-500 ">kcal / ngày</span>
-        </div>
-
-        <div className="p-4 rounded-2xl border text-center bg-white border-stone-200/90 shadow-soft">
-          <span className="text-xs font-bold block text-stone-500">BMR</span>
-          <span className="text-xl sm:text-2xl font-extrabold block mt-0.5 text-stone-900">
-            {result.bmr}
-          </span>
-          <span className="text-xs text-stone-500 ">kcal trao đổi</span>
-        </div>
-
-        <div className="p-4 rounded-2xl border text-center bg-white border-stone-200/90 shadow-soft">
-          <span className="text-xs font-bold block text-stone-500">Nước uống</span>
-          <span className="text-xl sm:text-2xl font-extrabold text-blue-500 block mt-0.5">
-            {result.recommendedWaterMl}
-          </span>
-          <span className="text-xs text-stone-500 ">ml / ngày</span>
-        </div>
+      {/* Daily numbers, each with a plain-language label. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+        {[
+          { label: "Calo nên ăn", value: result.dailyCalorieTarget, unit: "kcal mỗi ngày", accent: true },
+          { label: "Năng lượng nghỉ (BMR)", value: result.bmr, unit: "kcal cơ thể tự đốt" },
+          { label: "BMI", value: result.bmi, unit: result.bmiCategory, good: true },
+          { label: "Nước uống", value: result.recommendedWaterMl, unit: "ml mỗi ngày" },
+        ].map((m) => (
+          <div key={m.label} className="p-4 rounded-2xl border text-center bg-white border-stone-200 shadow-soft">
+            <span className="text-xs font-semibold block text-stone-600">{m.label}</span>
+            <span className={`text-xl sm:text-2xl font-extrabold block mt-0.5 ${m.accent ? "text-brand-action" : "text-stone-950"}`}>
+              {m.value.toLocaleString("vi-VN")}
+            </span>
+            <span className={`text-xs ${m.good ? "text-emerald-700 font-semibold" : "text-stone-600"}`}>{m.unit}</span>
+          </div>
+        ))}
       </div>
+
+      {/* How the numbers are made: the same rules as lib/quiz-calculations.ts. */}
+      <details className="group mb-6 rounded-2xl border border-stone-200 bg-white">
+        <summary className="min-h-12 px-4 flex items-center justify-between gap-3 cursor-pointer list-none text-sm font-semibold text-stone-800 [&::-webkit-details-marker]:hidden">
+          Các con số này được tính thế nào?
+          <ChevronDown className="w-4 h-4 shrink-0 text-stone-500 transition-transform duration-[var(--duration-fast)] group-open:rotate-180" aria-hidden />
+        </summary>
+        <dl className="px-4 pb-4 grid gap-3 text-sm text-stone-700 leading-relaxed">
+          <div>
+            <dt className="font-semibold text-stone-900">Năng lượng nghỉ (BMR)</dt>
+            <dd>Lượng calo cơ thể đốt khi nằm nghỉ cả ngày, tính bằng công thức Mifflin-St Jeor từ cân nặng, chiều cao, tuổi và giới tính.</dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-stone-900">Mức tiêu hao mỗi ngày (TDEE)</dt>
+            <dd>BMR nhân với hệ số vận động bạn chọn: 1,2 (ít vận động) đến 1,725 (vận động nhiều). Bạn đang ở khoảng {result.tdee.toLocaleString("vi-VN")} kcal.</dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-stone-900">Calo nên ăn</dt>
+            <dd>
+              Muốn giảm cân: TDEE trừ 400 kcal (Pilates) hoặc 500 kcal (sức mạnh), không thấp hơn 1.200 hoặc 1.500 kcal.
+              Muốn tăng cân: TDEE cộng 350 kcal. Giữ cân: bằng TDEE.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-stone-900">BMI và nước</dt>
+            <dd>BMI là cân nặng chia bình phương chiều cao; vùng khỏe mạnh là 18,5–24,9. Nước: khoảng 35 ml cho mỗi kg cân nặng.</dd>
+          </div>
+          <div>
+            <dt className="font-semibold text-stone-900">Chia calo theo nhóm chất</dt>
+            <dd>Chất đạm 1,6 g mỗi kg cân nặng (Pilates) hoặc 2,0 g (sức mạnh); chất béo 25% lượng calo; phần còn lại là tinh bột.</dd>
+          </div>
+          <p className="text-xs text-stone-600">Đây là ước tính chung, không thay cho lời khuyên của bác sĩ hay chuyên gia dinh dưỡng.</p>
+        </dl>
+      </details>
 
       {/* 4. Macro Split Cards */}
       <div className="p-5 rounded-3xl border mb-6 bg-white border-stone-200/90 shadow-card">
         <h4 className="text-xs font-bold mb-3 text-stone-700">
-          Phân bổ dinh dưỡng vĩ mô (macronutrient split):
+          Chia calo theo nhóm chất
         </h4>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20">
             <span className="text-xs text-amber-800 font-semibold block">Chất đạm (protein)</span>
             <span className="text-lg sm:text-xl font-extrabold text-amber-800">
-              {result.macroSplit?.proteinG || 95}g
+              {result.macroSplit?.proteinG ?? "—"} g
             </span>
             <span className="text-xs text-stone-600 block mt-0.5">Xây dựng & phục hồi cơ</span>
           </div>
@@ -280,7 +298,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
           <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20">
             <span className="text-xs text-sky-800 font-semibold block">Tinh bột (carbs)</span>
             <span className="text-lg sm:text-xl font-extrabold text-sky-800">
-              {result.macroSplit?.carbsG || 160}g
+              {result.macroSplit?.carbsG ?? "—"} g
             </span>
             <span className="text-xs text-stone-600 block mt-0.5">Năng lượng tập luyện</span>
           </div>
@@ -288,7 +306,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
           <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20">
             <span className="text-xs text-rose-800 font-semibold block">Chất béo tốt (fat)</span>
             <span className="text-lg sm:text-xl font-extrabold text-rose-800">
-              {result.macroSplit?.fatG || 40}g
+              {result.macroSplit?.fatG ?? "—"} g
             </span>
             <span className="text-xs text-stone-600 block mt-0.5">Nội tiết tố cân bằng</span>
           </div>
