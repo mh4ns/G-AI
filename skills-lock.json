@@ -187,6 +187,24 @@
       "skillPath": "skills/engineering/to-tickets/SKILL.md",
       "computedHash": "f7d1bca83f85e4880eec5ed4fe0bff5b8ad1ba14f1e0b17dd0f6d9235a461ec4"
     },
+    "transitions-dev": {
+      "source": "Jakubantalik/transitions.dev",
+      "sourceType": "github",
+      "skillPath": "skills/transitions-dev/SKILL.md",
+      "computedHash": "b7836f609ef9bd930cd38a67a778605491090968b30edf96c681c86624b62b09"
+    },
+    "transitions-polish": {
+      "source": "Jakubantalik/transitions.dev",
+      "sourceType": "github",
+      "skillPath": "skills/transitions-polish/SKILL.md",
+      "computedHash": "3f0630020cdfd0ea3d582ac45201c1ad4bced2ef7d0a0145d4cc81ad25f57ec3"
+    },
+    "transitions-ui-generation": {
+      "source": "Jakubantalik/transitions.dev",
+      "sourceType": "github",
+      "skillPath": "skills/transitions-ui-generation/SKILL.md",
+      "computedHash": "a28b89c7d8ce34c2083c36d86e5b324bdde022b1ed59ef06b006f0e8e9722961"
+    },
     "triage": {
       "source": "mattpocock/skills",
       "sourceType": "github",
