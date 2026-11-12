@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -19,7 +19,19 @@ const display = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
   title: "G-AI Movement | Pilates & sức mạnh tại nhà",
-  description: "Hệ sinh thái chăm sóc sức khỏe toàn diện với trợ lý AI đồng hành sửa tư thế và khích lệ thời gian thực.",
+  description: "Hai chương trình tập tại nhà, Pilates và sức mạnh, với AI theo dõi form qua webcam và lộ trình calo 28 ngày theo cơ thể bạn.",
+  openGraph: {
+    title: "G-AI Movement | Pilates & sức mạnh tại nhà",
+    description: "Hai chương trình tập tại nhà, Pilates và sức mạnh, với AI theo dõi form qua webcam và lộ trình calo 28 ngày theo cơ thể bạn.",
+    siteName: "G-AI Movement",
+    locale: "vi_VN",
+    type: "website",
+  },
+};
+
+// Browser chrome matches the shared canvas.
+export const viewport: Viewport = {
+  themeColor: "#FAF8F5",
 };
 
 export default function RootLayout({

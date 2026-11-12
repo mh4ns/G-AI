@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -19,7 +19,19 @@ const display = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
   title: "G-AI | Huấn luyện tại nhà với AI",
-  description: "Trang chính của G-AI: chọn sản phẩm để bắt đầu, từ lộ trình luyện tập cá nhân hóa đến dụng cụ tập luyện.",
+  description: "Khảo sát 2 phút để nhận lộ trình calo và bài tập 28 ngày theo cơ thể bạn, hoặc xem chương trình Pilates, sức mạnh và dụng cụ tập của G-AI.",
+  openGraph: {
+    title: "G-AI | Huấn luyện tại nhà với AI",
+    description: "Khảo sát 2 phút để nhận lộ trình calo và bài tập 28 ngày theo cơ thể bạn, hoặc xem chương trình Pilates, sức mạnh và dụng cụ tập của G-AI.",
+    siteName: "G-AI",
+    locale: "vi_VN",
+    type: "website",
+  },
+};
+
+// Browser chrome matches the shared canvas.
+export const viewport: Viewport = {
+  themeColor: "#FAF8F5",
 };
 
 export default function RootLayout({
