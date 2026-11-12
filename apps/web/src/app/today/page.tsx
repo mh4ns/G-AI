@@ -201,6 +201,13 @@ export default function TodayDashboardPage() {
   const isLight = theme === "light";
 
   const remainingCalories = plan.dailyCalorieTarget - caloriesEaten + caloriesBurned;
+  const calorieGap = Math.round(plan.tdee - plan.dailyCalorieTarget);
+  const calorieGoalLine =
+    Math.abs(calorieGap) < 10
+      ? "Ăn bằng mức tiêu hao để giữ cân"
+      : calorieGap > 0
+        ? `Ăn ít hơn mức tiêu hao khoảng ${calorieGap.toLocaleString("vi-VN")} kcal để giảm cân từ từ`
+        : `Ăn nhiều hơn mức tiêu hao khoảng ${Math.abs(calorieGap).toLocaleString("vi-VN")} kcal để tăng cân từ từ`;
   const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
 
   // 16:8 from the clock: eating 12:00-20:00, fasting 20:00-12:00.
@@ -312,61 +319,81 @@ export default function TodayDashboardPage() {
         </div>
       </header>
 
-      {/* Demo Mode / Missing Quiz Alert Banner */}
-      {!hasCustomPlan && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-peach-500/10 to-amber-500/10 border-b border-amber-200/80 px-4 py-3">
-          <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5 text-stone-700">
-              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-semibold text-xs">
-                Lộ trình mẫu
-              </span>
-              <span>
-                Bạn đang xem lộ trình mẫu chưa cá nhân hóa. Hãy làm bài khảo sát thể trạng 2 phút để thuật toán AI tối ưu riêng cho bạn.
-              </span>
+      {/* One notice: sample plan and/or where the numbers are kept. Sync errors stand apart. */}
+      {syncError ? (
+        <div role="alert" className="border-b px-4 py-2.5 text-sm bg-rose-50 border-rose-200 text-rose-800">
+          <div className="w-full max-w-4xl mx-auto">{syncError}</div>
+        </div>
+      ) : (
+        (!hasCustomPlan || !sessionUser) && (
+          <div
+            className={`border-b px-4 py-3 text-sm ${
+              isLight ? "bg-amber-50 border-amber-200 text-stone-800" : "bg-amber-500/10 border-amber-500/30 text-stone-100"
+            }`}
+          >
+            <div className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p>
+                {!hasCustomPlan
+                  ? "Đây là lộ trình mẫu. Làm khảo sát 2 phút để có lộ trình theo cơ thể bạn."
+                  : "Số liệu hôm nay chỉ lưu trên trình duyệt này."}
+                {!sessionUser && (
+                  <>
+                    {" "}
+                    <Link href="/login?next=/today" className="font-semibold text-accent underline underline-offset-2">
+                      Đăng nhập để lưu tiến trình
+                    </Link>
+                  </>
+                )}
+              </p>
+              {!hasCustomPlan && (
+                <Link
+                  href="/quiz"
+                  className="min-h-11 px-5 rounded-full bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-sm shrink-0 inline-flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  Làm khảo sát
+                  <ArrowRight className="w-4 h-4" aria-hidden />
+                </Link>
+              )}
             </div>
-            <Link
-              href="/quiz"
-              className="min-h-11 px-4 py-1.5 rounded-full bg-stone-900 hover:bg-black text-white font-bold text-xs shrink-0 transition-all shadow-sm flex items-center gap-1.5"
-            >
-              <span>Làm khảo sát ngay</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
-        </div>
-      )}
-
-      {/* Account sync status */}
-      {(!sessionUser || syncError) && (
-        <div className={`border-b px-4 py-2.5 text-xs ${
-          syncError
-            ? "bg-rose-50 border-rose-200 text-rose-700"
-            : isLight ? "bg-white border-stone-200 text-stone-600" : "bg-[#11100F] border-stone-800 text-stone-300"
-        }`}>
-          <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-3">
-            <span role={syncError ? "alert" : undefined}>
-              {syncError ?? "Số liệu bên dưới chỉ lưu trên trình duyệt này."}
-            </span>
-            {!sessionUser && (
-              <Link href="/login?next=/today" className="min-h-11 inline-flex items-center font-bold text-brand-action hover:underline shrink-0">
-                Đăng nhập để lưu tiến trình
-              </Link>
-            )}
-          </div>
-        </div>
+        )
       )}
 
       {/* Main Dashboard Body */}
       <main className="w-full max-w-4xl mx-auto px-4 py-6 space-y-5">
+        {/* Today's workout: the day's main action, first */}
+        <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-soft relative overflow-hidden">
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <h3 className="text-xl sm:text-2xl font-bold">
+                Pilates siết cơ bụng & thẳng vai
+              </h3>
+              <p className="text-xs sm:text-sm text-stone-300 max-w-md">
+                18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsStudioOpen(true)}
+              className="min-h-12 px-6 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px w-full sm:w-auto"
+            >
+              <Play className="w-4 h-4 fill-white" />
+              <span>Bắt đầu tập</span>
+            </button>
+          </div>
+        </section>
+
         {/* Calorie Balance Hero Widget */}
         <section className="p-5 sm:p-6 rounded-3xl bg-white border border-stone-200 shadow-card">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-bold text-stone-800 text-lg">Ngân sách năng lượng hôm nay</h2>
-              <p className="text-xs text-muted">Duy trì thâm hụt an toàn để đạt mốc cân mục tiêu</p>
+              <p className="text-xs text-muted">{calorieGoalLine}</p>
             </div>
             <div className="text-right">
               <span className="text-xs text-muted font-medium block">Mục tiêu ngày</span>
-              <span className="text-sm font-bold text-stone-700">{plan.dailyCalorieTarget} kcal</span>
+              <span className="text-sm font-bold text-stone-700">{plan.dailyCalorieTarget.toLocaleString("vi-VN")} kcal</span>
             </div>
           </div>
 
@@ -396,49 +423,6 @@ export default function TodayDashboardPage() {
                 <div className="text-xl font-bold text-stone-800 mt-1"><SubtleNumber value={caloriesBurned} /> <span className="text-xs font-normal text-muted">kcal</span></div>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Digital Twin AI Prediction Teaser Banner */}
-        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 border border-stone-800 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-brand/20 border border-brand/30 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-brand-action" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm text-white">Dự đoán vóc dáng 28 ngày</h3>
-              </div>
-              <p className="text-xs text-stone-300 mt-0.5">Kéo thanh thời gian để xem lộ trình 28 ngày theo từng tuần.</p>
-            </div>
-          </div>
-          <Link
-            href="/prediction"
-            className="min-h-11 px-5 py-2.5 rounded-full bg-white text-stone-900 hover:bg-stone-200 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all shadow-sm"
-          >
-            <span>Xem mô phỏng</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </section>
-        <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white shadow-soft relative overflow-hidden">
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <h3 className="text-xl sm:text-2xl font-bold">
-                Pilates siết cơ bụng & thẳng vai
-              </h3>
-              <p className="text-xs sm:text-sm text-stone-300 max-w-md">
-                18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsStudioOpen(true)}
-              className="min-h-12 px-6 rounded-2xl bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px w-full sm:w-auto"
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span>Bắt đầu tập</span>
-            </button>
           </div>
         </section>
 
@@ -576,6 +560,27 @@ export default function TodayDashboardPage() {
               );
             })}
           </ul>
+        </section>
+        {/* Prediction teaser: secondary, so it comes last */}
+        <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-950 to-stone-900 border border-stone-800 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-brand/20 border border-brand/30 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-brand-action" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-white">Dự đoán vóc dáng 28 ngày</h3>
+              </div>
+              <p className="text-xs text-stone-300 mt-0.5">Kéo thanh thời gian để xem lộ trình 28 ngày theo từng tuần.</p>
+            </div>
+          </div>
+          <Link
+            href="/prediction"
+            className="min-h-11 px-5 py-2.5 rounded-full bg-white text-stone-900 hover:bg-stone-200 font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <span>Xem mô phỏng</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </section>
       </main>
 
