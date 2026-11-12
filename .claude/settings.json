@@ -1,0 +1,20 @@
+{
+  "extraKnownMarketplaces": {
+    "taste-skill": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/Leonxlnx/taste-skill.git"
+      }
+    },
+    "impeccable": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/pbakaus/impeccable.git"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "taste-skill@taste-skill": true,
+    "impeccable@impeccable": true
+  }
+}
