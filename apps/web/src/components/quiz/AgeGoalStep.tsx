@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { Check, Sparkles } from "lucide-react";
 import { AthleticArchetype, PrimaryGoal } from "@/types/quiz";
 
@@ -18,7 +17,6 @@ interface DemographicCard {
   numericAge: number;
   title: string;
   subtitle: string;
-  image: string;
 }
 
 export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
@@ -35,29 +33,25 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
       range: "18-29",
       numericAge: 24,
       title: "18–29 tuổi",
-      subtitle: "Năng động, trao đổi chất cao & định hình cơ lõi",
-      image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Xây nền cơ lõi và tư thế",
     },
     {
       range: "30-39",
       numericAge: 34,
       title: "30–39 tuổi",
-      subtitle: "Siết eo, giải phóng thắt lưng & phục hồi sau sinh",
-      image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Cơ lõi, thắt lưng và tư thế khi ngồi nhiều",
     },
     {
       range: "40-49",
       numericAge: 44,
       title: "40–49 tuổi",
-      subtitle: "Săn chắc toàn thân, bảo vệ mật độ xương & khớp",
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Săn chắc toàn thân, nhẹ nhàng với khớp",
     },
     {
       range: "50+",
       numericAge: 54,
       title: "50+ tuổi",
-      subtitle: "Bài tập thảm nhẹ nhàng, cân bằng & dẻo dai",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Bài trên thảm nhẹ, cân bằng và dẻo dai",
     },
   ];
 
@@ -66,29 +60,25 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
       range: "18-29",
       numericAge: 24,
       title: "18–29 tuổi",
-      subtitle: "Hypertrophy tối đa, tăng cơ nạc & cắt nét cơ thể",
-      image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Tăng cơ và sức mạnh",
     },
     {
       range: "30-39",
       numericAge: 34,
       title: "30–39 tuổi",
-      subtitle: "Siết mỡ bụng bia, tối ưu thể lực & bảo vệ cột sống",
-      image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Giảm mỡ bụng, giữ lưng khỏe",
     },
     {
       range: "40-49",
       numericAge: 44,
       title: "40–49 tuổi",
-      subtitle: "Củng cố gân khớp, sức mạnh cơ lõi & chống đau lưng",
-      image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Sức mạnh cơ lõi, nhẹ nhàng với khớp",
     },
     {
       range: "50+",
       numericAge: 54,
       title: "50+ tuổi",
-      subtitle: "Duy trì khối cơ, sức bền tim mạch & linh hoạt",
-      image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80",
+      subtitle: "Giữ khối cơ, sức bền và độ linh hoạt",
     },
   ];
 
@@ -159,41 +149,31 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
         {demographicCards.map((card) => {
           const isSelected = selectedAge === card.numericAge;
           return (
-            <div
+            <button type="button" aria-pressed={isSelected}
               key={card.range}
               onClick={() => onSelectAge(card.numericAge)}
-              className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 flex flex-col justify-between p-3.5 sm:p-4 text-left min-h-[190px] sm:min-h-[220px] ${
+              className={`w-full text-left group relative rounded-2xl overflow-hidden transition-all duration-300 border-2 flex flex-col justify-between p-3.5 sm:p-4 text-left min-h-[120px] ${
                 isSelected
                   ? "border-brand bg-[#FFF5F0] ring-2 ring-brand/30 shadow-lg"
                   : "border-stone-200 bg-white hover:border-stone-300"
               }`}
             >
-              {/* Image Preview */}
-              <div className="relative w-full h-24 sm:h-28 rounded-xl overflow-hidden mb-3">
-                <Image
-                  src={card.image}
-                  alt={card.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/10" />
-                {isSelected && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white bg-brand-action">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                )}
-              </div>
+              {isSelected && (
+                <span className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-white bg-brand-action" aria-hidden>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </span>
+              )}
 
               {/* Title & Subtitle */}
               <div>
                 <h3 className="text-sm sm:text-base font-bold tracking-tight mb-1 text-stone-900">
                   {card.title}
                 </h3>
-                <p className="text-xs leading-snug line-clamp-2 text-stone-500">
+                <p className="text-sm leading-snug text-stone-600 pr-6">
                   {card.subtitle}
                 </p>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -209,10 +189,10 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
           {goals.map((g) => {
             const isSelected = selectedGoal === g.id;
             return (
-              <div
+              <button type="button" aria-pressed={isSelected}
                 key={g.id}
                 onClick={() => onSelectGoal(g.id)}
-                className={`p-4 rounded-2xl cursor-pointer transition-all duration-200 border-2 flex items-start justify-between gap-3 ${
+                className={`w-full text-left p-4 rounded-2xl transition-all duration-200 border-2 flex items-start justify-between gap-3 ${
                   isSelected
                     ? "border-brand bg-[#FFF5F0] shadow-md"
                     : "border-stone-200 bg-white hover:border-stone-300"
@@ -234,7 +214,7 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
                 }`}>
                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

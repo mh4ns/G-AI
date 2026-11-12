@@ -61,9 +61,9 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
           Không gian & dụng cụ bạn tập:
         </label>
         <div className="grid grid-cols-2 gap-3.5">
-          <div
+          <button type="button" aria-pressed={equipmentAccess === "home"}
             onClick={() => onSelectEquipment("home")}
-            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-3.5 ${
+            className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-3.5 ${
               equipmentAccess === "home"
                 ? "border-brand bg-[#FFF5F0] ring-2 ring-brand/20 shadow-md"
                 : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -84,11 +84,11 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
                 Thảm & Dây kháng lực
               </div>
             </div>
-          </div>
+          </button>
 
-          <div
+          <button type="button" aria-pressed={equipmentAccess === "gym"}
             onClick={() => onSelectEquipment("gym")}
-            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-3.5 ${
+            className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-3.5 ${
               equipmentAccess === "gym"
                 ? "border-brand bg-[#FFF5F0] ring-2 ring-brand/20 shadow-md"
                 : "border-stone-200 bg-white text-stone-700 hover:border-stone-300"
@@ -109,7 +109,7 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
                 Tạ đơn & Thiết bị máy
               </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -122,10 +122,10 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
           {bodyAreas.map((area) => {
             const isSelected = selectedAreas.includes(area.id);
             return (
-              <div
+              <button type="button" aria-pressed={isSelected}
                 key={area.id}
                 onClick={() => onToggleArea(area.id)}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 flex flex-col justify-between ${
                   isSelected
                     ? "border-brand ring-2 ring-brand/20 bg-[#FFF5F0]"
                     : "border-stone-200 bg-white hover:border-stone-300"
@@ -150,7 +150,7 @@ export const FocusAreaStep: React.FC<FocusAreaStepProps> = ({
                     {area.sub}
                   </p>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

@@ -46,6 +46,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           alt="G"
           width={width}
           height={height}
+          // Both dimensions set together so no CSS can stretch the mark.
+          style={{ width, height }}
           className="object-contain transition-transform duration-300 group-hover:scale-105"
           priority
         />

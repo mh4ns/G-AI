@@ -27,14 +27,6 @@ Quy tắc đang áp dụng:
 | Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:15` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
 | Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:20` | [photo-1540497077202-7c8a3999166f](https://images.unsplash.com/photo-1540497077202-7c8a3999166f) |
 | Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:25` | [photo-1574680096145-d05b474e2155](https://images.unsplash.com/photo-1574680096145-d05b474e2155) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:39` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:46` | [photo-1545205597-3d9d02c29597](https://images.unsplash.com/photo-1545205597-3d9d02c29597) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:53` | [photo-1506126613408-eca07ce68773](https://images.unsplash.com/photo-1506126613408-eca07ce68773) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:60` | [photo-1571019613454-1cb2f99b2d8b](https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:70` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:77` | [photo-1583454110551-21f2fa2afe61](https://images.unsplash.com/photo-1583454110551-21f2fa2afe61) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:84` | [photo-1581009146145-b5ef050c2e1e](https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e) |
-| Quiz bước 2: thẻ nhóm tuổi | `apps/web/src/components/quiz/AgeGoalStep.tsx:91` | [photo-1517838277536-f5f99be501cd](https://images.unsplash.com/photo-1517838277536-f5f99be501cd) |
 | Quiz bước 1: thẻ chọn chương trình | `apps/web/src/components/quiz/ArchetypeSelectionStep.tsx:29` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
 | Quiz bước 1: thẻ chọn chương trình | `apps/web/src/components/quiz/ArchetypeSelectionStep.tsx:38` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
 
@@ -64,4 +56,3 @@ Quy tắc đang áp dụng:
 ## Ảnh khác chưa rõ nguồn
 
 - `apps/web/public/twins/*.png` (10 ảnh, ảnh mẫu "Ảnh mẫu · chưa phải ảnh thật" ở Prediction): repo không ghi nguồn. Cần xác nhận quyền sử dụng hoặc thay.
-- `apps/web/public/images/quiz/`: kiểm tra nguồn cùng lúc.

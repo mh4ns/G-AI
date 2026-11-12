@@ -106,10 +106,10 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
           {jointInjuries.map((item) => {
             const isSelected = selectedInjuries.includes(item.id);
             return (
-              <div
+              <button type="button" aria-pressed={isSelected}
                 key={item.id}
                 onClick={() => onToggleInjury(item.id)}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start justify-between gap-3 ${
+                className={`w-full text-left p-4 rounded-2xl border-2 transition-all duration-200 flex items-start justify-between gap-3 ${
                   isSelected
                     ? "border-brand bg-[#FFF5F0] ring-2 ring-brand/20 shadow-md"
                     : "border-stone-200 bg-white hover:border-stone-300"
@@ -140,7 +140,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
                 }`}>
                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -159,10 +159,10 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
           {lifestyleObstacles.map((item) => {
             const isSelected = selectedObstacles.includes(item.id);
             return (
-              <div
+              <button type="button" aria-pressed={isSelected}
                 key={item.id}
                 onClick={() => onToggleObstacle(item.id)}
-                className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all duration-200 flex flex-col justify-between ${
                   isSelected
                     ? "border-brand bg-[#FFF5F0] ring-2 ring-brand/20"
                     : "border-stone-200 bg-white hover:border-stone-300"
@@ -184,7 +184,7 @@ export const ObstaclesStep: React.FC<ObstaclesStepProps> = ({
                 <p className="text-xs mt-0.5 text-stone-600">
                   {item.desc}
                 </p>
-              </div>
+              </button>
             );
           })}
         </div>
