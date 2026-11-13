@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { HomeNavbar } from "@/components/home/HomeNavbar";
 import { DualAthleteHero } from "@/components/home/DualAthleteHero";
 import { VelocityMarquee } from "@/components/home/VelocityMarquee";
@@ -166,59 +166,34 @@ export default function HomePage() {
       <AiVisionTeaser />
 
       {/* 6. Curated Movement Goods & Biomechanical Equipment Section */}
-      <MovementGoodsSection isLight={isLight} items={catalog} source={catalogSource} onAddToCart={handleAddToCart} />
+      <MovementGoodsSection items={catalog} source={catalogSource} onAddToCart={handleAddToCart} />
 
-      {/* 7. Ecosystem Call to Action Banner */}
-      <section className={`py-20 sm:py-28 border-t text-center relative overflow-hidden transition-colors duration-500 ${
-        isLight
-          ? "bg-white border-stone-200"
-          : "bg-[#0D0C0B] border-stone-800"
-      }`}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
-          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-mono ${
-            isLight
-              ? "bg-peach-50 border-peach-200 text-[#FF6B4A]"
-              : "bg-stone-900 border-stone-800 text-[#FF5A36]"
-          }`}>
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Hành Trình Chuyển Hóa Cá Nhân Hóa</span>
-          </div>
-
-          <h2 className={`text-3xl sm:text-5xl font-black tracking-tight leading-tight ${
-            isLight ? "text-stone-950" : "text-white"
-          }`}>
-            28 Ngày Định Hình Lại Tư Thế & Vóc Dáng Của Bạn
+      {/* 7. Closing call to action: the page's one brand-coloured block */}
+      <section className="bg-brand py-20 text-brand-contrast sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="max-w-[18ch] text-balance font-display text-[2.75rem] font-black uppercase leading-[1.08] tracking-[-0.01em] sm:text-6xl lg:text-7xl">
+            28 ngày định hình lại tư thế &amp; vóc dáng của bạn
           </h2>
 
-          <p className={`text-sm sm:text-base max-w-2xl mx-auto leading-relaxed ${
-            isLight ? "text-stone-600" : "text-stone-400"
-          }`}>
-            Trả lời khảo sát thể trạng 2 phút. Thuật toán khoa học chuyển hóa Mifflin-St Jeor sẽ dự đoán chính xác cân nặng, lượng calo mục tiêu và lộ trình bài tập phù hợp với cơ thể bạn.
+          <p className="mt-6 max-w-[58ch] text-base leading-relaxed sm:text-lg">
+            Trả lời khảo sát thể trạng 2 phút. Công thức Mifflin-St Jeor sẽ ước tính cân nặng, lượng calo mục tiêu
+            và lộ trình bài tập phù hợp với cơ thể bạn.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
             <Link
               href={appUrl("/quiz")}
-              className={`w-full sm:w-auto px-8 py-4 rounded-full text-white font-bold text-sm transition-all shadow-xl flex items-center justify-center gap-2 ${
-                isLight
-                  ? "bg-[#FF6B4A] hover:bg-[#ff5530] shadow-[#FF6B4A]/25"
-                  : "bg-[#FF5A36] hover:bg-[#e04825] shadow-[#FF5A36]/25"
-              }`}
+              className="group inline-flex h-14 items-center gap-2.5 rounded-full bg-brand-contrast px-8 text-base font-semibold text-white transition-[opacity,transform] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-contrast"
             >
-              <span>Làm Khảo Sát Thể Trạng Miễn Phí</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>Làm khảo sát thể trạng miễn phí</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
             </Link>
 
             <Link
               href={appUrl("/prediction")}
-              className={`w-full sm:w-auto px-8 py-4 rounded-full font-mono text-xs transition-colors flex items-center justify-center gap-2 border ${
-                isLight
-                  ? "bg-stone-100 hover:bg-stone-200 border-stone-300 text-stone-800"
-                  : "bg-stone-900 hover:bg-stone-800 border-stone-700 text-white"
-              }`}
+              className="rounded text-base font-semibold underline decoration-2 underline-offset-[6px] transition-opacity duration-200 hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-contrast"
             >
-              <Sparkles className="w-4 h-4 text-emerald-500" />
-              <span>Xem Bản Sao Số (Digital Twin)</span>
+              Xem bản sao số (Digital Twin)
             </Link>
           </div>
         </div>
@@ -235,7 +210,6 @@ export default function HomePage() {
         onRemoveItem={handleRemoveItem}
         onOrderPlaced={handleOrderPlaced}
         onCatalogStale={refreshCatalog}
-        isLight={isLight}
       />
     </div>
   );

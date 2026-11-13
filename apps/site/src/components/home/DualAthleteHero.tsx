@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SweepHighlight } from "@/components/home/KineticText";
+import { FOCUS_RING, SegmentedControl } from "@/components/home/SegmentedControl";
 import { appUrl } from "@g-ai/ui";
 
 /**
@@ -45,8 +46,7 @@ const PROGRAMMES: Programme[] = [
   },
 ];
 
-const FOCUS_RING =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+const PROGRAMME_TABS = PROGRAMMES.map((p) => ({ id: p.id, label: p.tab }));
 
 export const DualAthleteHero: React.FC = () => {
   const [programmeId, setProgrammeId] = useState<ProgrammeId>("pilates");
@@ -100,28 +100,13 @@ export const DualAthleteHero: React.FC = () => {
               );
             })}
 
-            <div
-              role="group"
-              aria-label="Chọn chương trình"
-              className="absolute left-4 top-4 inline-flex rounded-full bg-surface p-1 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
-            >
-              {PROGRAMMES.map((programme) => {
-                const active = programme.id === current.id;
-                return (
-                  <button
-                    key={programme.id}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setProgrammeId(programme.id)}
-                    className={`h-9 rounded-full px-4 text-sm font-semibold transition-colors duration-200 ${FOCUS_RING} ${
-                      active ? "bg-ink text-page" : "text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    {programme.tab}
-                  </button>
-                );
-              })}
-            </div>
+            <SegmentedControl
+              label="Chọn chương trình"
+              options={PROGRAMME_TABS}
+              value={current.id}
+              onChange={setProgrammeId}
+              className="absolute left-4 top-4 border-transparent shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
+            />
           </div>
 
           <div
