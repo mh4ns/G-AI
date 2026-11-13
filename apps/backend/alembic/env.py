@@ -25,10 +25,11 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
-_url, _engine_options = engine_options(settings.DATABASE_URL)
+_migration_db_url = settings.effective_migration_database_url
+_url, _engine_options = engine_options(_migration_db_url)
 config.set_main_option(
     "sqlalchemy.url",
-    normalize_database_url(settings.DATABASE_URL)[0].render_as_string(hide_password=False).replace("%", "%%"),
+    normalize_database_url(_migration_db_url)[0].render_as_string(hide_password=False).replace("%", "%%"),
 )
 
 # other values from the config, defined by the needs of env.py,

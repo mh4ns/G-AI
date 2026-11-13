@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from sqlalchemy import String, Float, Integer, Boolean, DateTime, ForeignKey, JSON, func
+from sqlalchemy import String, Float, Integer, Boolean, DateTime, ForeignKey, Index, JSON, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -9,7 +9,7 @@ class QuizAssessment(Base):
     __tablename__ = "quiz_assessments"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     session_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     
     # Demographic & Biometrics (Software calculated, zero hardware required)
@@ -36,10 +36,13 @@ class QuizAssessment(Base):
 
 class PersonalizedPlan(Base):
     __tablename__ = "personalized_plans"
+    __table_args__ = (
+        Index("ix_personalized_plans_user_active_created", "user_id", "is_active", "created_at"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     assessment_id: Mapped[int] = mapped_column(ForeignKey("quiz_assessments.id", ondelete="CASCADE"), unique=True, nullable=False)
-    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
 
     # Biometric Projections & Nutritional Targets
     bmi: Mapped[float] = mapped_column(Float, nullable=False)
