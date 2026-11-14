@@ -9,11 +9,15 @@ const BACK = "Quay lại trang trước";
 // The logo always leads to the brand site's home page (homeUrl() in packages/ui).
 const LOGO_PAGES = [
   { name: "site home", url: SITE_HOME },
+  { name: "site store", url: `${URLS.site}/store` },
+  { name: "site 404", url: `${URLS.site}/no-such-page` },
   { name: "hub", url: `${URLS.hub}/` },
   { name: "app quiz", url: `${URLS.app}/quiz` },
   { name: "app login", url: `${URLS.app}/login` },
   { name: "app today", url: `${URLS.app}/today` },
   { name: "app prediction", url: `${URLS.app}/prediction` },
+  { name: "app 404", url: `${URLS.app}/no-such-page` },
+  { name: "hub 404", url: `${URLS.hub}/no-such-page` },
 ];
 
 for (const { name, url } of LOGO_PAGES) {
@@ -27,7 +31,7 @@ for (const { name, url } of LOGO_PAGES) {
 
 // The back button returns to the page the visitor came from, even on another site.
 const BACK_FROM_SITE = [
-  { name: "prediction", link: "Bản sao số (Digital Twin)", arrives: `${URLS.app}/prediction` },
+  { name: "prediction", link: "Dự đoán vóc dáng", arrives: `${URLS.app}/prediction` },
   { name: "login", link: "Đăng nhập", arrives: `${URLS.app}/login` },
   { name: "quiz", link: "Bắt đầu khảo sát", arrives: `${URLS.app}/quiz` },
 ];
@@ -78,6 +82,7 @@ test.describe("phone width (390px)", () => {
   const PAGES = [
     `${URLS.hub}/`,
     `${URLS.site}/`,
+    `${URLS.site}/store`,
     `${URLS.app}/quiz`,
     `${URLS.app}/login`,
     `${URLS.app}/today`,

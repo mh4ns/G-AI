@@ -56,7 +56,7 @@ async def test_products_expose_ui_fields_and_filters(client):
 
     p5 = (await client.get("/api/v1/store/products/p5")).json()
     assert p5["category"] == "equipment"
-    assert p5["subcategory"] == "Home Gym"
+    assert p5["subcategory"] == "Tập tại nhà"
     assert p5["activity"] == "pilates"
     assert p5["discount_percent"] == 37
     assert p5["image_hover"].startswith("https://")

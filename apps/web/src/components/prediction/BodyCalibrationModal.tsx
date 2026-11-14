@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { healthyWeightRangeKg, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
 import Image from "next/image";
 import { Sparkles, X, Check, ArrowRight, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
 import { deletePredictionOnServer, hasPhotoConsent, setPhotoConsent } from "@/lib/prediction-client";
@@ -86,7 +87,39 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     }
   }, [isOpen, initialHeight, initialWeight, initialTargetWeight, currentPhoto]);
 
-  if (!isOpen) return null;
+  // Modal open / close (transitions.dev 06): open only after the resting
+  // state has been laid out; on close play .is-closing, then unmount.
+  const [mounted, setMounted] = useState(isOpen);
+  const [phase, setPhase] = useState<"idle" | "open" | "closing">("idle");
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      return;
+    }
+    setPhase((p) => (p === "idle" ? p : "closing"));
+    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--modal-close-dur")) || 150;
+    const id = setTimeout(() => {
+      setMounted(false);
+      setPhase("idle");
+    }, ms);
+    return () => clearTimeout(id);
+  }, [isOpen]);
+  useLayoutEffect(() => {
+    if (!mounted || !isOpen) return;
+    void dialogRef.current?.offsetHeight;
+    const id = requestAnimationFrame(() => setPhase("open"));
+    return () => cancelAnimationFrame(id);
+  }, [mounted, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  if (!mounted) return null;
 
   const handleArchetypeToggle = (next: "female_pilates" | "male_strength") => {
     setCurrentArchetype(next);
@@ -177,7 +210,9 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
       else setWeight(currentArchetype === "male_strength" ? "76" : "56");
     } else if (field === "targetWeight") {
       const num = parseFloat(targetWeight);
-      if (!isNaN(num) && num > 0) setTargetWeight(cleanNumberInput(String(Math.min(250, Math.max(30, num)))));
+      // Never below the healthy BMI floor for the entered height.
+      const floor = minSafeTargetWeightKg(parseFloat(height) || (currentArchetype === "male_strength" ? 175 : 162));
+      if (!isNaN(num) && num > 0) setTargetWeight(cleanNumberInput(String(Math.min(250, Math.max(floor, num)))));
       else setTargetWeight(currentArchetype === "male_strength" ? "73.5" : "52");
     }
   };
@@ -186,7 +221,10 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     e.preventDefault();
     const finalHeight = parseFloat(height) || (currentArchetype === "male_strength" ? 175 : 162);
     const finalWeight = parseFloat(weight) || (currentArchetype === "male_strength" ? 76 : 56);
-    const finalTargetWeight = parseFloat(targetWeight) || (currentArchetype === "male_strength" ? 73.5 : 52);
+    const finalTargetWeight = Math.max(
+      minSafeTargetWeightKg(finalHeight),
+      parseFloat(targetWeight) || (currentArchetype === "male_strength" ? 73.5 : 52)
+    );
 
     onSave({
       archetype: currentArchetype,
@@ -200,28 +238,45 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none overflow-y-auto">
-      <div className="relative w-full max-w-lg my-8 rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-8 shadow-2xl text-white">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto ${isOpen ? "" : "pointer-events-none"}`}
+    >
+      <div
+        aria-hidden
+        onClick={onClose}
+        data-open={phase === "open"}
+        className="t-backdrop fixed inset-0 bg-black/80"
+        style={{ transitionDuration: phase === "open" ? "var(--modal-open-dur)" : "var(--modal-close-dur)" }}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Hiệu chỉnh thể trạng"
+        className={`t-modal relative w-full max-w-lg my-8 rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-8 shadow-2xl text-white${
+          phase === "open" ? " is-open" : phase === "closing" ? " is-closing" : ""
+        }`}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           aria-label="Đóng cửa sổ hiệu chỉnh"
-          className="absolute top-5 right-5 p-2 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Header */}
         <div className="space-y-1.5 mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-xs font-mono text-[#FF5A36]">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-xs text-brand">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>HIỆU CHỈNH THỂ TRẠNG</span>
+            <span>Hiệu chỉnh thể trạng</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
-            Hiệu Chỉnh Chỉ Số Cá Nhân
+            Hiệu chỉnh chỉ số cá nhân
           </h3>
           <p className="text-xs text-stone-400">
-            Cập nhật số đo, ảnh thể trạng và tình trạng tư thế để mô hình tính toán lại lộ trình thích nghi sinh học chuẩn xác.
+            Cập nhật số đo, ảnh và tình trạng tư thế để tính lại lộ trình theo cơ thể hiện tại của bạn.
           </p>
         </div>
 
@@ -229,9 +284,9 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Photo Section */}
           <div className="p-4 rounded-2xl border border-stone-800 bg-stone-950/70 space-y-3">
-            <div className="text-xs font-mono text-stone-400 uppercase flex items-center justify-between">
-              <span>Ảnh Thể Trạng Cá Nhân</span>
-              <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+            <div className="text-xs text-stone-400 flex items-center justify-between">
+              <span>Ảnh thể trạng cá nhân</span>
+              <span className="text-xs text-emerald-400 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" />
                 Bảo mật cục bộ
               </span>
@@ -255,7 +310,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                 <p className="text-stone-300 font-medium">
                   {photoPreview ? "Đã có ảnh cá nhân" : "Đang dùng hình thể mẫu"}
                 </p>
-                <p className="text-[11px] text-stone-500">
+                <p className="text-xs text-stone-500">
                   Cập nhật ảnh để AI tạo mốc biến đổi chân thực theo thể trạng của bạn.
                 </p>
                 <div className="flex items-center gap-2">
@@ -263,9 +318,9 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     aria-label="Tải ảnh lên hoặc đổi ảnh khác"
-                    className="px-3.5 py-1.5 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-[11px] font-mono flex items-center gap-1.5 active:scale-95 transition-all"
+                    className="px-3.5 py-1.5 rounded-full bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-xs flex items-center gap-1.5 active:scale-95 transition-all"
                   >
-                    <Upload className="w-3 h-3 text-[#FF5A36]" />
+                    <Upload className="w-3 h-3 text-brand" />
                     <span>{photoPreview ? "Thay đổi ảnh khác" : "Tải ảnh lên"}</span>
                   </button>
                   {photoPreview && (
@@ -274,7 +329,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                       onClick={handleDeletePhoto}
                       disabled={isDeletingCache}
                       aria-label="Xóa ảnh thể trạng"
-                      className="px-3 py-1.5 rounded-full bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-300 text-[11px] font-mono flex items-center gap-1 active:scale-95 transition-all"
+                      className="px-3 py-1.5 rounded-full bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-300 text-xs flex items-center gap-1 active:scale-95 transition-all"
                     >
                       <Trash2 className="w-3 h-3 text-red-400" />
                       <span>{isDeletingCache ? "Đang xóa..." : "Xóa ảnh"}</span>
@@ -294,36 +349,36 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
 
           {/* Gender / Archetype Toggle */}
           <div>
-            <label className="text-xs font-mono text-stone-400 uppercase block mb-2">
-              Giới tính & Giáo án tập luyện
+            <label className="text-xs text-stone-400 block mb-2">
+              Chương trình tập
             </label>
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+            <div className="grid grid-cols-2 gap-2 text-xs ">
               <button
                 type="button"
                 onClick={() => handleArchetypeToggle("female_pilates")}
-                aria-label="Chọn lộ trình Nữ Pilates"
+                aria-pressed={currentArchetype === "female_pilates"}
                 className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   currentArchetype === "female_pilates"
-                    ? "bg-[#FF6B4A]/10 border-[#FF6B4A] text-white font-bold"
+                    ? "bg-brand/10 border-brand text-white font-bold"
                     : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                 }`}
               >
-                <span>Nữ (Pilates & Siết Eo)</span>
-                {currentArchetype === "female_pilates" && <Check className="w-3.5 h-3.5 text-[#FF6B4A]" />}
+                <span>Pilates & cơ lõi</span>
+                {currentArchetype === "female_pilates" && <Check className="w-3.5 h-3.5 text-brand-action" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleArchetypeToggle("male_strength")}
-                aria-label="Chọn lộ trình Nam Calisthenics"
+                aria-pressed={currentArchetype === "male_strength"}
                 className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
                   currentArchetype === "male_strength"
-                    ? "bg-[#FF5A36]/10 border-[#FF5A36] text-white font-bold"
+                    ? "bg-brand/10 border-brand text-white font-bold"
                     : "bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200"
                 }`}
               >
-                <span>Nam (Calisthenics & Cơ Xô)</span>
-                {currentArchetype === "male_strength" && <Check className="w-3.5 h-3.5 text-[#FF5A36]" />}
+                <span>Sức mạnh</span>
+                {currentArchetype === "male_strength" && <Check className="w-3.5 h-3.5 text-brand" />}
               </button>
             </div>
           </div>
@@ -331,7 +386,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
           {/* Biometric Stats Inputs (Sanitized without leading zeros, no native steppers) */}
           <div className="grid grid-cols-3 gap-3 text-xs">
             <div>
-              <label htmlFor="input-height" className="font-mono text-stone-400 uppercase block mb-1">Chiều cao (cm)</label>
+              <label htmlFor="input-height" className=" text-stone-400 block mb-1">Chiều cao (cm)</label>
               <input
                 id="input-height"
                 type="text"
@@ -340,13 +395,13 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                 value={height}
                 onChange={(e) => setHeight(cleanNumberInput(e.target.value))}
                 onBlur={() => handleBlur("height")}
-                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white focus:outline-none focus:border-brand [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="165"
                 aria-label="Chiều cao tính bằng cm"
               />
             </div>
             <div>
-              <label htmlFor="input-weight" className="font-mono text-stone-400 uppercase block mb-1">Hiện tại (kg)</label>
+              <label htmlFor="input-weight" className=" text-stone-400 block mb-1">Hiện tại (kg)</label>
               <input
                 id="input-weight"
                 type="text"
@@ -355,13 +410,13 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                 value={weight}
                 onChange={(e) => setWeight(cleanNumberInput(e.target.value))}
                 onBlur={() => handleBlur("weight")}
-                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white focus:outline-none focus:border-brand [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="60"
                 aria-label="Cân nặng hiện tại tính bằng kg"
               />
             </div>
             <div>
-              <label htmlFor="input-target-weight" className="font-mono text-stone-400 uppercase block mb-1">Mục tiêu (kg)</label>
+              <label htmlFor="input-target-weight" className=" text-stone-400 block mb-1">Mục tiêu (kg)</label>
               <input
                 id="input-target-weight"
                 type="text"
@@ -370,16 +425,25 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
                 value={targetWeight}
                 onChange={(e) => setTargetWeight(cleanNumberInput(e.target.value))}
                 onBlur={() => handleBlur("targetWeight")}
-                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white font-mono focus:outline-none focus:border-[#FF5A36] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-900 border border-stone-800 text-white focus:outline-none focus:border-brand [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 placeholder="52"
                 aria-label="Cân nặng mục tiêu tính bằng kg"
+                aria-describedby="calibration-healthy-range"
               />
             </div>
           </div>
+          <p id="calibration-healthy-range" className="text-xs text-stone-400 leading-relaxed">
+            {(() => {
+              const h = parseFloat(height);
+              if (!h || h < 100) return "Mục tiêu không thể thấp hơn vùng cân nặng khỏe mạnh (BMI 18,5).";
+              const range = healthyWeightRangeKg(h);
+              return `Vùng cân nặng khỏe mạnh với chiều cao ${Math.round(h)} cm: ${range.min}–${range.max} kg. Mục tiêu không thể thấp hơn ${range.min} kg.`;
+            })()}
+          </p>
 
           {/* Primary Posture Challenge */}
           <div>
-            <label className="text-xs font-mono text-stone-400 uppercase block mb-2">
+            <label className="text-xs text-stone-400 block mb-2">
               Vùng tư thế ưu tiên cải thiện
             </label>
             <div className="space-y-2 text-xs">
@@ -414,7 +478,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
               id="privacy-consent"
               checked={consentAccepted}
               onChange={(e) => setConsentAccepted(e.target.checked)}
-              className="mt-0.5 w-4 h-4 rounded border-stone-700 bg-stone-900 text-[#FF5A36] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+              className="mt-0.5 w-4 h-4 rounded border-stone-700 bg-stone-900 text-brand focus:ring-0 focus:ring-offset-0 cursor-pointer"
             />
             <label htmlFor="privacy-consent" className="text-stone-400 leading-relaxed cursor-pointer select-none">
               Tôi đồng ý để hệ thống AI xử lý ảnh thể trạng nhằm tạo mô phỏng thay đổi vóc dáng 28 ngày. Dữ liệu được bảo mật và không dùng để huấn luyện mô hình.
@@ -427,7 +491,7 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Hủy bỏ thay đổi"
-              className="px-5 py-2.5 rounded-full border border-stone-800 text-xs font-mono text-stone-400 hover:text-white"
+              className="px-5 py-2.5 rounded-full border border-stone-800 text-xs text-stone-400 hover:text-white"
             >
               Hủy
             </button>
@@ -435,13 +499,13 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
               type="submit"
               disabled={!consentAccepted}
               aria-label="Lưu và cập nhật chỉ số thể trạng"
-              className={`px-6 py-2.5 rounded-full text-white text-xs font-bold font-mono transition-all flex items-center gap-1.5 ${
+              className={`px-6 py-2.5 rounded-full text-white text-xs font-bold transition-all flex items-center gap-1.5 ${
                 consentAccepted
-                  ? "bg-[#FF5A36] hover:bg-[#e04825] shadow-lg shadow-[#FF5A36]/25 cursor-pointer"
+                  ? "bg-brand-action hover:bg-brand-action-hover shadow-lg cursor-pointer"
                   : "bg-stone-800 text-stone-500 cursor-not-allowed"
               }`}
             >
-              <span>Cập Nhật Dự Đoán</span>
+              <span>Cập nhật dự đoán</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

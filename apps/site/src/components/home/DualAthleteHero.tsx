@@ -30,19 +30,19 @@ interface Programme {
 const PROGRAMMES: Programme[] = [
   {
     id: "pilates",
-    tab: "Nữ · Pilates",
-    name: "Pilates Sculpt · 28 ngày",
-    focus: "AI Live PT phân tích cột sống và khớp hông",
+    tab: "Pilates & cơ lõi",
+    name: "Pilates & cơ lõi · 28 ngày",
+    focus: "AI theo dõi tư thế qua camera và nhắc khi bạn sai form",
     image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=85",
-    alt: "Chương trình nữ: Pilates Sculpt & Core Alignment",
+    alt: "Chương trình Pilates & cơ lõi",
   },
   {
     id: "strength",
-    tab: "Nam · Strength",
-    name: "Athletic Power · 28 ngày",
-    focus: "AI Live PT định vị đường đi tạ và chuỗi cơ sau",
+    tab: "Sức mạnh",
+    name: "Sức mạnh · 28 ngày",
+    focus: "AI đếm rep qua camera và nhắc khi bạn sai form",
     image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=85",
-    alt: "Chương trình nam: Athletic Strength & Biomechanics",
+    alt: "Chương trình sức mạnh",
   },
 ];
 
@@ -64,8 +64,8 @@ export const DualAthleteHero: React.FC = () => {
           </h1>
 
           <p className="mt-6 max-w-[52ch] text-base leading-relaxed text-ink-muted sm:text-lg">
-            Khảo sát thể trạng 2 phút, nhận lộ trình Pilates hoặc Strength theo cơ thể bạn. AI đồng hành qua camera
-            và sửa tư thế theo thời gian thực.
+            Khảo sát thể trạng 2 phút, nhận lộ trình Pilates &amp; cơ lõi hoặc Sức mạnh theo cơ thể bạn. AI theo dõi
+            tư thế qua camera và nhắc khi bạn sai form.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">

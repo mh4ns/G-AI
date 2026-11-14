@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Flame, Lightbulb, Play, Plus, RotateCcw, ShoppingBag } from "lucide-react";
+import { ArrowRight, Check, Lightbulb, Play, Plus, RotateCcw, ShoppingBag } from "lucide-react";
 import { PersonalizedPlanResult } from "@/types/quiz";
 import { BrandLogo, homeUrl, siteUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
@@ -35,7 +35,7 @@ export default function TodayDashboardPage() {
     weeklyRoutine: [
       {
         dayNumber: 1,
-        title: "Thảm Mat: Siết Eo & Phẳng Bụng",
+        title: "Thảm: cơ lõi & bụng dưới",
         durationMin: 35,
         target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
         intensity: "moderate",
@@ -43,7 +43,7 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 2,
-        title: "Glute Bridge & Hip Sculpting",
+        title: "Glute Bridge & tạo dáng hông",
         durationMin: 40,
         target: "Cơ mông lớn & Cơ đùi sau",
         intensity: "high",
@@ -51,7 +51,7 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 3,
-        title: "Active Recovery: Decompression & Mở Khớp",
+        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
         durationMin: 25,
         target: "Giải phóng đốt sống lưng",
         intensity: "low",
@@ -59,24 +59,33 @@ export default function TodayDashboardPage() {
       },
       {
         dayNumber: 4,
-        title: "Pilates Toàn Thân & Cân Bằng Tư Thế",
+        title: "Pilates toàn thân & cân bằng tư thế",
         durationMin: 35,
-        target: "Đốt mỡ toàn diện & Định hình đường cong",
+        target: "Toàn thân & tư thế",
         intensity: "moderate",
         exerciseCount: 6,
       },
     ],
   });
 
-  const [waterDrunkMl, setWaterDrunkMl] = useState<number>(750);
-  const [caloriesBurned, setCaloriesBurned] = useState<number>(180);
-  const [caloriesEaten, setCaloriesEaten] = useState<number>(620);
+  // Everyone starts the day at zero; signed-in users get their saved numbers below.
+  const [waterDrunkMl, setWaterDrunkMl] = useState<number>(0);
+  const [caloriesBurned, setCaloriesBurned] = useState<number>(0);
+  const [caloriesEaten, setCaloriesEaten] = useState<number>(0);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({
     water: false,
     workout: false,
-    mindfulness: true,
+    mindfulness: false,
     fasting: false,
   });
+  // Clock for the 16:8 habit, refreshed each minute. Null until mounted, so the
+  // server render and the first client render agree.
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const [sessionUser, setSessionUser] = useState<ApiUser | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -113,7 +122,7 @@ export default function TodayDashboardPage() {
     }
   };
 
-  // Signed-in users get real, persisted numbers; guests keep the local demo values.
+  // Signed-in users get real, persisted numbers; guests log on this device only.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -177,6 +186,14 @@ export default function TodayDashboardPage() {
   const isLight = theme === "light";
 
   const remainingCalories = plan.dailyCalorieTarget - caloriesEaten + caloriesBurned;
+  // The target follows the plan's goal: below, at or above what the body uses.
+  const calorieGap = Math.round(plan.tdee - plan.dailyCalorieTarget);
+  const calorieGoalLine =
+    Math.abs(calorieGap) < 10
+      ? "Ăn bằng mức tiêu hao để giữ cân."
+      : calorieGap > 0
+        ? `Ăn ít hơn mức tiêu hao khoảng ${formatNumber(calorieGap)} kcal để giảm cân từ từ.`
+        : `Ăn nhiều hơn mức tiêu hao khoảng ${formatNumber(Math.abs(calorieGap))} kcal để tăng cân từ từ.`;
   const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
 
   const addWater = () => {
@@ -214,6 +231,7 @@ export default function TodayDashboardPage() {
   const habitsTotal = Object.keys(checklist).length;
   const waterGoalReached = waterDrunkMl >= plan.recommendedWaterMl;
   const waterGoalLitres = (plan.recommendedWaterMl / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+  const fastingDetail = describeFasting(now);
 
   return (
     <div data-theme={theme} className="min-h-screen bg-page text-ink transition-colors duration-300">
@@ -229,14 +247,12 @@ export default function TodayDashboardPage() {
             </Link>
             <div className="min-w-0 border-l border-line pl-3">
               <h1 className="truncate text-sm font-semibold leading-tight text-ink">Hôm nay, {todayLabel}</h1>
-              <p className="truncate text-xs text-ink-muted">
-                <span className="hidden sm:inline">Lộ trình 28 ngày · </span>Tuần 1, ngày 3
-              </p>
+              <p className="truncate text-xs text-ink-muted">Lộ trình 28 ngày</p>
             </div>
           </div>
 
           <nav aria-label="Công cụ" className="flex shrink-0 items-center">
-            <Link href={siteUrl("/#movement-goods")} title="Dụng cụ tập luyện" aria-label="Dụng cụ tập luyện" className={ICON_BUTTON}>
+            <Link href={siteUrl("/store")} title="Dụng cụ tập" aria-label="Dụng cụ tập" className={ICON_BUTTON}>
               <ShoppingBag className="h-[18px] w-[18px]" aria-hidden />
             </Link>
             <button
@@ -249,9 +265,9 @@ export default function TodayDashboardPage() {
             >
               <Lightbulb className="h-[18px] w-[18px]" aria-hidden />
             </button>
-            <a href="/quiz" title="Khảo sát lại kế hoạch" aria-label="Khảo sát lại kế hoạch" className={ICON_BUTTON}>
+            <Link href="/quiz" title="Làm lại khảo sát" aria-label="Làm lại khảo sát" className={ICON_BUTTON}>
               <RotateCcw className="h-[18px] w-[18px]" aria-hidden />
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
@@ -295,7 +311,7 @@ export default function TodayDashboardPage() {
             Pilates siết cơ bụng &amp; thẳng vai
           </h2>
           <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-ink-muted">
-            18 phút · 4 bài tập. Bật webcam để AI Live PT quan sát cột sống và sửa tư thế gù lưng theo thời gian thực.
+            18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -325,6 +341,7 @@ export default function TodayDashboardPage() {
           <h2 id="energy-title" className="text-lg font-semibold text-ink">
             Năng lượng hôm nay
           </h2>
+          <p className="mt-1 text-sm text-ink-muted">{calorieGoalLine}</p>
           <p className="sr-only">
             Mục tiêu {plan.dailyCalorieTarget} kcal, đã nạp {caloriesEaten} kcal, đã đốt {caloriesBurned} kcal.{" "}
             {isOverBudget
@@ -372,14 +389,8 @@ export default function TodayDashboardPage() {
             <h2 id="habits-title" className="text-lg font-semibold text-ink">
               Thói quen hôm nay
             </h2>
-            <p className="flex items-center gap-3 text-sm text-ink-muted">
-              <span className="tabular-nums">
-                {habitsDone}/{habitsTotal} xong
-              </span>
-              <span className="inline-flex items-center gap-1 font-medium text-ink">
-                <Flame className="h-4 w-4 text-brand" aria-hidden />
-                Chuỗi 3 ngày
-              </span>
+            <p className="text-sm tabular-nums text-ink-muted">
+              {habitsDone}/{habitsTotal} xong
             </p>
           </div>
 
@@ -388,7 +399,7 @@ export default function TodayDashboardPage() {
               checked={checklist.workout}
               onToggle={() => toggleChecklist("workout")}
               title="Hoàn thành 18 phút bài tập Pilates bụng"
-              detail="+180 kcal"
+              detail="18 phút"
             />
 
             <HabitRow
@@ -415,28 +426,28 @@ export default function TodayDashboardPage() {
             <HabitRow
               checked={checklist.mindfulness}
               onToggle={() => toggleChecklist("mindfulness")}
-              title="5 phút thở thư giãn Box Breathing giảm căng thẳng"
+              title="5 phút thở hộp (hít 4 giây, giữ 4, thở 4, giữ 4) để thư giãn"
             />
 
             <HabitRow
               checked={checklist.fasting}
               onToggle={() => toggleChecklist("fasting")}
               title="Không ăn vặt sau 20:00 tối"
-              detail="Nhịn ăn 16:8 · đã nhịn 14h 25m / 16 giờ · khung ăn 12:00–20:00"
+              detail={fastingDetail}
             />
           </ul>
         </section>
 
-        {/* Digital Twin: secondary destination, kept as a single quiet row */}
+        {/* Prediction: secondary destination, kept as a single quiet row */}
         <div className="border-t border-line pt-3">
           <Link
             href="/prediction"
             className={`group -mx-3 flex items-center justify-between gap-6 rounded-2xl px-3 py-5 transition-colors duration-200 hover:bg-sunken ${FOCUS_RING}`}
           >
             <span className="min-w-0">
-              <span className="block text-lg font-semibold text-ink">Mô hình biến đổi 28 ngày (Digital Twin)</span>
+              <span className="block text-lg font-semibold text-ink">Dự đoán vóc dáng 28 ngày</span>
               <span className="mt-1 block text-sm leading-relaxed text-ink-muted">
-                Kéo thanh thời gian để xem mô phỏng gù lưng giảm dần và siết eo tự nhiên.
+                Kéo thanh thời gian để xem lộ trình 28 ngày theo từng tuần.
               </span>
             </span>
             <ArrowRight
@@ -447,7 +458,7 @@ export default function TodayDashboardPage() {
         </div>
       </main>
 
-      {/* AI Live PT Studio Modal */}
+      {/* Camera workout studio */}
       <LiveWorkoutStudio
         isOpen={isStudioOpen}
         onClose={() => setIsStudioOpen(false)}
@@ -461,7 +472,8 @@ export default function TodayDashboardPage() {
 const FOCUS_RING =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
-const ICON_BUTTON = `flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
+// 44px: the minimum tap target.
+const ICON_BUTTON = `flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
 
 const NOTICE_LINK = `shrink-0 rounded font-semibold text-brand-text underline-offset-4 hover:underline ${FOCUS_RING}`;
 
@@ -471,6 +483,19 @@ const ENERGY_OPERATOR = "text-xl leading-none text-ink-faint sm:text-3xl";
 
 function formatNumber(value: number): string {
   return value.toLocaleString("vi-VN");
+}
+
+/** 16:8 from the clock: eating 12:00-20:00, fasting 20:00-12:00. */
+function describeFasting(now: Date | null): string {
+  const eatingWindow = "khung ăn 12:00–20:00";
+  if (!now) return `Nhịn ăn 16:8 · ${eatingWindow}`;
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const fmt = (m: number) => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+  if (minutes >= 12 * 60 && minutes < 20 * 60) {
+    return `Nhịn ăn 16:8 · trong giờ ăn, còn ${fmt(20 * 60 - minutes)} · ${eatingWindow}`;
+  }
+  const elapsed = minutes >= 20 * 60 ? minutes - 20 * 60 : minutes + 4 * 60;
+  return `Nhịn ăn 16:8 · đã nhịn ${fmt(elapsed)} / 16 giờ · ${eatingWindow}`;
 }
 
 interface HabitRowProps {

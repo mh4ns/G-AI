@@ -18,7 +18,7 @@ test("register → Today shows server numbers that persist across sessions", asy
   await page.getByRole("button", { name: "Đăng ký", exact: true }).click();
 
   await expect(page).toHaveURL(`${URLS.app}/today`);
-  // Signed in: the guest banner disappears and a new account starts at 0 ml (guests see demo values).
+  // Signed in: the guest banner disappears and a new account starts at 0 ml.
   await expect(page.getByRole("link", { name: "Đăng nhập để lưu tiến trình" })).toBeHidden();
   const water = waterLine(page);
   await expect(water).toHaveText(waterText(0));

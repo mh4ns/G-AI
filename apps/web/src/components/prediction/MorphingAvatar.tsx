@@ -177,7 +177,6 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const headOffset = 24 * (1 - progress) + 2 * progress;
   const kyphosisOffset = 22 * (1 - progress) + 3 * progress;
   const pelvicOffset = 16 * (1 - progress) + 1 * progress;
-  const currentAngleDeg = Math.round(18 * (1 - progress));
 
   const currentHeadX = 160 + headOffset * 0.7;
   const currentThoracicX = 160 - kyphosisOffset * 0.7;
@@ -191,19 +190,17 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
       ? SEMANTIC_COLORS.warning
       : SEMANTIC_COLORS.primary;
 
+  // Stage names only: the angle drives the drawing, but nothing measured the
+  // person, so no degree value is shown as theirs.
   const statusLabel =
-    progress > 0.75
-      ? "Trục dóng tối ưu (0° lệch)"
-      : progress > 0.35
-      ? `Cơ dựng sống nâng thẳng (${currentAngleDeg}° lệch)`
-      : `Độ đổ thân trước & gù (${currentAngleDeg}° lệch)`;
+    progress > 0.75 ? "Tư thế mục tiêu" : progress > 0.35 ? "Đang căn chỉnh" : "Điểm xuất phát";
 
   return (
     <div className="w-full flex flex-col items-center select-none font-sans">
       {/* 1. Top Controls Bar: View Mode Tabs (Nghiêng / Chính diện) + Actions */}
       <div className="w-full flex flex-wrap items-center justify-between gap-2.5 mb-3 px-1">
-        {/* View Mode Tabs (Small Pill Tabs) */}
-        {onViewModeChange && (
+        {/* View Mode Tabs: only offered once a side photo exists (one usable option is no choice). */}
+        {onViewModeChange && hasSidePhoto && (
           <div
             role="tablist"
             aria-label="Chọn góc nhìn cơ thể"
@@ -216,11 +213,11 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               disabled={!hasSidePhoto}
               onClick={() => hasSidePhoto && onViewModeChange("profile")}
               title={hasSidePhoto ? "Xem góc nghiêng" : "Chụp thêm ảnh nghiêng để xem góc này"}
-              className={`px-3 py-1 rounded-full text-xs transition-all duration-200 flex items-center gap-1.5 ${
+              className={`min-h-11 px-3.5 rounded-full text-sm transition-colors duration-200 flex items-center gap-1.5 ${
                 !hasSidePhoto
                   ? "text-stone-500 cursor-not-allowed opacity-60"
                   : viewMode === "profile"
-                  ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
+                  ? "bg-brand-action text-white font-bold shadow-md"
                   : "text-stone-300 hover:text-white font-medium"
               }`}
             >
@@ -232,9 +229,9 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               role="tab"
               aria-selected={viewMode === "front"}
               onClick={() => onViewModeChange("front")}
-              className={`px-3 py-1 rounded-full text-xs transition-all duration-200 ${
+              className={`min-h-11 px-3.5 rounded-full text-sm transition-colors duration-200 ${
                 viewMode === "front"
-                  ? "bg-[#FF5A36] text-white font-bold shadow-md shadow-[#FF5A36]/30"
+                  ? "bg-brand-action text-white font-bold shadow-md"
                   : "text-stone-300 hover:text-white font-medium"
               }`}
             >
@@ -251,16 +248,16 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             onClick={() => setShowSkeleton((prev) => !prev)}
             aria-pressed={showSkeleton}
             aria-label="Bật hoặc tắt lớp phủ khung xương"
-            className={`px-3 py-1.5 rounded-full border text-xs font-sans transition-all flex items-center gap-1.5 active:scale-95 ${
+            className={`min-h-11 px-3.5 rounded-full border text-sm transition-colors flex items-center gap-1.5 ${
               showSkeleton
-                ? "bg-[#FF5A36]/20 border-[#FF5A36] text-white font-bold shadow-sm shadow-[#FF5A36]/20"
+                ? "bg-brand/20 border-brand text-white font-bold shadow-sm"
                 : "bg-stone-900/90 border-stone-800 text-stone-300 hover:text-white"
             }`}
             title="Bật/tắt lớp phủ khung xương và trục dóng giải phẫu"
           >
-            <Activity className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <Activity className="w-3.5 h-3.5 text-brand" />
             <span>Khung xương</span>
-            {showSkeleton && <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36]" />}
+            {showSkeleton && <span className="w-1.5 h-1.5 rounded-full bg-brand-action" />}
           </button>
 
           {/* Before / After Comparison Toggle */}
@@ -269,14 +266,14 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             onClick={() => setIsComparing((prev) => !prev)}
             aria-pressed={isComparing}
             aria-label="Bật thanh kéo so sánh trước sau"
-            className={`px-3 py-1.5 rounded-full border text-xs font-sans transition-all flex items-center gap-1.5 active:scale-95 ${
+            className={`min-h-11 px-3.5 rounded-full border text-sm transition-colors flex items-center gap-1.5 ${
               isComparing
                 ? "bg-white text-stone-900 font-bold border-white shadow-md"
                 : "bg-stone-900/90 border-stone-800 text-stone-300 hover:text-white"
             }`}
             title="Bật thanh kéo so sánh trước/sau trực quan"
           >
-            <Columns className="w-3.5 h-3.5 text-[#FF5A36]" />
+            <Columns className="w-3.5 h-3.5 text-brand" />
             <span>So sánh</span>
           </button>
 
@@ -285,11 +282,11 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             <button
               type="button"
               onClick={onOpenUploadModal}
-              className="px-2.5 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition-colors"
+              className="w-11 h-11 rounded-full bg-stone-900 border border-stone-800 text-stone-300 hover:text-white transition-colors flex items-center justify-center"
               title="Cập nhật ảnh thật thể trạng"
               aria-label="Cập nhật ảnh thật thể trạng"
             >
-              <Camera className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <Camera className="w-3.5 h-3.5 text-brand" />
             </button>
           )}
         </div>
@@ -308,12 +305,12 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
       >
         {/* Mock Badge (Displayed ONLY when using placeholder silhouettes) */}
         {isMock && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-[11px] font-bold text-amber-300 shadow-md pointer-events-none">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-xs font-bold text-amber-300 shadow-md pointer-events-none">
             ẢNH MẪU · CHƯA PHẢI ẢNH THẬT
           </div>
         )}
         {!isMock && isIllustrative && activeMilestoneDay > 0 && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-[11px] font-bold text-amber-300 shadow-md pointer-events-none whitespace-nowrap">
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 backdrop-blur-md text-xs font-bold text-amber-300 shadow-md pointer-events-none whitespace-nowrap">
             ẢNH MINH HỌA · CHƯA DỰ ĐOÁN TỪ ẢNH CỦA BẠN
           </div>
         )}
@@ -333,9 +330,9 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         {isGenerating && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/85 backdrop-blur-md p-6 text-center">
             <div className="relative w-14 h-14 rounded-2xl bg-stone-900 border border-stone-700 flex items-center justify-center mb-3 shadow-xl">
-              <Loader2 className="w-7 h-7 text-[#FF5A36] animate-spin" />
+              <Loader2 className="w-7 h-7 text-brand animate-spin" />
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF5A36]/15 border border-[#FF5A36]/40 text-xs font-bold text-[#FF5A36] mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand/15 border border-brand/40 text-xs font-bold text-brand mb-2">
               <Sparkles className="w-3.5 h-3.5" />
               <span>
                 Đang tạo sinh ({generationProgress?.current || 0}/{generationProgress?.total || 3} ảnh)
@@ -350,7 +347,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         {/* --- STATE 2: ERROR STATE WITH RETRY (No silent mock replacement) --- */}
         {generationError && !isGenerating && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-950/92 backdrop-blur-md p-6 text-center">
-            <AlertCircle className="w-10 h-10 text-[#FF5A36] mb-3" />
+            <AlertCircle className="w-10 h-10 text-brand mb-3" />
             <h5 className="text-sm font-bold text-white mb-1.5">Không thể tạo sinh ảnh dự đoán</h5>
             <p className="text-xs text-stone-300 mb-4 max-w-xs leading-relaxed">
               {generationError}
@@ -359,7 +356,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               <button
                 onClick={onRetryGeneration}
                 aria-label="Thử tạo lại ảnh"
-                className="px-5 py-2.5 rounded-full bg-[#FF5A36] hover:bg-[#e04825] text-xs font-bold text-white flex items-center gap-2 shadow-lg shadow-[#FF5A36]/30 transition-all active:scale-95 cursor-pointer"
+                className="px-5 py-2.5 rounded-full bg-brand-action hover:bg-brand-action-hover text-xs font-bold text-white flex items-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-white" />
                 <span>Thử lại</span>
@@ -373,7 +370,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-stone-950/70 backdrop-blur-sm p-6 text-center animate-pulse">
             <div className="w-24 h-48 rounded-2xl bg-stone-900 border border-stone-800 mb-3" />
             <p className="text-xs font-medium text-stone-300">
-              Đang hoàn thiện mốc {activeMilestoneDay === 7 ? "Tuần 1" : activeMilestoneDay === 14 ? "Tuần 2" : "Tuần 4"}...
+              Đang hoàn thiện mốc {activeMilestoneDay === 7 ? "Tuần 1" : activeMilestoneDay === 14 ? "Tuần 2" : "Ngày 28"}...
             </p>
           </div>
         )}
@@ -451,8 +448,8 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               <div className="absolute inset-y-0 -left-[1px] w-[2px] bg-white shadow-[0_0_12px_rgba(255,90,54,0.8)]" />
 
               {/* Centered Draggable Thumb Button */}
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#FF5A36] text-white flex items-center justify-center border-2 border-white shadow-xl shadow-black/80 ring-4 ring-[#FF5A36]/40">
-                <span className="text-xs font-mono font-bold">↔</span>
+              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-brand-action text-white flex items-center justify-center border-2 border-white shadow-xl shadow-black/80 ring-4 ring-brand/40">
+                <span className="text-xs font-bold">↔</span>
               </div>
             </div>
 
@@ -460,7 +457,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
             <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-xs font-medium text-stone-200">
               Trước · Ngày 0
             </div>
-            <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-[#FF5A36]/90 backdrop-blur-md border border-white/20 text-xs font-bold text-white shadow-md">
+            <div className="absolute top-3 right-3 z-20 px-2.5 py-1 rounded-full bg-brand/90 backdrop-blur-md border border-white/20 text-xs font-bold text-white shadow-md">
               Sau · {compareTargetTitle}
             </div>
           </div>
@@ -470,7 +467,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
         {showSkeleton && (
           <svg
             viewBox="0 0 320 500"
-            className="absolute inset-0 w-full h-full z-20 pointer-events-none overflow-visible animate-in fade-in duration-300"
+            className="absolute inset-0 w-full h-full z-20 pointer-events-none overflow-visible"
           >
             <defs>
               <filter id="skeletonGlow" x="-20%" y="-20%" width="140%" height="140%">
@@ -632,7 +629,7 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
               ? "Tuần 1"
               : activeMilestoneDay === 14
               ? "Tuần 2"
-              : "Tuần 4"}
+              : "Ngày 28"}
           </span>
         </div>
       </div>

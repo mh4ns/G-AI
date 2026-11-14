@@ -12,12 +12,14 @@ interface VelocityMarqueeProps {
 // viewport; the offset wraps after exactly one copy, which keeps the loop seamless.
 const COPIES = 4;
 
+// Plain programme facts in Vietnamese, no performance claims.
 const DEFAULT_ITEMS = [
-  "REAL-TIME AI POSTURE CORRECTION",
-  "28-DAY DIGITAL TWIN TRANSFORMATION",
-  "ZERO WEARABLE HARDWARE REQUIRED",
-  "PILATES SCULPT & BIOMECHANICAL STRENGTH",
-  "PRECISION CAMERA REP COUNTING",
+  "Khảo sát thể trạng 2 phút",
+  "Lộ trình 28 ngày",
+  "Chỉ cần webcam",
+  "Pilates & cơ lõi · Sức mạnh",
+  "Đếm rep qua camera",
+  "Dự đoán vóc dáng",
 ];
 
 export const VelocityMarquee: React.FC<VelocityMarqueeProps> = ({

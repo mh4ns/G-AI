@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 interface SweepHighlightProps {
   children: React.ReactNode;
@@ -47,59 +47,6 @@ export const SweepHighlight: React.FC<SweepHighlightProps> = ({
       {/* 2. Text Container (Always on top at z-20, 100% visible, never obstructed) */}
       <span className="relative z-20 inline-block px-3 py-1 text-white font-black tracking-tight select-none">
         {children}
-      </span>
-    </span>
-  );
-};
-
-interface FlipTextHoverProps {
-  text: string;
-  className?: string;
-  activeClassName?: string;
-}
-
-export const FlipTextHover: React.FC<FlipTextHoverProps> = ({
-  text,
-  className = "",
-  activeClassName = "text-[#FF5A36]",
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <span
-      className={`relative inline-flex overflow-hidden cursor-pointer select-none ${className}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <span className="flex">
-        {text.split("").map((char, index) => (
-          <span
-            key={index}
-            className="inline-block transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
-            style={{
-              transform: isHovered ? "translateY(-100%)" : "translateY(0%)",
-              transitionDelay: `${index * 18}ms`,
-            }}
-          >
-            {char === " " ? "\u00A0" : char}
-          </span>
-        ))}
-      </span>
-
-      {/* Duplicate Row rolling in from bottom */}
-      <span className={`absolute inset-0 flex ${activeClassName}`}>
-        {text.split("").map((char, index) => (
-          <span
-            key={index}
-            className="inline-block transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
-            style={{
-              transform: isHovered ? "translateY(0%)" : "translateY(100%)",
-              transitionDelay: `${index * 18}ms`,
-            }}
-          >
-            {char === " " ? "\u00A0" : char}
-          </span>
-        ))}
       </span>
     </span>
   );

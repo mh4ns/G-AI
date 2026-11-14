@@ -152,7 +152,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-ink-muted">G-AI Movement Goods</p>
+                <p className="text-sm text-ink-muted">G-AI Movement · cửa hàng</p>
               </div>
             </div>
             <button

@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
-import { Check, Sparkles, Target } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { AthleticArchetype, PrimaryGoal } from "@/types/quiz";
 
 interface AgeGoalStepProps {
@@ -18,7 +17,6 @@ interface DemographicCard {
   numericAge: number;
   title: string;
   subtitle: string;
-  image: string;
 }
 
 export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
@@ -34,30 +32,26 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
     {
       range: "18-29",
       numericAge: 24,
-      title: "18 – 29 Tuổi",
-      subtitle: "Năng động, trao đổi chất cao & định hình cơ lõi",
-      image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
+      title: "18–29 tuổi",
+      subtitle: "Xây nền cơ lõi và tư thế",
     },
     {
       range: "30-39",
       numericAge: 34,
-      title: "30 – 39 Tuổi",
-      subtitle: "Siết eo, giải phóng thắt lưng & phục hồi sau sinh",
-      image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80",
+      title: "30–39 tuổi",
+      subtitle: "Cơ lõi, thắt lưng và tư thế khi ngồi nhiều",
     },
     {
       range: "40-49",
       numericAge: 44,
-      title: "40 – 49 Tuổi",
-      subtitle: "Săn chắc toàn thân, bảo vệ mật độ xương & khớp",
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
+      title: "40–49 tuổi",
+      subtitle: "Săn chắc toàn thân, nhẹ nhàng với khớp",
     },
     {
       range: "50+",
       numericAge: 54,
-      title: "50+ Tuổi",
-      subtitle: "Bài tập thảm nhẹ nhàng, cân bằng & dẻo dai",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=600&q=80",
+      title: "50+ tuổi",
+      subtitle: "Bài trên thảm nhẹ, cân bằng và dẻo dai",
     },
   ];
 
@@ -65,30 +59,26 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
     {
       range: "18-29",
       numericAge: 24,
-      title: "18 – 29 Tuổi",
-      subtitle: "Hypertrophy tối đa, tăng cơ nạc & cắt nét cơ thể",
-      image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80",
+      title: "18–29 tuổi",
+      subtitle: "Tăng cơ và sức mạnh",
     },
     {
       range: "30-39",
       numericAge: 34,
-      title: "30 – 39 Tuổi",
-      subtitle: "Siết mỡ bụng bia, tối ưu thể lực & bảo vệ cột sống",
-      image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=600&q=80",
+      title: "30–39 tuổi",
+      subtitle: "Giảm mỡ bụng, giữ lưng khỏe",
     },
     {
       range: "40-49",
       numericAge: 44,
-      title: "40 – 49 Tuổi",
-      subtitle: "Củng cố gân khớp, sức mạnh cơ lõi & chống đau lưng",
-      image: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=600&q=80",
+      title: "40–49 tuổi",
+      subtitle: "Sức mạnh cơ lõi, nhẹ nhàng với khớp",
     },
     {
       range: "50+",
       numericAge: 54,
-      title: "50+ Tuổi",
-      subtitle: "Duy trì khối cơ, sức bền tim mạch & linh hoạt",
-      image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80",
+      title: "50+ tuổi",
+      subtitle: "Giữ khối cơ, sức bền và độ linh hoạt",
     },
   ];
 
@@ -97,74 +87,60 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
   const femaleGoals: { id: PrimaryGoal; title: string; desc: string }[] = [
     {
       id: "tone_muscle",
-      title: "Siết Eo & Cơ Lõi Phẳng",
-      desc: "Làm phẳng bụng dưới, lộ rãnh số 11 và săn chắc eo",
+      title: "Bụng phẳng & eo săn chắc",
+      desc: "Tập cơ lõi sâu để bụng dưới gọn và eo chắc hơn",
     },
     {
       id: "tone_glutes",
-      title: "Nâng Mông & Thon Đùi",
-      desc: "Kích hoạt cơ mông quả đào, giảm mỡ đùi trong và săn đùi sau",
+      title: "Nâng mông & thon đùi",
+      desc: "Tập cơ mông và đùi sau để hông chắc, đùi thon hơn",
     },
     {
       id: "fix_posture",
-      title: "Thẳng Lưng & Chống Gù",
-      desc: "Mở rộng khớp vai, giải phóng áp lực thắt lưng và cổ rùa",
+      title: "Thẳng lưng & chống gù",
+      desc: "Mở vai, giảm mỏi thắt lưng và cổ khi ngồi nhiều",
     },
     {
       id: "lose_weight",
-      title: "Đốt Mỡ Toàn Thân Bền Vững",
-      desc: "Giảm 3 – 6 kg mỡ thừa với các bài tập nhịp thở Pilates kiểm soát",
+      title: "Giảm mỡ toàn thân",
+      desc: "Giảm cân đều đặn với Pilates và ăn ít hơn một chút mỗi ngày",
     },
   ];
 
   const maleGoals: { id: PrimaryGoal; title: string; desc: string }[] = [
     {
       id: "hypertrophy",
-      title: "Tăng Cơ Ngực, Vai & Lưng Xô",
-      desc: "Xây dựng khối cơ nạc dày dặn, thân hình chữ V nam tính",
+      title: "Tăng cơ ngực, vai & lưng xô",
+      desc: "Tăng khối cơ thân trên với chống đẩy, kéo xà hoặc tạ",
     },
     {
       id: "lose_weight",
-      title: "Siết Mỡ & Lộ Rãnh 6 Múi",
-      desc: "Triệt tiêu mỡ bụng dưới, làm rõ nét cơ bụng thẳng và cơ liên sườn",
+      title: "Giảm mỡ bụng",
+      desc: "Giảm mỡ, giữ cơ, bụng gọn và rõ nét hơn",
     },
     {
       id: "explosive_power",
-      title: "Sức Mạnh Bùng Nổ & Calisthenics",
-      desc: "Tăng sức kéo xà, chống đẩy biến thể và sức bật toàn thân",
+      title: "Sức mạnh với trọng lượng cơ thể",
+      desc: "Kéo xà, chống đẩy nhiều kiểu và bật nhảy tốt hơn",
     },
     {
       id: "cardio_stamina",
-      title: "Sức Bền Tim Mạch & Năng Lượng Cao",
-      desc: "Cải thiện VO2 Max, bền bỉ và không còn hụt hơi khi leo dốc",
+      title: "Sức bền & thể lực",
+      desc: "Tim phổi khỏe hơn, ít hụt hơi khi leo cầu thang",
     },
   ];
 
   const goals = isMale ? maleGoals : femaleGoals;
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:py-10 animate-in fade-in duration-500">
-      {/* Step Badge & Title */}
+    <div className="w-full max-w-4xl mx-auto px-4 py-6 sm:py-10">
       <div className="text-center mb-8">
-        <div className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold mb-3 ${
-          isMale 
-            ? "bg-[#FF5A36]/10 border border-[#FF5A36]/30 text-[#FF5A36]" 
-            : "bg-peach-100/80 border border-peach-200 text-[#FF6B4A]"
-        }`}>
-          <Target className="w-3.5 h-3.5" />
-          <span>Bước 2 / 5 • Thể Trạng & Mục Tiêu</span>
-        </div>
+        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2 text-stone-900">
+          Độ tuổi của bạn & mục tiêu trọng tâm
+        </h1>
 
-        <h2 className={`text-2xl sm:text-4xl font-black tracking-tight mb-2 ${
-          isMale ? "text-white" : "text-stone-900"
-        }`}>
-          Độ Tuổi Của Bạn & Mục Tiêu Trọng Tâm
-        </h2>
-
-        <p className={`text-xs sm:text-sm max-w-md mx-auto ${
-          isMale ? "text-stone-400" : "text-stone-600"
-        }`}>
-          Chọn nhóm tuổi để hệ thống hiệu chỉnh tốc độ chuyển hóa sinh học BMR và mật độ phục hồi khớp.
+        <p className="text-xs sm:text-sm max-w-md mx-auto text-stone-600">
+          Tuổi giúp tính lượng calo cơ thể bạn đốt mỗi ngày và chọn bài tập vừa sức với khớp.
         </p>
       </div>
 
@@ -173,108 +149,72 @@ export const AgeGoalStep: React.FC<AgeGoalStepProps> = ({
         {demographicCards.map((card) => {
           const isSelected = selectedAge === card.numericAge;
           return (
-            <div
+            <button type="button" aria-pressed={isSelected}
               key={card.range}
               onClick={() => onSelectAge(card.numericAge)}
-              className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 flex flex-col justify-between p-3.5 sm:p-4 text-left min-h-[190px] sm:min-h-[220px] ${
+              className={`w-full text-left group relative rounded-2xl overflow-hidden transition-all duration-300 border-2 flex flex-col justify-between p-3.5 sm:p-4 text-left min-h-[120px] ${
                 isSelected
-                  ? isMale
-                    ? "border-[#FF5A36] bg-[#FF5A36]/10 ring-2 ring-[#FF5A36]/30 shadow-lg shadow-[#FF5A36]/20"
-                    : "border-[#FF6B4A] bg-[#FFF5F0] ring-2 ring-[#FF6B4A]/30 shadow-lg shadow-[#FF6B4A]/10"
-                  : isMale
-                  ? "border-stone-800 bg-[#161514] hover:border-stone-600"
+                  ? "border-brand bg-[#FFF5F0] ring-2 ring-brand/30 shadow-lg"
                   : "border-stone-200 bg-white hover:border-stone-300"
               }`}
             >
-              {/* Image Preview */}
-              <div className="relative w-full h-24 sm:h-28 rounded-xl overflow-hidden mb-3">
-                <Image
-                  src={card.image}
-                  alt={card.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className={`absolute inset-0 ${
-                  isMale ? "bg-black/30" : "bg-black/10"
-                }`} />
-                {isSelected && (
-                  <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-white ${
-                    isMale ? "bg-[#FF5A36]" : "bg-[#FF6B4A]"
-                  }`}>
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                )}
-              </div>
+              {isSelected && (
+                <span className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-white bg-brand-action" aria-hidden>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </span>
+              )}
 
               {/* Title & Subtitle */}
               <div>
-                <h3 className={`text-sm sm:text-base font-bold tracking-tight mb-1 ${
-                  isMale ? "text-white" : "text-stone-900"
-                }`}>
+                <h3 className="text-sm sm:text-base font-bold tracking-tight mb-1 text-stone-900">
                   {card.title}
                 </h3>
-                <p className={`text-[11px] leading-snug line-clamp-2 ${
-                  isMale ? "text-stone-400" : "text-stone-500"
-                }`}>
+                <p className="text-sm leading-snug text-stone-600 pr-6">
                   {card.subtitle}
                 </p>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
 
       {/* 2. Primary Goals Selection */}
       <div>
-        <h3 className={`text-sm sm:text-base font-bold tracking-tight mb-4 flex items-center gap-2 ${
-          isMale ? "text-white" : "text-stone-900"
-        }`}>
-          <Sparkles className={`w-4 h-4 ${isMale ? "text-[#FF5A36]" : "text-[#FF6B4A]"}`} />
-          <span>Mục Tiêu Ưu Tiên Cao Nhất:</span>
+        <h3 className="text-sm sm:text-base font-bold tracking-tight mb-4 flex items-center gap-2 text-stone-900">
+          <Sparkles className="w-4 h-4 text-brand-action" />
+          <span>Mục tiêu quan trọng nhất với bạn</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {goals.map((g) => {
             const isSelected = selectedGoal === g.id;
             return (
-              <div
+              <button type="button" aria-pressed={isSelected}
                 key={g.id}
                 onClick={() => onSelectGoal(g.id)}
-                className={`p-4 rounded-2xl cursor-pointer transition-all duration-200 border-2 flex items-start justify-between gap-3 ${
+                className={`w-full text-left p-4 rounded-2xl transition-all duration-200 border-2 flex items-start justify-between gap-3 ${
                   isSelected
-                    ? isMale
-                      ? "border-[#FF5A36] bg-[#FF5A36]/15 shadow-md"
-                      : "border-[#FF6B4A] bg-[#FFF5F0] shadow-md"
-                    : isMale
-                    ? "border-stone-800 bg-[#161514] hover:border-stone-700"
+                    ? "border-brand bg-[#FFF5F0] shadow-md"
                     : "border-stone-200 bg-white hover:border-stone-300"
                 }`}
               >
                 <div>
-                  <h4 className={`text-sm sm:text-base font-bold mb-1 ${
-                    isMale ? "text-white" : "text-stone-900"
-                  }`}>
+                  <h4 className="text-sm sm:text-base font-bold mb-1 text-stone-900">
                     {g.title}
                   </h4>
-                  <p className={`text-xs leading-relaxed ${
-                    isMale ? "text-stone-400" : "text-stone-600"
-                  }`}>
+                  <p className="text-xs leading-relaxed text-stone-600">
                     {g.desc}
                   </p>
                 </div>
 
                 <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mt-0.5 transition-colors ${
                   isSelected
-                    ? isMale
-                      ? "border-[#FF5A36] bg-[#FF5A36] text-white"
-                      : "border-[#FF6B4A] bg-[#FF6B4A] text-white"
-                    : isMale
-                    ? "border-stone-700 bg-stone-900"
+                    ? "border-brand bg-brand-action text-white"
                     : "border-stone-300 bg-stone-50"
                 }`}>
                   {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

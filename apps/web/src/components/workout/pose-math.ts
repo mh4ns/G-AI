@@ -236,7 +236,7 @@ export function exercisesFromApi(
 export const DEFAULT_EXERCISES: StudioExercise[] = [
   {
     code: "squat",
-    name: "Squat Căn Chỉnh Trục Hông",
+    name: "Squat căn chỉnh trục hông",
     cue: "Đẩy hông ra sau như ngồi vào ghế, giữ ngực mở và lưng thẳng tự nhiên.",
     criteria: "Góc gối 80°–100° ở điểm thấp nhất",
     joints: [23, 25, 27],
@@ -247,7 +247,7 @@ export const DEFAULT_EXERCISES: StudioExercise[] = [
   },
   {
     code: "plank",
-    name: "Plank Siết Cơ Ngang Bụng",
+    name: "Plank siết cơ ngang bụng",
     cue: "Gồng chắc cơ bụng, thở đều, giữ một đường thẳng từ vai đến gót chân.",
     criteria: "Vai–hông–gót thẳng hàng 165°–180° (đặt camera nhìn ngang)",
     joints: [11, 23, 27],
@@ -258,7 +258,7 @@ export const DEFAULT_EXERCISES: StudioExercise[] = [
   },
   {
     code: "wall_angel",
-    name: "Mở Vai & Sửa Gù Lưng Trên",
+    name: "Mở vai & sửa gù lưng trên",
     cue: "Ép sát bả vai, từ từ trượt cánh tay lên cao rồi hạ xuống chậm.",
     criteria: "Tay nâng qua đầu: góc khuỷu–vai–hông 140°–180°",
     joints: [13, 11, 23],

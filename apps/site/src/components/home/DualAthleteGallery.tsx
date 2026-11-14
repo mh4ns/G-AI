@@ -9,10 +9,11 @@ type GalleryFilter = "all" | "female" | "male";
 interface GalleryItem {
   id: string;
   title: string;
-  category: "Nữ · Pilates & Sculpt" | "Nam · Strength & Calisthenics";
+  category: "Pilates & cơ lõi" | "Sức mạnh";
   gender: "female" | "male";
   targetMuscle: string;
   image: string;
+  alt: string;
   spanClass: string;
   correctionTip: string;
 }
@@ -20,61 +21,67 @@ interface GalleryItem {
 const GALLERY_ITEMS: GalleryItem[] = [
   {
     id: "f1",
-    title: "Reformer Carriage Long Stretch",
-    category: "Nữ · Pilates & Sculpt",
+    title: "Long Stretch trên máy Reformer",
+    category: "Pilates & cơ lõi",
     gender: "female",
     targetMuscle: "Vùng bụng sâu & vai",
     image: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=800&q=80",
+    alt: "Người tập Pilates trên thảm, giữ lưng thẳng",
     spanClass: "md:col-span-2 md:row-span-2",
-    correctionTip: "Giữ xương chậu trung tính, không để võng thắt lưng khi đẩy cáp.",
+    correctionTip: "Giữ xương chậu trung tính, không để võng thắt lưng khi đẩy.",
   },
   {
     id: "m1",
-    title: "Tactical Weighted Pull-Up",
-    category: "Nam · Strength & Calisthenics",
+    title: "Pull-Up có tạ",
+    category: "Sức mạnh",
     gender: "male",
     targetMuscle: "Lưng xô & khớp bả vai",
     image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
+    alt: "Người tập sức mạnh với tạ trong phòng tập",
     spanClass: "md:col-span-1 md:row-span-1",
-    correctionTip: "Hạ bả vai trước khi kéo để kích hoạt tối đa nhóm cơ xô (Lats).",
+    correctionTip: "Hạ bả vai trước khi kéo để dùng đúng nhóm cơ xô.",
   },
   {
     id: "f2",
-    title: "Pelvic Bridge & Glute Alignment",
-    category: "Nữ · Pilates & Sculpt",
+    title: "Glute Bridge",
+    category: "Pilates & cơ lõi",
     gender: "female",
     targetMuscle: "Cơ mông & đùi sau",
     image: "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=800&q=80",
+    alt: "Bài tập nâng hông trên thảm",
     spanClass: "md:col-span-1 md:row-span-1",
     correctionTip: "Cuộn từng đốt sống rời sàn, thở ra ở điểm siết cao nhất.",
   },
   {
     id: "m2",
-    title: "Biomechanical Barbell Back Squat",
-    category: "Nam · Strength & Calisthenics",
+    title: "Back Squat với thanh đòn",
+    category: "Sức mạnh",
     gender: "male",
     targetMuscle: "Tứ đầu đùi & khung chậu",
     image: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=800&q=80",
+    alt: "Người tập squat với thanh đòn",
     spanClass: "md:col-span-1 md:row-span-2",
-    correctionTip: "AI Live PT kiểm soát góc gối 90° song song sàn, ấn lực qua gót chân.",
+    correctionTip: "Hạ đến khi đùi song song sàn, ấn lực qua gót chân.",
   },
   {
     id: "f3",
-    title: "Isometric Wall Alignment & Spine Lengthening",
-    category: "Nữ · Pilates & Sculpt",
+    title: "Đứng áp tường, kéo dài cột sống",
+    category: "Pilates & cơ lõi",
     gender: "female",
     targetMuscle: "Cột sống cổ & thắt lưng",
     image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
+    alt: "Người tập đứng thẳng, kéo dài cột sống",
     spanClass: "md:col-span-1 md:row-span-1",
-    correctionTip: "Kéo dài đỉnh đầu lên trần nhà, giải tỏa áp lực đĩa đệm lưng.",
+    correctionTip: "Kéo dài đỉnh đầu lên trần nhà, giữ lưng áp sát tường.",
   },
   {
     id: "m3",
-    title: "Explosive Kettlebell Clean & Press",
-    category: "Nam · Strength & Calisthenics",
+    title: "Kettlebell Clean & Press",
+    category: "Sức mạnh",
     gender: "male",
     targetMuscle: "Toàn thân & chuỗi cơ sau",
     image: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80",
+    alt: "Người tập với tạ ấm, chuẩn bị đẩy lên",
     spanClass: "md:col-span-1 md:row-span-1",
     correctionTip: "Phát lực dứt khoát từ hông, gồng chặt cơ bụng khi tạ lên đỉnh.",
   },
@@ -82,8 +89,8 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 const FILTERS = [
   { id: "all", label: "Tất cả" },
-  { id: "female", label: "Nữ · Pilates" },
-  { id: "male", label: "Nam · Strength" },
+  { id: "female", label: "Pilates & cơ lõi" },
+  { id: "male", label: "Sức mạnh" },
 ] as const;
 
 export const DualAthleteGallery: React.FC = () => {
@@ -96,10 +103,10 @@ export const DualAthleteGallery: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <h2 className={SECTION_HEADING}>Vẻ đẹp vận động &amp; tư thế chuẩn</h2>
+            <h2 className={SECTION_HEADING}>Hai chương trình, tập ngay tại nhà</h2>
             <p className="mt-4 max-w-[60ch] text-base leading-relaxed text-ink-muted">
-              Nguồn cảm hứng thị giác thể thao kết hợp khoa học cơ sinh học cho cả nam và nữ. Mỗi động tác đều có
-              sự đồng hành hướng dẫn của trợ lý AI.
+              Pilates cho cơ lõi và tư thế, sức mạnh cho chuỗi cơ sau. Mỗi bài có hướng dẫn và AI theo dõi form qua
+              camera.
             </p>
           </div>
 
@@ -120,7 +127,7 @@ export const DualAthleteGallery: React.FC = () => {
             >
               <Image
                 src={item.image}
-                alt=""
+                alt={item.alt}
                 fill
                 className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"

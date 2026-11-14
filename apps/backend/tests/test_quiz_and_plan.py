@@ -68,3 +68,11 @@ async def test_quiz_validation(client):
     assert (await client.post("/api/v1/quiz/submit", json=bad_age)).status_code == 422
     assert (await client.post("/api/v1/quiz/submit", json={**QUIZ, "height_cm": 20})).status_code == 422
     assert (await client.post("/api/v1/quiz/submit", json={**QUIZ, "focus_areas": ["<img>"]})).status_code == 422
+
+
+async def test_target_weight_below_healthy_bmi_is_rejected(client):
+    # 162 cm: BMI 18.5 is about 48.6 kg.
+    low = {**QUIZ, "target_weight_kg": 45}
+    assert (await client.post("/api/v1/quiz/submit", json=low)).status_code == 422
+    at_floor = {**QUIZ, "target_weight_kg": 48.6}
+    assert (await client.post("/api/v1/quiz/submit", json=at_floor)).status_code == 201

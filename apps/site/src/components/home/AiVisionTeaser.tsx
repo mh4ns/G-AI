@@ -8,17 +8,19 @@ import { FOCUS_RING, SECTION_HEADING } from "@/components/home/SegmentedControl"
 
 const CAPABILITIES = [
   {
-    title: "Sửa lỗi võng lưng & gù vai tức thì",
-    detail: "Giọng nói AI nhắc nhở hạ vai và siết cơ bụng ngay khi bạn sai biên độ.",
+    title: "Đếm rep khi bạn đạt đúng góc",
+    detail:
+      "Squat chỉ được tính khi góc gối đạt 80–100° ở điểm thấp nhất; Plank được tính khi vai, hông và gót thẳng hàng.",
   },
   {
-    title: "Tự động đếm rep khi đạt góc khớp chuẩn",
-    detail: "Chỉ tính điểm khi Squat đủ sâu 90° hoặc Plank giữ thẳng trục cột sống.",
+    title: "Nhắc bằng giọng nói khi sai form",
+    detail:
+      "Giữ sai tư thế quá vài giây, AI đọc lời nhắc của bài tập, ví dụ “Đẩy hông ra sau như ngồi vào ghế”.",
   },
 ];
 
 /**
- * AI Live PT section. Always dark, whatever the page theme: it stages a camera
+ * Camera workout section. Always dark, whatever the page theme: it stages a camera
  * view, so `data-theme="dark"` is pinned on the section itself.
  */
 export const AiVisionTeaser: React.FC = () => {
@@ -27,12 +29,11 @@ export const AiVisionTeaser: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <h2 className={SECTION_HEADING}>Tập chuẩn form ngay tại nhà với AI Live PT</h2>
+            <h2 className={SECTION_HEADING}>Tập đúng form tại nhà, chỉ cần webcam</h2>
 
             <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-ink-muted">
-              Không cần mua Apple Watch hay vòng đeo đắt tiền. Bạn chỉ cần đặt điện thoại hoặc mở webcam máy tính.
-              Trợ lý AI phân tích 33 điểm xương khớp theo thời gian thực (MediaPipe Pose), cảnh báo sai tư thế và tự
-              động đếm rep.
+              Không cần đồng hồ thông minh hay vòng đeo. AI theo dõi 33 điểm trên cơ thể bằng MediaPipe Pose. Video
+              được xử lý ngay trên máy bạn, không gửi đi đâu.
             </p>
 
             <ul className="mt-8 space-y-5">
@@ -54,12 +55,9 @@ export const AiVisionTeaser: React.FC = () => {
                 href={appUrl("/quiz")}
                 className={`group inline-flex h-12 items-center gap-2.5 rounded-full bg-ink px-6 text-[15px] font-semibold text-page transition-[opacity,transform] duration-200 hover:opacity-85 active:scale-[0.98] ${FOCUS_RING}`}
               >
-                <span>Làm khảo sát để kích hoạt AI Live PT</span>
+                <span>Làm khảo sát để bắt đầu tập</span>
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
               </Link>
-              <p className="mt-3 max-w-[52ch] text-sm leading-relaxed text-ink-faint">
-                Hoàn thành đánh giá thể trạng 2 phút để thuật toán cá nhân hóa góc khớp và giáo án riêng cho bạn.
-              </p>
             </div>
           </div>
 
@@ -88,7 +86,7 @@ export const AiVisionTeaser: React.FC = () => {
                 <svg
                   viewBox="0 0 400 300"
                   role="img"
-                  aria-label="Khung xương AI nhận diện tư thế squat, góc gối 92 độ đạt chuẩn"
+                  aria-label="Hình minh họa: khung xương tư thế squat, góc gối 92 độ, trong khoảng được tính rep"
                   className="h-full max-h-[320px] w-full"
                 >
                   <g className="stroke-positive" strokeLinecap="round">

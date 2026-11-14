@@ -11,6 +11,12 @@ import type { StoreProduct } from "@/types/store";
 
 export const API_BASE = "/api/v1";
 
+/**
+ * Prices and ordering stay hidden until the launch prices are confirmed.
+ * Set NEXT_PUBLIC_STORE_PRICES=true to show prices, the bag and checkout.
+ */
+export const STORE_PRICES_PUBLISHED = process.env.NEXT_PUBLIC_STORE_PRICES === "true";
+
 /** Product as the storefront renders it, from the backend or the sample catalog. */
 export interface StoreItem {
   id: string;
@@ -25,6 +31,9 @@ export interface StoreItem {
   rating: number;
   reviews: number;
   image: string;
+  /** Product colour, shown as the card's swatch tile. */
+  colorHex: string;
+  colorName: string;
   specs: string[];
   description: string;
   sizes: string[];
@@ -116,7 +125,7 @@ export function cartKey(productId: string, size: string): string {
 
 const CATEGORY_LABELS: Record<string, string> = {
   apparel: "Trang Phục",
-  equipment: "Dụng Cụ Studio",
+  equipment: "Dụng cụ tập",
   device: "Thiết Bị",
   supplement: "Dinh Dưỡng",
 };
@@ -141,7 +150,9 @@ export function fromApiProduct(p: ApiProduct): StoreItem {
     rating: p.rating,
     reviews: p.review_count,
     image: p.image_front,
-    specs: [p.color_name, p.material, p.discipline].filter(Boolean),
+    colorHex: p.color_hex,
+    colorName: p.color_name,
+    specs: [p.material, p.discipline].filter(Boolean),
     description: p.description || p.subtitle,
     sizes: p.sizes_available?.length ? p.sizes_available : ["One Size"],
     stock: p.stock_quantity,
@@ -161,7 +172,9 @@ export function fromMockProduct(p: StoreProduct): StoreItem {
     rating: p.rating ?? 0,
     reviews: p.reviewsCount ?? 0,
     image: p.imageFront,
-    specs: [p.colorName, p.activity].filter(Boolean),
+    colorHex: p.colorHex,
+    colorName: p.colorName,
+    specs: [p.subcategory ?? ""].filter(Boolean),
     description: p.description,
     sizes: p.sizes.length ? p.sizes : ["One Size"],
     stock: null,

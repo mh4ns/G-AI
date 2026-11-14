@@ -33,16 +33,16 @@ export const SEMANTIC_COLORS = {
   hotspots: {
     cervical: {
       id: "cervical",
-      name: "Cổ & Vai Gáy",
+      name: "Cổ & vai gáy",
       shortName: "Cổ & Vai",
       color: "#FF5A36", // Cam
       bg: "rgba(255, 90, 54, 0.15)",
       border: "rgba(255, 90, 54, 0.4)",
-      badgeClass: "text-[#FF5A36] border-[#FF5A36]/40 bg-[#FF5A36]/10",
+      badgeClass: "text-brand border-brand/40 bg-brand/10",
     },
     thoracic: {
       id: "thoracic",
-      name: "Lưng Trên (Gù)",
+      name: "Lưng trên (gù)",
       shortName: "Lưng Trên",
       color: "#38BDF8", // Xanh dương
       bg: "rgba(56, 189, 248, 0.15)",
@@ -51,7 +51,7 @@ export const SEMANTIC_COLORS = {
     },
     core: {
       id: "core",
-      name: "Cơ Bụng Sâu & Eo",
+      name: "Cơ bụng sâu & eo",
       shortName: "Bụng & Eo",
       color: "#10B981", // Xanh lá
       bg: "rgba(16, 185, 129, 0.15)",
@@ -60,7 +60,7 @@ export const SEMANTIC_COLORS = {
     },
     pelvis: {
       id: "pelvis",
-      name: "Khung Chậu & Mông",
+      name: "Khung chậu & mông",
       shortName: "Khung Chậu",
       color: "#F59E0B", // Vàng
       bg: "rgba(245, 158, 11, 0.15)",

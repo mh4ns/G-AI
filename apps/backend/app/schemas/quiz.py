@@ -4,6 +4,9 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+# Lowest BMI a target weight may sit at (WHO healthy range starts at 18.5).
+HEALTHY_BMI_MIN = 18.5
+
 
 class QuizSubmitRequest(BaseModel):
     session_id: str = Field(..., min_length=8, max_length=100, description="Client generated UUID session")
@@ -27,6 +30,17 @@ class QuizSubmitRequest(BaseModel):
         for tag in [*self.focus_areas, *self.obstacles]:
             if not (1 <= len(tag) <= 50) or not tag.replace("_", "").isalnum():
                 raise ValueError(f"Invalid tag: {tag!r}")
+        return self
+
+    @model_validator(mode="after")
+    def _target_not_underweight(self) -> "QuizSubmitRequest":
+        # Same rule as the web quiz: no plan may aim below the healthy BMI
+        # floor (18.5) for the person's height.
+        floor_kg = HEALTHY_BMI_MIN * (self.height_cm / 100) ** 2
+        if self.target_weight_kg < floor_kg:
+            raise ValueError(
+                f"target_weight_kg must be at least {floor_kg:.1f} kg (BMI {HEALTHY_BMI_MIN}) for this height"
+            )
         return self
 
 

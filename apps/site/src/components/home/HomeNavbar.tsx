@@ -16,7 +16,8 @@ interface HomeNavbarProps {
 const FOCUS_RING =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
-const ICON_BUTTON = `relative flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
+// 44px: the minimum tap target.
+const ICON_BUTTON = `relative flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
 
 const NAV_LINK = `rounded text-sm font-medium text-ink-muted underline-offset-8 transition-colors duration-200 hover:text-ink hover:underline ${FOCUS_RING}`;
 
@@ -34,14 +35,14 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
           aria-label="G-AI – trang chủ"
           className={`group flex shrink-0 items-center rounded-lg ${FOCUS_RING}`}
         >
-          <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
+          <BrandLogo isLight={isLight} size="md" />
         </Link>
 
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-8 md:flex">
           <Link href={appUrl("/prediction")} className={NAV_LINK}>
-            Bản sao số (Digital Twin)
+            Dự đoán vóc dáng
           </Link>
-          <Link href="/#movement-goods" className={NAV_LINK}>
+          <Link href="/store" className={NAV_LINK}>
             Dụng cụ tập
           </Link>
         </nav>

@@ -4,19 +4,18 @@ import { URLS } from "./urls";
 /** Walks the onboarding quiz with its default answers and skips the photo step. */
 export async function completeQuiz(page: Page) {
   await expect(page).toHaveURL(`${URLS.app}/quiz`);
-  // Step 1: archetype card (a clickable card, not a button).
-  await page.getByText("Nữ Giới • Pilates & Core").click();
+  // Step 1: programme card (a button with aria-pressed).
+  await page.getByRole("button", { name: /Pilates & cơ lõi/ }).click();
   // Steps 2-4: keep the defaults.
   for (let i = 0; i < 3; i++) {
-    await page.getByRole("button", { name: "Tiếp Tục" }).click();
+    await page.getByRole("button", { name: "Tiếp tục" }).click();
   }
   // Step 5: obstacles, then generate.
-  await page.getByRole("button", { name: /Tạo Giáo Án 28 Ngày/ }).click();
+  await page.getByRole("button", { name: /Tạo giáo án 28 ngày/ }).click();
   // Step 6: photo is optional.
-  await page.getByRole("button", { name: /Bỏ qua & dùng hình thể mẫu/ }).click();
+  await page.getByRole("button", { name: /Bỏ qua, dùng hình mẫu/ }).click();
   // Step 7 is an animated "analyzing" loader; step 8 is the result.
-  await expect(page.getByText("Kế Hoạch Đã Khởi Tạo Thành Công!")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("heading", { level: 1, name: /Lộ Trình 28 Ngày/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Lộ trình 28 ngày/ })).toBeVisible({ timeout: 30_000 });
 }
 
 export function uniqueEmail(prefix = "e2e") {

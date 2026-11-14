@@ -14,7 +14,7 @@ export const MILESTONES_4_STEPS: TimelineMilestone[] = [
   { day: 0, label: "Ngày 0", stageTitle: "Khởi điểm", percent: 0 },
   { day: 7, label: "Tuần 1", stageTitle: "Kích hoạt", percent: 25 },
   { day: 14, label: "Tuần 2", stageTitle: "Tái căn chỉnh", percent: 50 },
-  { day: 28, label: "Tuần 4", stageTitle: "Vóc dáng mới", percent: 100 },
+  { day: 28, label: "Ngày 28", stageTitle: "Hoàn thành", percent: 100 },
 ];
 
 const STEP_DAYS = [0, 7, 14, 28];
@@ -98,17 +98,17 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
     <div
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      className="w-full bg-[#11100F] border border-stone-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 backdrop-blur-xl select-none shadow-xl focus:outline-none focus:border-[#FF5A36]/60 transition-colors font-sans"
+      className="w-full bg-[#11100F] border border-stone-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 backdrop-blur-xl select-none shadow-xl focus:outline-none focus:border-brand/60 transition-colors font-sans"
       role="region"
       aria-label="Thanh điều khiển dòng thời gian chuyển hóa 28 ngày"
     >
       {/* Scrubber Header */}
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold text-[#FF5A36] uppercase tracking-normal">
+        <span className="text-xs font-bold text-brand tracking-normal">
           Dòng thời gian chuyển hóa 28 ngày
         </span>
         <span className="text-xs text-stone-300 font-medium">
-          Mốc: <strong className="text-white font-mono">{activeMilestone.label}</strong> ({activeMilestone.stageTitle})
+          Mốc: <strong className="text-white ">{activeMilestone.label}</strong> ({activeMilestone.stageTitle})
         </span>
       </div>
 
@@ -122,7 +122,7 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
             }
             setIsPlaying(!isPlaying);
           }}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#FF5A36] hover:bg-[#e04825] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#FF5A36]/30 transition-all active:scale-95"
+          className="w-11 h-11 rounded-xl bg-brand-action hover:bg-brand-action-hover text-white flex items-center justify-center shrink-0 transition-colors active:translate-y-px"
           title={isPlaying ? "Tạm dừng" : "Tự động phát qua các tuần (1.2s/tuần)"}
           aria-label={isPlaying ? "Tạm dừng phát" : "Tự động phát qua 4 mốc tuần"}
         >
@@ -136,12 +136,12 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
         </button>
 
         {/* Thick Interactive Track (>= 8px, orange progress, >= 28px thumb, snap to milestone) */}
-        <div className="flex-1 relative" ref={trackRef}>
+        <div className="flex-1 relative mx-4" ref={trackRef}>
           {/* Base Track (Thick >= 10px) */}
           <div className="relative h-2.5 sm:h-3 w-full bg-stone-800 rounded-full overflow-visible">
             {/* Active Orange Passed Fill */}
             <div
-              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#FF5A36] to-[#FF6B4A] rounded-full transition-all duration-150"
+              className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-brand to-brand rounded-full transition-all duration-150"
               style={{ width: `${progressPercent}%` }}
             />
 
@@ -156,15 +156,17 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
                   type="button"
                   onClick={() => onDayChange(m.day)}
                   style={{ left: `${m.percent}%` }}
+                  // Pointer shortcut only: the range input and the labels below cover keyboard and screen readers.
+                  tabIndex={-1}
+                  aria-hidden
                   className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1 group focus:outline-none"
-                  aria-label={`Chuyển tới ${m.label}: ${m.stageTitle}`}
                 >
                   <div
                     className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
                       isSelected
-                        ? "bg-white border-[#FF5A36] scale-125 ring-4 ring-[#FF5A36]/40"
+                        ? "bg-white border-brand scale-125 ring-4 ring-brand/40"
                         : isPassed
-                        ? "bg-[#FF5A36] border-white/80"
+                        ? "bg-brand-action border-white/80"
                         : "bg-stone-700 border-stone-900 group-hover:bg-stone-500"
                     }`}
                   />
@@ -193,14 +195,14 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
             {/* Large Thumb (>= 28px) with radiant halo ring */}
             <div
               style={{ left: `${progressPercent}%` }}
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FF5A36] border-2 border-white shadow-lg shadow-[#FF5A36]/50 ring-4 ring-[#FF5A36]/30 flex items-center justify-center pointer-events-none transition-all duration-150 z-10"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-brand-action border-2 border-white shadow-lg ring-4 ring-brand/30 flex items-center justify-center pointer-events-none transition-all duration-150 z-10"
             >
-              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-white" />
             </div>
           </div>
 
           {/* 4 Milestone Labels directly aligned below the track */}
-          <div className="relative w-full mt-3 h-7">
+          <div className="relative w-full mt-3 h-11">
             {MILESTONES_4_STEPS.map((m, idx) => {
               const isSelected = activeIndex === idx;
 
@@ -210,14 +212,21 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
                   type="button"
                   onClick={() => onDayChange(m.day)}
                   style={{ left: `${m.percent}%` }}
-                  className={`absolute -translate-x-1/2 flex flex-col items-center transition-colors text-center ${
+                  // Ends align inward so their labels never spill past the track.
+                  className={`absolute flex flex-col transition-colors min-h-11 ${
+                    idx === 0
+                      ? "-translate-x-4 items-start text-left"
+                      : idx === MILESTONES_4_STEPS.length - 1
+                        ? "-translate-x-[calc(100%-1rem)] items-end text-right"
+                        : "-translate-x-1/2 items-center text-center"
+                  } ${
                     isSelected ? "text-white" : "text-stone-400 hover:text-stone-200"
                   }`}
                 >
-                  <span className={`text-xs ${isSelected ? "font-bold text-[#FF5A36]" : "font-medium"}`}>
+                  <span className={`text-xs ${isSelected ? "font-bold text-brand" : "font-medium"}`}>
                     {m.label}
                   </span>
-                  <span className="text-[11px] text-stone-400 hidden sm:inline whitespace-nowrap">
+                  <span className="text-xs text-stone-400 hidden sm:inline whitespace-nowrap">
                     {m.stageTitle}
                   </span>
                 </button>
