@@ -4,7 +4,7 @@ The repo ships **three independent websites** that share one design foundation (
 
 | Vercel project | Root Directory | What it serves |
 |---|---|---|
-| `g-ai-hub` | `apps/hub` | Main website: product cards that link to the other two. Every product's logo links back here. |
+| `g-ai-hub` | `apps/hub` | Main website: product cards that link to the other two. |
 | `g-ai-site` | `apps/site` | G-AI Movement: brand landing page and Movement Goods store |
 | `g-ai-app` | `apps/web` | Onboarding quiz, photo prediction, Today dashboard, login, `/api/prediction/*` |
 

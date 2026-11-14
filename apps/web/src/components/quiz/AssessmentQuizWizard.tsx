@@ -155,13 +155,13 @@ export const AssessmentQuizWizard: React.FC = () => {
           : "bg-canvas text-stone-900 selection:bg-[#FF6B4A]/20 selection:text-[#FF6B4A]"
       }`}
     >
-      {/* Header with progress line (shown for steps 2 to 6) */}
-      {step >= 2 && step <= 6 && (
+      {/* Header with logo, back button and progress line (steps 1 to 6) */}
+      {step <= 6 && (
         <StepHeader
           currentStep={step}
           totalSteps={6}
           onBack={handleBack}
-          canGoBack={true}
+          canGoBack={step > 1}
           archetype={responses.archetype}
         />
       )}

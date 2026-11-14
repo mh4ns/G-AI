@@ -1,5 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
-import { BrandLogo, appUrl, siteUrl } from "@g-ai/ui";
+import { BrandLogo, appUrl, homeUrl, siteUrl } from "@g-ai/ui";
 
 /**
  * G-AI main website. Each product is its own deployment; this page is the shared
@@ -97,7 +97,9 @@ export default function HubPage() {
   return (
     <div className="min-h-screen bg-canvas text-stone-900">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <BrandLogo isLight size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
+        <a href={homeUrl()} aria-label="G-AI – trang chủ" className="group flex items-center rounded-lg">
+          <BrandLogo isLight size="md" showSubtitle subtitle="Biometric Kinetic Lab" />
+        </a>
         <a
           href={appUrl("/login")}
           className="text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"

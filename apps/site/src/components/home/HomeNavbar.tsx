@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Lightbulb, ShoppingBag } from "lucide-react";
-import { BrandLogo, appUrl, hubUrl } from "@g-ai/ui";
+import { BrandLogo, appUrl } from "@g-ai/ui";
 
 interface HomeNavbarProps {
   /** Picks the black or white logo artwork; colours follow `data-theme`. */
@@ -30,8 +30,8 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
     <header className="sticky top-0 z-50 border-b border-line bg-page/85 text-ink backdrop-blur-md transition-colors duration-300">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
-          href={hubUrl("/")}
-          aria-label="G-AI – trang chính"
+          href="/"
+          aria-label="G-AI – trang chủ"
           className={`group flex shrink-0 items-center rounded-lg ${FOCUS_RING}`}
         >
           <BrandLogo isLight={isLight} size="md" showSubtitle subtitle="Biometric Kinetic Lab" />

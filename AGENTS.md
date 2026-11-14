@@ -22,15 +22,21 @@ Single-context layout with root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/
 
 ## Architecture & Monorepo Layout
 
-- **`apps/hub`**: Main website. Product cards link to each product site; every product's logo links back here via `hubUrl()`.
+- **`apps/hub`**: Main website. Product cards link to each product site.
 - **`apps/site`**: Brand website (landing page + Movement Goods store). Next.js 15, deployed as its own Vercel project.
 - **`apps/web`**: Coaching app (quiz, prediction, Today, login). Next.js 15 (App Router), React 19, Tailwind CSS, Lucide icons, Canvas Confetti. Proxies `/api/v1/*` to the backend (see ADR-0001). MediaPipe Pose is planned, not yet integrated.
-- **`packages/ui`** (`@g-ai/ui`): Shared design foundation for both sites: Tailwind preset (`bg-canvas`, `bg-canvas-dark`, `brand` colours), base CSS, `BrandLogo`, and `hubUrl()` / `appUrl()` / `siteUrl()` for cross-site links. Change the shared background here, not in pages.
+- **`packages/ui`** (`@g-ai/ui`): Shared design foundation for both sites: Tailwind preset (`bg-canvas`, `bg-canvas-dark`, `brand` colours), base CSS, `BrandLogo`, `BackLink`, and `hubUrl()` / `appUrl()` / `siteUrl()` / `homeUrl()` for cross-site links. Change the shared background here, not in pages.
 - **`apps/backend`**: Python FastAPI, Uvicorn, async SQLAlchemy 2.0 (`aiosqlite`/PostgreSQL), Pydantic v2 schemas, Alembic migrations, JWT cookie sessions.
 - **`packages/shared-types`**: Shared types and `fixtures/plan-vectors.json`, the parity fixture both apps' plan maths is tested against.
 - **`docs/`**: Technical specs, use case breakdown (`USECASE_BREAKDOWN.md`), architecture designs, sequence diagrams, and agent configs (`docs/agents/`).
 
 ---
+
+## Navigation rules
+
+- **Logo**: on every page the logo goes to the brand site's home page. In `apps/web` and `apps/hub` use `homeUrl()`; in `apps/site` use `/`.
+- **Back button**: use `BackLink` from `@g-ai/ui`. It returns to the page the visitor came from, including a page on another site, and falls back to its `fallbackHref` when nothing is behind the page (bookmark, new tab). Do not hard-code a back destination.
+- Both rules are covered by `e2e/navigation.spec.ts`.
 
 ## Commands (run before pushing)
 

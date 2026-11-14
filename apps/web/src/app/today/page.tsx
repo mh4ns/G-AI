@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Flame, Lightbulb, Play, Plus, RotateCcw, ShoppingBag } from "lucide-react";
 import { PersonalizedPlanResult } from "@/types/quiz";
-import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
+import { BrandLogo, homeUrl, siteUrl } from "@g-ai/ui";
 import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
 import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
 
@@ -221,8 +221,8 @@ export default function TodayDashboardPage() {
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
-              href={hubUrl("/")}
-              aria-label="Về trang chủ G-AI"
+              href={homeUrl()}
+              aria-label="G-AI – trang chủ"
               className={`flex shrink-0 items-center rounded-lg transition-opacity hover:opacity-70 ${FOCUS_RING}`}
             >
               <BrandLogo variant="horizontal" isLight={isLight} size="sm" />

@@ -4,12 +4,14 @@ import React from "react";
 import { ArrowLeft, Lock } from "lucide-react";
 import Link from "next/link";
 import { AthleticArchetype } from "@/types/quiz";
-import { BrandLogo, hubUrl } from "@g-ai/ui";
+import { BackLink, BrandLogo, homeUrl } from "@g-ai/ui";
 
 interface StepHeaderProps {
   currentStep: number;
   totalSteps: number;
+  /** Go to the previous quiz step. */
   onBack: () => void;
+  /** False on the first step, where "back" leaves the quiz for the page the visitor came from. */
   canGoBack: boolean;
   archetype?: AthleticArchetype;
 }
@@ -23,28 +25,32 @@ export const StepHeader: React.FC<StepHeaderProps> = ({
 }) => {
   const isMale = archetype === "male_strength";
   const progressPercent = Math.round((currentStep / totalSteps) * 100);
+  const backButtonClass = `w-9 h-9 rounded-full border shadow-sm flex items-center justify-center transition-colors ${
+    isMale
+      ? "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-[#FF5A36]"
+      : "bg-white border-stone-200 text-stone-600 hover:text-black hover:border-black"
+  }`;
 
   return (
     <header className="w-full max-w-xl mx-auto px-4 pt-6 pb-2 select-none">
       {/* Top Bar with Brand & Back */}
       <div className="flex items-center justify-between mb-4">
         {canGoBack ? (
-          <button
-            onClick={onBack}
-            className={`w-9 h-9 rounded-full border shadow-sm flex items-center justify-center transition-colors ${
-              isMale
-                ? "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-[#FF5A36]"
-                : "bg-white border-stone-200 text-stone-600 hover:text-black hover:border-black"
-            }`}
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="w-4 h-4 stroke-[2]" />
+          <button type="button" onClick={onBack} className={backButtonClass} aria-label="Quay lại bước trước">
+            <ArrowLeft className="w-4 h-4 stroke-[2]" aria-hidden />
           </button>
         ) : (
-          <div className="w-9" />
+          <BackLink
+            fallbackHref={homeUrl()}
+            className={backButtonClass}
+            aria-label="Quay lại trang trước"
+            title="Quay lại trang trước"
+          >
+            <ArrowLeft className="w-4 h-4 stroke-[2]" aria-hidden />
+          </BackLink>
         )}
 
-        <Link href={hubUrl("/")} className="flex items-center gap-2 group">
+        <Link href={homeUrl()} aria-label="G-AI – trang chủ" className="flex items-center gap-2 group">
           <BrandLogo isLight={!isMale} size="sm" />
           <span className="font-mono text-[10px] tracking-widest text-stone-400 uppercase hidden sm:inline">
             / {isMale ? "STRENGTH" : "PILATES"}

@@ -20,7 +20,12 @@ export function appUrl(path: string = "/"): string {
   return `${APP_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** Absolute URL on the main hub site. Every product's logo links here. */
+/** Absolute URL on the main hub site (the page of product cards). */
 export function hubUrl(path: string = "/"): string {
   return `${HUB_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+/** Where the logo goes from every page of the coaching app: the brand site's home page. */
+export function homeUrl(): string {
+  return siteUrl("/");
 }

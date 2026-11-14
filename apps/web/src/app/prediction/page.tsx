@@ -16,7 +16,7 @@ import {
 import { MorphingAvatar } from "@/components/prediction/MorphingAvatar";
 import { TelemetryHud } from "@/components/prediction/TelemetryHud";
 import { TimelineScrubber } from "@/components/prediction/TimelineScrubber";
-import { BrandLogo, siteUrl, hubUrl } from "@g-ai/ui";
+import { BackLink, BrandLogo, homeUrl, siteUrl } from "@g-ai/ui";
 import { BodyCalibrationModal } from "@/components/prediction/BodyCalibrationModal";
 import { PlanSummaryCard, PlanConfig } from "@/components/prediction/PlanSummaryCard";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
@@ -409,14 +409,16 @@ export default function PredictionPage() {
       <header className="sticky top-0 z-40 bg-canvas-dark/90 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link
-              href="/today"
+            {/* Visitors arrive from Today, the quiz result or the brand site: go back there. */}
+            <BackLink
+              fallbackHref="/today"
               className="p-2 -ml-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800/60 transition-colors"
-              title="Quay lại Today Hub"
+              title="Quay lại trang trước"
+              aria-label="Quay lại trang trước"
             >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <Link href={hubUrl("/")} className="flex items-center group">
+              <ArrowLeft className="w-5 h-5" aria-hidden />
+            </BackLink>
+            <Link href={homeUrl()} aria-label="G-AI – trang chủ" className="flex items-center group">
               <BrandLogo isLight={false} size="sm" showSubtitle subtitle="Dự đoán vóc dáng 28 ngày" />
             </Link>
           </div>

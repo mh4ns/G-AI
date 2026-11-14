@@ -19,8 +19,8 @@
 | Dinh dưỡng, IoT/BLE, CBT Journal, Premium, App mobile | 📝 Chưa bắt đầu |
 
 **Ba website, một nền thiết kế:** web chính `apps/hub` (cổng 3002) dẫn tới G-AI Movement `apps/site`
-(trang thương hiệu + cửa hàng, cổng 3001) và G-AI Coach `apps/web` (ứng dụng huấn luyện, cổng 3000); logo của
-mỗi sản phẩm quay về web chính. Cả ba dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
+(trang thương hiệu + cửa hàng, cổng 3001) và G-AI Coach `apps/web` (ứng dụng huấn luyện, cổng 3000); logo ở
+mọi trang đưa về trang chủ của `apps/site`, nút quay lại đưa về trang trước đó. Cả ba dùng chung `packages/ui`. Chạy local: `npm install` ở thư mục gốc, rồi
 `npm run dev:hub`, `npm run dev:site`, `npm run dev:app`. Deploy: 3 web lên Vercel (`docs/deploy-vercel.md`),
 backend lên Render + Supabase (`docs/deploy-render.md`, Blueprint `render.yaml`).
 

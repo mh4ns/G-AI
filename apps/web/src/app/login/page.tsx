@@ -3,8 +3,8 @@
 import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Loader2 } from "lucide-react";
-import { BrandLogo, hubUrl } from "@g-ai/ui";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { BackLink, BrandLogo, homeUrl } from "@g-ai/ui";
 import { ApiError, api } from "@/lib/api-client";
 
 /** Only allow same-site relative redirects (blocks `//evil.com` and absolute URLs). */
@@ -64,8 +64,17 @@ function LoginForm() {
     "w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 outline-none transition focus:border-[#FF5A36] focus:ring-2 focus:ring-[#FF5A36]/20";
 
   return (
-    <div className="min-h-screen bg-canvas flex flex-col items-center justify-center px-4 py-12">
-      <Link href={hubUrl("/")} className="mb-8">
+    <div className="relative min-h-screen bg-canvas flex flex-col items-center justify-center px-4 py-12">
+      <BackLink
+        fallbackHref={homeUrl()}
+        aria-label="Quay lại trang trước"
+        title="Quay lại trang trước"
+        className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 shadow-sm transition-colors hover:border-stone-900 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A36]/40 sm:left-6 sm:top-6"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+      </BackLink>
+
+      <Link href={homeUrl()} aria-label="G-AI – trang chủ" className="mb-8">
         <BrandLogo variant="horizontal" isLight size="md" />
       </Link>
 

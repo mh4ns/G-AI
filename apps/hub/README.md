@@ -1,7 +1,7 @@
 # G-AI — Main website (hub)
 
 Entry point for the G-AI ecosystem. It shows one card per product; clicking a product's logo card
-opens that product's own website. Every product site links its logo back here (`hubUrl()` from `@g-ai/ui`).
+opens that product's own website. Product logos lead to the brand site's home page (`homeUrl()` from `@g-ai/ui`), not here.
 
 ```bash
 npm install          # from the repo root (npm workspaces)
