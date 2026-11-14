@@ -23,6 +23,39 @@ export function uniqueEmail(prefix = "e2e") {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
 }
 
+/**
+ * Today renders whole numbers with `toLocaleString("vi-VN")`, which groups thousands with "."
+ * (2100 -> "2.100"). These helpers format and parse that the same way.
+ */
+const VI_NUMBER = String.raw`\d{1,3}(?:\.\d{3})*`;
+
+export function formatViNumber(value: number): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+export function parseViNumber(text: string): number {
+  return Number(text.replace(/\./g, ""));
+}
+
+/** The "<drunk> / <goal> ml" line on the Today water habit. */
+export function waterLine(page: Page) {
+  return page.getByText(new RegExp(`^${VI_NUMBER} / ${VI_NUMBER} ml$`));
+}
+
+/** Matches a water line whose drunk amount is exactly `drunkMl` (and, if given, whose goal is `goalMl`). */
+export function waterText(drunkMl: number, goalMl?: number) {
+  const goal = goalMl == null ? VI_NUMBER : formatViNumber(goalMl).replace(/\./g, "\\.");
+  return new RegExp(`^${formatViNumber(drunkMl).replace(/\./g, "\\.")} / ${goal} ml$`);
+}
+
+/** Reads the drunk and goal amounts from the water line. */
+export async function readWater(page: Page) {
+  const [drunk, goal] = (await waterLine(page).innerText()).replace(/ ml$/, "").split(" / ");
+  return { drunkMl: parseViNumber(drunk), goalMl: parseViNumber(goal) };
+}
+
+export const ADD_WATER_BUTTON = { name: "Thêm 250 ml nước" } as const;
+
 /** Fails when the page is wider than the viewport (horizontal scrolling). */
 export async function expectNoHorizontalScroll(page: Page) {
   const { scrollWidth, viewport } = await page.evaluate(() => ({
