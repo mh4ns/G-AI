@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from sqlalchemy import String, Float, Integer, Boolean, DateTime, ForeignKey, Text, JSON, func
+from sqlalchemy import String, Float, Integer, Boolean, DateTime, ForeignKey, Index, Text, JSON, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -47,6 +47,9 @@ class WorkoutRoutine(Base):
 
 class WorkoutLog(Base):
     __tablename__ = "workout_logs"
+    __table_args__ = (
+        Index("ix_workout_logs_user_completed", "user_id", "completed_at"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)

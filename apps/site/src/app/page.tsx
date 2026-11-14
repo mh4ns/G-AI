@@ -1,60 +1,55 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { appUrl } from "@g-ai/ui";
 import { DualAthleteHero } from "@/components/home/DualAthleteHero";
+import { VelocityMarquee } from "@/components/home/VelocityMarquee";
 import { DualAthleteGallery } from "@/components/home/DualAthleteGallery";
 import { AiVisionTeaser } from "@/components/home/AiVisionTeaser";
 import { MovementGoodsSection } from "@/components/home/MovementGoodsSection";
-import { Storefront, useStorefront } from "@/components/store/Storefront";
+import { Storefront } from "@/components/store/Storefront";
 
 function HomeContent() {
-  const { theme, isLight } = useStorefront();
-  // The programme switch changes content only, never the theme.
-  const [athleteMode, setAthleteMode] = useState<"female" | "male">("female");
-
   return (
     <main>
-      <DualAthleteHero athleteMode={athleteMode} theme={theme} onSelectAthlete={setAthleteMode} />
+      {/* Hero: one headline, one action; follows data-theme on the Storefront frame */}
+      <DualAthleteHero />
+
+      <VelocityMarquee />
+
       <DualAthleteGallery />
+
       <AiVisionTeaser />
+
+      {/* A few featured products; the full catalog lives on /store */}
       <MovementGoodsSection mode="featured" />
 
-      {/* 7. Ecosystem Call to Action Banner */}
-      <section className={`py-20 sm:py-28 border-t text-center relative overflow-hidden transition-colors duration-500 ${
-        isLight
-          ? "bg-white border-stone-200"
-          : "bg-[#0D0C0B] border-stone-800"
-      }`}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
-          <h2 className={`text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight ${
-            isLight ? "text-stone-950" : "text-white"
-          }`}>
-            Bắt đầu lộ trình 28 ngày theo cơ thể bạn
+      {/* Closing call to action: the page's one brand-coloured block */}
+      <section className="bg-brand py-20 text-brand-contrast sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="max-w-[18ch] text-balance font-display text-[2.75rem] font-black uppercase leading-[1.08] tracking-[-0.01em] sm:text-6xl lg:text-7xl">
+            28 ngày định hình lại tư thế &amp; vóc dáng của bạn
           </h2>
 
-          <p className={`text-sm sm:text-base max-w-2xl mx-auto leading-relaxed ${
-            isLight ? "text-stone-600" : "text-stone-300"
-          }`}>
-            Trả lời khảo sát thể trạng 2 phút. G-AI ước tính lượng calo mỗi ngày bằng công thức Mifflin-St Jeor, rồi dựng lộ trình bài tập theo cơ thể và mục tiêu của bạn.
+          <p className="mt-6 max-w-[58ch] text-base leading-relaxed sm:text-lg">
+            Trả lời khảo sát thể trạng 2 phút. G-AI ước tính lượng calo mỗi ngày bằng công thức Mifflin-St Jeor, rồi
+            dựng lộ trình bài tập theo cơ thể và mục tiêu của bạn.
           </p>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
+          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
             <Link
               href={appUrl("/quiz")}
-              className="w-full sm:w-auto min-h-12 px-8 rounded-full bg-brand-action hover:bg-brand-action-hover text-white font-semibold text-base inline-flex items-center justify-center gap-2 transition-colors active:translate-y-px"
+              className="group inline-flex h-14 items-center gap-2.5 rounded-full bg-brand-contrast px-8 text-base font-semibold text-white transition-[opacity,transform] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-contrast"
             >
-              <span>Làm khảo sát 2 phút</span>
-              <ArrowRight className="w-4 h-4" aria-hidden />
+              <span>Làm khảo sát thể trạng miễn phí</span>
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
             </Link>
 
             <Link
               href={appUrl("/prediction")}
-              className={`min-h-11 inline-flex items-center justify-center text-base font-semibold underline-offset-4 decoration-2 hover:underline ${
-                isLight ? "text-stone-900" : "text-white"
-              }`}
+              className="inline-flex min-h-11 items-center rounded text-base font-semibold underline decoration-2 underline-offset-[6px] transition-opacity duration-200 hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-contrast"
             >
               Xem dự đoán vóc dáng
             </Link>

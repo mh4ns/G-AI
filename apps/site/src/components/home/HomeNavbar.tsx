@@ -1,16 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { ArrowRight, Moon, ShoppingBag, Sun } from "lucide-react";
-import { BrandLogo, appUrl, hubUrl } from "@g-ai/ui";
+import { Lightbulb, ShoppingBag } from "lucide-react";
+import { BrandLogo, appUrl } from "@g-ai/ui";
 
 interface HomeNavbarProps {
+  /** Picks the black or white logo artwork; colours follow `data-theme`. */
   isLight?: boolean;
   onToggleTheme?: () => void;
   cartCount?: number;
   onOpenCart?: () => void;
 }
+
+const FOCUS_RING =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+
+// 44px: the minimum tap target.
+const ICON_BUTTON = `relative flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
+
+const NAV_LINK = `rounded text-sm font-medium text-ink-muted underline-offset-8 transition-colors duration-200 hover:text-ink hover:underline ${FOCUS_RING}`;
 
 export const HomeNavbar: React.FC<HomeNavbarProps> = ({
   isLight = false,
@@ -18,56 +27,44 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
   cartCount = 0,
   onOpenCart,
 }) => {
-  // Keep showing the last count while the badge shrinks away at zero.
-  const [lastCount, setLastCount] = useState(cartCount);
-  useEffect(() => {
-    if (cartCount > 0) setLastCount(cartCount);
-  }, [cartCount]);
-
-  const iconButton = `relative w-11 h-11 rounded-full border flex items-center justify-center transition-colors duration-200 ${
-    isLight
-      ? "bg-white border-stone-200 text-stone-700 hover:text-stone-950 hover:border-stone-400"
-      : "bg-stone-900 border-stone-800 text-stone-300 hover:text-white hover:border-stone-600"
-  }`;
-  const navLink = `min-h-11 inline-flex items-center underline-offset-4 decoration-2 hover:underline transition-colors ${
-    isLight ? "text-stone-700 hover:text-stone-950" : "text-stone-300 hover:text-white"
-  }`;
-
   return (
-    <header
-      className={`sticky top-0 z-50 border-b transition-colors duration-300 ${
-        isLight ? "bg-canvas/95 border-stone-200 text-stone-900" : "bg-canvas-dark/95 border-stone-800 text-white"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
-        <Link href={hubUrl("/")} className="min-h-11 min-w-11 flex items-center" aria-label="G-AI – trang chính">
+    <header className="sticky top-0 z-50 border-b border-line bg-page/85 text-ink backdrop-blur-md transition-colors duration-300">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          aria-label="G-AI – trang chủ"
+          className={`group flex shrink-0 items-center rounded-lg ${FOCUS_RING}`}
+        >
           <BrandLogo isLight={isLight} size="md" />
         </Link>
 
-        <nav aria-label="Chính" className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <Link href={appUrl("/prediction")} className={navLink}>
+        <nav aria-label="Điều hướng chính" className="hidden items-center gap-8 md:flex">
+          <Link href={appUrl("/prediction")} className={NAV_LINK}>
             Dự đoán vóc dáng
           </Link>
-          <Link href="/store" className={navLink}>
+          <Link href="/store" className={NAV_LINK}>
             Dụng cụ tập
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {onOpenCart && (
             <button
               type="button"
               onClick={onOpenCart}
-              className={iconButton}
+              title="Mở giỏ hàng"
               aria-label={cartCount > 0 ? `Mở giỏ hàng, ${cartCount} sản phẩm` : "Mở giỏ hàng"}
+              className={ICON_BUTTON}
             >
-              <ShoppingBag className="w-[18px] h-[18px]" aria-hidden />
-              {/* Notification badge (transitions.dev 03): slides on and pops when the bag fills. */}
-              <span className="t-badge" data-open={cartCount > 0} aria-hidden>
-                <span className="t-badge-dot min-w-5 h-5 px-1 rounded-full bg-brand-action text-white text-xs font-semibold flex items-center justify-center">
-                  {lastCount}
+              <ShoppingBag className="h-[18px] w-[18px]" aria-hidden />
+              {cartCount > 0 && (
+                <span
+                  aria-hidden
+                  className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-bold tabular-nums leading-none text-brand-contrast"
+                >
+                  {cartCount}
                 </span>
-              </span>
+              )}
             </button>
           )}
 
@@ -75,29 +72,25 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
             <button
               type="button"
               onClick={onToggleTheme}
-              className={iconButton}
-              aria-label={isLight ? "Chuyển sang giao diện tối" : "Chuyển sang giao diện sáng"}
-              title={isLight ? "Giao diện tối" : "Giao diện sáng"}
+              title="Đổi giao diện sáng / tối"
+              aria-label="Đổi giao diện sáng / tối"
+              aria-pressed={!isLight}
+              className={ICON_BUTTON}
             >
-              {isLight ? <Moon className="w-[18px] h-[18px]" aria-hidden /> : <Sun className="w-[18px] h-[18px]" aria-hidden />}
+              <Lightbulb className="h-[18px] w-[18px]" aria-hidden />
             </button>
           )}
 
-          <Link
-            href={appUrl("/login")}
-            className={`hidden sm:inline-flex min-h-11 items-center px-1 text-sm font-medium transition-colors ${
-              isLight ? "text-stone-700 hover:text-stone-950" : "text-stone-300 hover:text-white"
-            }`}
-          >
+          <Link href={appUrl("/login")} className={`mx-2 hidden sm:inline ${NAV_LINK}`}>
             Đăng nhập
           </Link>
 
+          {/* Ink, not brand: the hero button is the one brand-coloured action. */}
           <Link
             href={appUrl("/quiz")}
-            className="min-h-11 px-5 rounded-full bg-brand-action hover:bg-brand-action-hover text-white text-sm font-semibold inline-flex items-center gap-1.5 transition-colors active:translate-y-px"
+            className={`ml-1 inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-semibold text-page transition-[opacity,transform] duration-200 hover:opacity-85 active:scale-[0.98] ${FOCUS_RING}`}
           >
-            <span>Làm khảo sát</span>
-            <ArrowRight className="w-4 h-4 hidden sm:block" aria-hidden />
+            Bắt đầu khảo sát
           </Link>
         </div>
       </div>

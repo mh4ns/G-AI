@@ -13,6 +13,9 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    timezone: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="Asia/Ho_Chi_Minh", server_default="Asia/Ho_Chi_Minh"
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
     # Embedded in every JWT ("tv"). Bumping it revokes all tokens issued before (logout, password change).
@@ -25,4 +28,10 @@ class User(Base):
     plans: Mapped[List["PersonalizedPlan"]] = relationship("PersonalizedPlan", back_populates="user", cascade="all, delete-orphan")
     daily_metrics: Mapped[List["DailyMetric"]] = relationship("DailyMetric", back_populates="user", cascade="all, delete-orphan")
     workout_logs: Mapped[List["WorkoutLog"]] = relationship("WorkoutLog", back_populates="user", cascade="all, delete-orphan")
+    custom_food_items: Mapped[List["FoodItem"]] = relationship("FoodItem", back_populates="owner", cascade="all, delete-orphan")
+    meal_logs: Mapped[List["MealLog"]] = relationship("MealLog", back_populates="user", cascade="all, delete-orphan")
+    body_measurements: Mapped[List["BodyMeasurement"]] = relationship("BodyMeasurement", back_populates="user", cascade="all, delete-orphan")
+    progress_photos: Mapped[List["ProgressPhoto"]] = relationship("ProgressPhoto", back_populates="user", cascade="all, delete-orphan")
+    cbt_sessions: Mapped[List["CbtSession"]] = relationship("CbtSession", back_populates="user", cascade="all, delete-orphan")
+    cbt_messages: Mapped[List["CbtMessage"]] = relationship("CbtMessage", back_populates="user", cascade="all, delete-orphan")
     orders: Mapped[List["Order"]] = relationship("Order", back_populates="user")

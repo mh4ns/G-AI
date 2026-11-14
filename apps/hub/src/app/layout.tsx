@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Inter } from "next/font/google";
+import { Archivo, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,11 +8,11 @@ const inter = Inter({
   display: "swap",
 });
 
-// Display face for headings: drawn for Vietnamese, so stacked diacritics sit
-// cleanly at large sizes. Body text stays in Inter.
-const display = Be_Vietnam_Pro({
+// Display face for headlines (`font-display`), same setup as the brand site and
+// the coaching app.
+const display = Archivo({
   subsets: ["latin", "vietnamese"],
-  weight: ["600", "700", "800"],
+  axes: ["wdth"],
   variable: "--font-display",
   display: "swap",
 });

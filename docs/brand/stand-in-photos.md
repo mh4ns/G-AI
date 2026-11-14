@@ -5,11 +5,11 @@ Mỗi dòng ghi rõ nơi ảnh xuất hiện để thay bằng ảnh thật củ
 
 Quy tắc đang áp dụng:
 
-- Thẻ sản phẩm **không** dùng ảnh tạm: chúng hiện màu thật của sản phẩm (`color_hex`) cho tới khi có ảnh chụp sản phẩm.
 - Ảnh tạm chỉ minh họa người tập, không gắn tên hay logo của thương hiệu khác.
-- Hero và khối "Tập đúng form tại nhà" trên site dùng ảnh chụp màn hình thật của app, không phải ảnh tạm (xem mục bên dưới).
+- Hero, gallery và thẻ sản phẩm trên site hiện dùng ảnh tạm (thiết kế của nhánh restyle). Khối "Tập đúng form tại nhà" là hình vẽ, có nhãn "Hình minh họa".
+- Chưa quyết: thẻ sản phẩm có nên hiện màu thật của sản phẩm (`color_hex`) thay cho ảnh tạm cho tới khi có ảnh chụp sản phẩm, và hero có nên hiện ảnh chụp màn hình app (mục bên dưới) thay cho ảnh tạm.
 
-## Ảnh chụp màn hình app (cần chụp lại khi giao diện đổi)
+## Ảnh chụp màn hình app (hiện chưa hiển thị; cần chụp lại khi giao diện đổi)
 
 | File | Nội dung | Cách chụp |
 |---|---|---|
@@ -23,16 +23,20 @@ Quy tắc đang áp dụng:
 
 | Nơi xuất hiện | File:dòng | Ảnh (Unsplash) |
 |---|---|---|
-| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:10` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
-| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:15` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
-| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:20` | [photo-1540497077202-7c8a3999166f](https://images.unsplash.com/photo-1540497077202-7c8a3999166f) |
-| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:25` | [photo-1574680096145-d05b474e2155](https://images.unsplash.com/photo-1574680096145-d05b474e2155) |
+| Hero trang chủ site (Pilates & cơ lõi) | `apps/site/src/components/home/DualAthleteHero.tsx:36` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
+| Hero trang chủ site (Sức mạnh) | `apps/site/src/components/home/DualAthleteHero.tsx:44` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
+| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:28` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
+| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:39` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
+| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:50` | [photo-1540497077202-7c8a3999166f](https://images.unsplash.com/photo-1540497077202-7c8a3999166f) |
+| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:61` | [photo-1583454110551-21f2fa2afe61](https://images.unsplash.com/photo-1583454110551-21f2fa2afe61) |
+| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:72` | [photo-1571019613454-1cb2f99b2d8b](https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b) |
+| Gallery trang chủ site | `apps/site/src/components/home/DualAthleteGallery.tsx:83` | [photo-1574680096145-d05b474e2155](https://images.unsplash.com/photo-1574680096145-d05b474e2155) |
 | Quiz bước 1: thẻ chọn chương trình | `apps/web/src/components/quiz/ArchetypeSelectionStep.tsx:29` | [photo-1518611012118-696072aa579a](https://images.unsplash.com/photo-1518611012118-696072aa579a) |
 | Quiz bước 1: thẻ chọn chương trình | `apps/web/src/components/quiz/ArchetypeSelectionStep.tsx:38` | [photo-1534438327276-14e5300c3a48](https://images.unsplash.com/photo-1534438327276-14e5300c3a48) |
 
-## Ảnh sản phẩm trong catalog (không hiển thị)
+## Ảnh sản phẩm trong catalog (hiển thị trên thẻ sản phẩm)
 
-`apps/backend/app/data/store_catalog.json` và `apps/site/src/data/mockStoreData.ts` vẫn giữ URL ảnh cũ ở `image_front` / `image_hover`. Site hiện không render các ảnh này; thay bằng ảnh chụp sản phẩm thật trước khi bật lại ảnh trên thẻ.
+`apps/backend/app/data/store_catalog.json` và `apps/site/src/data/mockStoreData.ts` giữ URL ảnh ở `image_front` / `image_hover`. Thẻ sản phẩm ở trang chủ và `/store` hiện ảnh `image_front`; thay bằng ảnh chụp sản phẩm thật.
 
 | Sản phẩm | Trường | Ảnh (Unsplash) |
 |---|---|---|

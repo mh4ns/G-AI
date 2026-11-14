@@ -149,9 +149,7 @@ export function Storefront({ children }: { children: React.ReactNode }) {
     <StorefrontContext.Provider value={value}>
       <div
         data-theme={theme}
-        className={`min-h-screen font-sans transition-colors duration-500 ${
-          isLight ? "bg-canvas text-stone-900" : "bg-canvas-dark text-stone-100"
-        }`}
+        className="min-h-screen bg-page font-sans text-ink transition-colors duration-500"
       >
         <HomeNavbar
           isLight={isLight}
@@ -176,7 +174,6 @@ export function Storefront({ children }: { children: React.ReactNode }) {
               refreshCatalog();
             }}
             onCatalogStale={refreshCatalog}
-            isLight={isLight}
           />
         )}
       </div>

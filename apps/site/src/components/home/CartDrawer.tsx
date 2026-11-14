@@ -1,20 +1,8 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState, useLayoutEffect } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
-import {
-  X,
-  Trash2,
-  Plus,
-  Minus,
-  ShoppingBag,
-  ArrowRight,
-  ArrowLeft,
-  ShieldCheck,
-  CheckCircle2,
-  AlertTriangle,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Loader2, Minus, Plus, ShieldCheck, ShoppingBag, Trash2, X } from "lucide-react";
 import {
   MAX_QUANTITY_PER_LINE,
   StoreApiError,
@@ -26,6 +14,7 @@ import {
   type OrderResponse,
   type StoreItem,
 } from "@/lib/store-api";
+import { FOCUS_RING } from "@/components/home/SegmentedControl";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -39,7 +28,6 @@ interface CartDrawerProps {
   onOrderPlaced: (order: OrderResponse) => void;
   /** Called when the server rejected the order over stock or availability. */
   onCatalogStale?: () => void;
-  isLight?: boolean;
 }
 
 type Step = "cart" | "checkout" | "done";
@@ -63,7 +51,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onOrderPlaced,
   onCatalogStale,
-  isLight = false,
 }) => {
   const [step, setStep] = useState<Step>("cart");
   const [name, setName] = useState("");
@@ -100,30 +87,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   }, [isOpen, step]);
 
-  // Panel reveal (transitions.dev 07): stay mounted while the close plays.
-  // Opening flips data-open only after the closed state has been laid out,
-  // so the transition always has a start state.
-  const [mounted, setMounted] = useState(isOpen);
-  const [shown, setShown] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (isOpen) {
-      setMounted(true);
-      return;
-    }
-    setShown(false);
-    const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--panel-close-dur")) || 350;
-    const id = setTimeout(() => setMounted(false), ms);
-    return () => clearTimeout(id);
-  }, [isOpen]);
-  useLayoutEffect(() => {
-    if (!mounted || !isOpen) return;
-    void panelRef.current?.offsetHeight; // commit the closed state first
-    const id = requestAnimationFrame(() => setShown(true));
-    return () => cancelAnimationFrame(id);
-  }, [mounted, isOpen]);
-
-  if (!mounted) return null;
+  if (!isOpen) return null;
 
   const rows = lines.map((line) => {
     const item = catalog.get(line.productId);
@@ -158,121 +122,89 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   };
 
-  const panel = isLight ? "bg-canvas text-stone-900 border-stone-200" : "bg-[#0E0D0C] text-stone-100 border-stone-800";
-  const card = isLight ? "bg-white border-stone-200/80 shadow-sm" : "bg-stone-900/60 border-stone-800/80";
-  const input = `w-full px-3.5 py-2.5 rounded-xl text-sm border outline-none transition-colors focus:border-brand ${
-    isLight ? "bg-white border-stone-300 text-stone-900" : "bg-stone-900 border-stone-700 text-white"
-  }`;
-  const muted = isLight ? "text-stone-500" : "text-stone-400";
+  const title = step === "checkout" ? "Thông tin giao hàng" : step === "done" ? "Đã nhận đơn" : "Giỏ hàng";
 
   return (
-    <div
-      className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? "" : "pointer-events-none"}`}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Giỏ hàng"
-    >
-      <div onClick={onClose} data-open={shown} className="t-backdrop absolute inset-0 bg-black/60" />
+    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label="Giỏ hàng">
+      <div onClick={onClose} className="absolute inset-0 bg-black/60" />
 
-      <div ref={panelRef} data-open={shown} className="t-panel-slide t-panel--drawer absolute inset-y-0 right-0 w-full max-w-lg flex">
-        <div className={`w-full flex flex-col shadow-2xl border-l ${panel}`}>
+      <div className="absolute inset-y-0 right-0 flex w-full max-w-lg">
+        <div className="flex w-full flex-col border-l border-line bg-page text-ink shadow-[-24px_0_60px_-30px_rgba(0,0,0,0.5)]">
           {/* Top bar */}
-          <div
-            className={`p-4 sm:p-6 border-b flex items-center justify-between shrink-0 backdrop-blur-md ${
-              isLight ? "border-stone-200/80 bg-white/70" : "border-stone-800/80 bg-stone-900/40"
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              {step === "checkout" ? (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-4 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2">
+              {step === "checkout" && (
                 <button
+                  type="button"
                   onClick={() => setStep("cart")}
-                  className={`p-2 rounded-xl transition-colors ${isLight ? "hover:bg-stone-200/70" : "hover:bg-stone-800"}`}
+                  className={`-ml-2 ${ICON_BUTTON}`}
                   aria-label="Quay lại giỏ hàng"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="h-5 w-5" aria-hidden />
                 </button>
-              ) : (
-                <div className="w-9 h-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-                  <ShoppingBag className="w-5 h-5" />
-                </div>
               )}
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-base sm:text-lg tracking-tight truncate">
-                    {step === "checkout" ? "Thông tin giao hàng" : step === "done" ? "Đã nhận đơn" : "Giỏ hàng"}
-                  </h2>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="truncate text-lg font-semibold tracking-tight">{title}</h2>
                   {step === "cart" && totalCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-brand text-white">
+                    <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-bold tabular-nums text-brand-contrast">
                       {totalCount}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-muted">G-AI Movement · cửa hàng</p>
+                <p className="text-sm text-ink-muted">G-AI Movement · cửa hàng</p>
               </div>
             </div>
             <button
               ref={closeRef}
+              type="button"
               onClick={onClose}
-              className={`p-2 rounded-xl transition-colors ${
-                isLight ? "hover:bg-stone-200/70 text-stone-600" : "hover:bg-stone-800 text-stone-300"
-              }`}
+              className={`-mr-2 ${ICON_BUTTON}`}
               aria-label="Đóng giỏ hàng"
             >
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" aria-hidden />
             </button>
           </div>
 
           {/* Body */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
             {step === "done" && order ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-2 sm:p-6 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10" />
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-positive text-page">
+                  <Check className="h-7 w-7" strokeWidth={3} aria-hidden />
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold">Đơn hàng đã được tạo</h3>
-                  <p className={`text-sm ${muted}`}>
-                    Mã đơn <strong className="">{order.id}</strong> · Tổng{" "}
-                    <strong className="">{formatPrice(order.total_amount)}</strong>
-                  </p>
-                  <p className={`text-xs max-w-xs mx-auto ${muted}`}>
-                    Đơn đang <strong>chờ thanh toán</strong>; chưa có khoản nào bị trừ. Chúng tôi sẽ liên hệ qua{" "}
-                    {order.customer_email} để hoàn tất.
-                  </p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-2.5 rounded-full bg-brand hover:bg-brand-deep text-white text-xs font-bold transition-colors"
-                >
+                <h3 className="mt-5 text-xl font-semibold">Đơn hàng đã được tạo</h3>
+                <p className="mt-2 text-base text-ink-muted">
+                  Mã đơn <strong className="font-semibold text-ink">{order.id}</strong> · Tổng{" "}
+                  <strong className="font-semibold tabular-nums text-ink">{formatPrice(order.total_amount)}</strong>
+                </p>
+                <p className="mt-2 max-w-xs text-sm leading-relaxed text-ink-muted">
+                  Đơn đang <strong className="font-semibold text-ink">chờ thanh toán</strong>; chưa có khoản nào bị
+                  trừ. Chúng tôi sẽ liên hệ qua {order.customer_email} để hoàn tất.
+                </p>
+                <button type="button" onClick={onClose} className={`mt-7 ${SECONDARY_BUTTON}`}>
                   Tiếp tục xem sản phẩm
                 </button>
               </div>
             ) : lines.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                <div className="w-16 h-16 rounded-full bg-stone-500/10 text-muted flex items-center justify-center">
-                  <ShoppingBag className="w-8 h-8 stroke-[1.5]" />
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-sunken text-ink-muted">
+                  <ShoppingBag className="h-6 w-6" strokeWidth={1.75} aria-hidden />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-base font-bold">Giỏ hàng đang trống</h3>
-                  <p className="text-xs text-muted max-w-xs">
-                    Khám phá dụng cụ và trang phục hỗ trợ lộ trình 28 ngày.
-                  </p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className={`px-5 py-2.5 rounded-full border text-xs font-semibold transition-colors hover:border-brand ${
-                    isLight ? "border-stone-300" : "border-stone-700"
-                  }`}
-                >
+                <h3 className="mt-5 text-xl font-semibold">Giỏ hàng đang trống</h3>
+                <p className="mt-2 max-w-xs text-sm leading-relaxed text-ink-muted">
+                  Khám phá dụng cụ và trang phục hỗ trợ lộ trình 28 ngày.
+                </p>
+                <button type="button" onClick={onClose} className={`mt-7 ${SECONDARY_BUTTON}`}>
                   Xem sản phẩm
                 </button>
               </div>
             ) : step === "checkout" ? (
-              <form id={formId} onSubmit={handleSubmit} className="space-y-4" noValidate={false}>
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-semibold">Họ và tên</span>
+              <form id={formId} onSubmit={handleSubmit} className="space-y-5" noValidate={false}>
+                <label className="block">
+                  <span className={FIELD_LABEL}>Họ và tên</span>
                   <input
-                    className={input}
+                    className={FIELD_INPUT}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -281,10 +213,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     autoComplete="name"
                   />
                 </label>
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-semibold">Email</span>
+                <label className="block">
+                  <span className={FIELD_LABEL}>Email</span>
                   <input
-                    className={input}
+                    className={FIELD_INPUT}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -294,10 +226,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     inputMode="email"
                   />
                 </label>
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-semibold">Địa chỉ giao hàng</span>
+                <label className="block">
+                  <span className={FIELD_LABEL}>Địa chỉ giao hàng</span>
                   <textarea
-                    className={`${input} min-h-24 resize-y`}
+                    className={`${FIELD_INPUT} min-h-24 resize-y py-2.5`}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     required
@@ -307,84 +239,85 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   />
                 </label>
 
-                <div className={`p-3.5 rounded-2xl border text-xs space-y-2 ${card}`}>
+                <ul className="divide-y divide-line rounded-2xl border border-line bg-surface text-sm">
                   {orderable.map(({ line, item }) => (
-                    <div key={line.key} className="flex justify-between gap-3">
+                    <li key={line.key} className="flex justify-between gap-3 px-4 py-3">
                       <span className="min-w-0 truncate">
-                        {line.quantity} × {item!.name} <span className={muted}>({line.size})</span>
+                        {line.quantity} × {item!.name} <span className="text-ink-muted">({line.size})</span>
                       </span>
-                      <span className=" shrink-0">{formatPrice(item!.price * line.quantity)}</span>
-                    </div>
+                      <span className="shrink-0 font-medium tabular-nums">{formatPrice(item!.price * line.quantity)}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
 
                 {error && (
-                  <p role="alert" className="flex items-start gap-2 text-xs text-rose-500">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <p role="alert" className="flex items-start gap-2 text-sm font-medium text-danger">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                     <span>{error}</span>
                   </p>
                 )}
               </form>
             ) : (
-              <ul className="space-y-3">
+              <ul className="-my-4 divide-y divide-line">
                 {rows.map(({ line, item, problem }) => (
-                  <li key={line.key} className={`p-3.5 rounded-2xl border flex gap-3.5 items-center ${card}`}>
-                    <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 bg-stone-950">
+                  <li key={line.key} className="flex gap-4 py-4">
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-sunken">
                       {item && (
                         <Image
                           src={item.image}
-                          alt={item.name}
+                          alt=""
                           fill
                           unoptimized={!canOptimizeImage(item.image)}
-                          className={`object-cover ${problem ? "grayscale opacity-60" : ""}`}
+                          className={`object-cover ${problem ? "opacity-60 grayscale" : ""}`}
                           sizes="80px"
                         />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-muted truncate">
-                          {item?.categoryLabel ?? "—"} · Size {line.size}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-[15px] font-semibold">{item?.name ?? line.productId}</h3>
+                          <p className="truncate text-sm text-ink-muted">
+                            {item?.categoryLabel ?? "—"} · Size {line.size}
+                          </p>
+                        </div>
                         <button
+                          type="button"
                           onClick={() => onRemoveItem(line.key)}
-                          className="text-muted hover:text-rose-500 p-1 transition-colors"
+                          className={`-mr-2 -mt-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-danger ${FOCUS_RING}`}
                           aria-label={`Xoá ${item?.name ?? "sản phẩm"}`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="h-4 w-4" aria-hidden />
                         </button>
                       </div>
-                      <h4 className="font-bold text-xs sm:text-sm truncate">{item?.name ?? line.productId}</h4>
-                      {problem && <p className="text-xs text-rose-500 font-semibold">{problem}</p>}
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="font-bold text-sm text-accent">
+                      {problem && <p className="mt-1 text-sm font-medium text-danger">{problem}</p>}
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <span className="text-base font-semibold tabular-nums">
                           {item ? formatPrice(item.price * line.quantity) : "—"}
                         </span>
-                        <div
-                          className={`flex items-center rounded-lg border overflow-hidden ${
-                            isLight ? "border-stone-200 bg-stone-50" : "border-stone-800 bg-stone-900"
-                          }`}
-                        >
+                        <div className="flex items-center rounded-full border border-line">
                           <button
+                            type="button"
                             onClick={() => onUpdateQuantity(line.key, -1)}
-                            className="p-1.5 text-muted hover:text-current transition-colors"
+                            className={STEPPER_BUTTON}
                             aria-label="Giảm số lượng"
                           >
-                            <Minus className="w-3 h-3" />
+                            <Minus className="h-3.5 w-3.5" aria-hidden />
                           </button>
-                          <span className="px-2.5 text-xs font-bold" aria-live="polite">
+                          <span className="min-w-6 text-center text-sm font-semibold tabular-nums" aria-live="polite">
                             {line.quantity}
                           </span>
                           <button
+                            type="button"
                             onClick={() => onUpdateQuantity(line.key, 1)}
                             disabled={
                               line.quantity >= MAX_QUANTITY_PER_LINE ||
                               (item?.stock != null && line.quantity >= item.stock)
                             }
-                            className="p-1.5 text-muted hover:text-current transition-colors disabled:opacity-30"
+                            className={STEPPER_BUTTON}
                             aria-label="Tăng số lượng"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="h-3.5 w-3.5" aria-hidden />
                           </button>
                         </div>
                       </div>
@@ -397,54 +330,51 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
           {/* Footer */}
           {lines.length > 0 && step !== "done" && (
-            <div
-              className={`p-4 sm:p-6 border-t shrink-0 space-y-3 ${
-                isLight ? "bg-white/90 border-stone-200" : "bg-stone-950/90 border-stone-800"
-              }`}
-            >
-              <div className="flex justify-between items-baseline text-sm">
-                <span className="font-bold">Tạm tính</span>
-                <span className="text-xl font-bold text-accent">{formatPrice(subtotal)}</span>
+            <div className="shrink-0 border-t border-line bg-surface px-4 py-5 sm:px-6">
+              <div className="flex items-baseline justify-between">
+                <span className="text-base font-semibold">Tạm tính</span>
+                <span className="text-2xl font-bold tabular-nums tracking-tight">{formatPrice(subtotal)}</span>
               </div>
-              <p className={`text-xs ${muted}`}>
+              <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
                 Giá cuối cùng do máy chủ xác nhận khi tạo đơn. Đơn ở trạng thái chờ thanh toán — chưa thu tiền.
               </p>
 
               {source === "sample" && (
-                <p className="flex items-start gap-2 text-xs text-amber-600">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <p className="mt-3 flex items-start gap-2 text-sm text-ink">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <span>Cửa hàng chưa kết nối máy chủ nên tạm thời chưa thể đặt hàng.</span>
                 </p>
               )}
               {source === "server" && hasProblems && step === "cart" && (
-                <p className="flex items-start gap-2 text-xs text-rose-500">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <p className="mt-3 flex items-start gap-2 text-sm font-medium text-danger">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <span>Hãy xoá hoặc điều chỉnh các sản phẩm được đánh dấu trước khi đặt hàng.</span>
                 </p>
               )}
 
               {step === "cart" ? (
                 <button
+                  type="button"
                   onClick={() => {
                     setError(null);
                     setStep("checkout");
                   }}
                   disabled={!canCheckout}
-                  className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-deep text-white text-sm font-bold transition-colors flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`mt-4 ${PRIMARY_BUTTON}`}
                 >
                   <span>Tiến hành đặt hàng</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="h-4 w-4" aria-hidden />
                 </button>
               ) : (
                 <button
                   type="submit"
                   form={formId}
                   disabled={!canCheckout || submitting}
-                  className="w-full py-3.5 rounded-2xl bg-brand hover:bg-brand-deep text-white text-sm font-bold transition-colors flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+                  className={`mt-4 ${PRIMARY_BUTTON}`}
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                       <span>Đang tạo đơn…</span>
                     </>
                   ) : (
@@ -453,10 +383,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </button>
               )}
 
-              <div className="flex items-center justify-center gap-1.5 text-xs text-muted">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ink-muted">
+                <ShieldCheck className="h-4 w-4" aria-hidden />
                 <span>Đổi trả miễn phí 30 ngày</span>
-              </div>
+              </p>
             </div>
           )}
         </div>
@@ -464,3 +394,17 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     </div>
   );
 };
+
+const ICON_BUTTON = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
+
+const PRIMARY_BUTTON = `flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand text-[15px] font-semibold text-brand-contrast transition-[background-color,transform] duration-200 hover:bg-brand-soft active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand ${FOCUS_RING}`;
+
+const SECONDARY_BUTTON = `inline-flex h-11 items-center rounded-full border border-ink-faint px-6 text-sm font-semibold text-ink transition-colors duration-200 hover:bg-sunken ${FOCUS_RING}`;
+
+const STEPPER_BUTTON = `flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:text-ink disabled:opacity-30 disabled:hover:text-ink-muted ${FOCUS_RING}`;
+
+const FIELD_LABEL = "mb-1.5 block text-sm font-medium text-ink";
+
+// 16px text keeps iOS from zooming the page when a field takes focus.
+const FIELD_INPUT =
+  "block min-h-11 w-full rounded-xl border border-ink-faint bg-surface px-3.5 text-base text-ink caret-brand outline-none transition-colors duration-200 focus:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";

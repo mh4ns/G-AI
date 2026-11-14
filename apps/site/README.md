@@ -9,3 +9,4 @@ npm run dev:site       # http://localhost:3001
 ```
 
 Links into the coaching app use `appUrl()` from `@g-ai/ui`, configured by `NEXT_PUBLIC_APP_URL`.
+The logo on every page of the coaching app leads back to this site's home page (`homeUrl()`).

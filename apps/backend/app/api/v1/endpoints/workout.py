@@ -32,7 +32,7 @@ async def log_workout(
     if payload.routine_id is not None and await db.get(WorkoutRoutine, payload.routine_id) is None:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Unknown routine_id")
 
-    metric = await get_or_create_today(db, user.id)
+    metric = await get_or_create_today(db, user.id, user.timezone)
     log = WorkoutLog(user_id=user.id, **payload.model_dump())
     db.add(log)
     metric.calories_burned = (metric.calories_burned or 0) + payload.calories_burned

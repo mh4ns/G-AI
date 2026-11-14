@@ -1,6 +1,7 @@
 from typing import Any, AsyncGenerator, Dict, Optional, Tuple
 from uuid import uuid4
 
+from sqlalchemy import event
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -72,6 +73,13 @@ def engine_options(raw_url: str) -> Tuple[URL, Dict[str, Any]]:
 
 _url, _options = engine_options(settings.DATABASE_URL)
 engine = create_async_engine(_url, **_options)
+
+if _url.drivername.startswith("sqlite"):
+    @event.listens_for(engine.sync_engine, "connect")
+    def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 async_session_maker = async_sessionmaker(
     bind=engine,

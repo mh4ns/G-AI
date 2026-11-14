@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, Dumbbell, Info, Shirt, ShoppingBag } from "lucide-react";
-import { SlidingTabs } from "@g-ai/ui";
+import { ArrowRight, Check, Info, ShoppingBag } from "lucide-react";
 
 import { useStorefront } from "@/components/store/Storefront";
-import { STORE_PRICES_PUBLISHED, formatPrice, type StoreItem } from "@/lib/store-api";
+import { STORE_PRICES_PUBLISHED, canOptimizeImage, formatPrice, type StoreItem } from "@/lib/store-api";
+import { FOCUS_RING, SECTION_HEADING, SegmentedControl } from "@/components/home/SegmentedControl";
 
 interface MovementGoodsSectionProps {
   /**
@@ -16,34 +17,30 @@ interface MovementGoodsSectionProps {
   mode: "featured" | "full";
 }
 
+type GoodsFilter = "all" | StoreItem["group"];
+
 const FEATURED_COUNT = 3;
 
-/** Readable foreground for a product colour tile. */
-function inkFor(hex: string): string {
-  const m = hex.replace("#", "").match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-  if (!m) return "#1c1917";
-  const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16) / 255);
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return lum > 0.55 ? "#1c1917" : "#ffffff";
-}
+const FILTERS = [
+  { id: "all", label: "Tất cả" },
+  { id: "equipment", label: "Dụng cụ" },
+  { id: "apparel", label: "Trang phục" },
+] as const;
 
 export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode }) => {
-  const { isLight, catalog, source, addToCart } = useStorefront();
-  const [filter, setFilter] = useState<"all" | StoreItem["group"]>("all");
+  const { catalog, source, addToCart } = useStorefront();
+  const [selectedFilter, setSelectedFilter] = useState<GoodsFilter>("all");
   const [addedProductId, setAddedProductId] = useState<string | null>(null);
   const [chosenSize, setChosenSize] = useState<Record<string, string>>({});
   const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(
-    () => () => {
-      if (addedTimer.current) clearTimeout(addedTimer.current);
-    },
-    []
-  );
+  useEffect(() => () => {
+    if (addedTimer.current) clearTimeout(addedTimer.current);
+  }, []);
 
   const full = mode === "full";
-  const filtered = filter === "all" ? catalog : catalog.filter((p) => p.group === filter);
-  const products = full ? filtered : catalog.slice(0, FEATURED_COUNT);
+  const filteredGoods = selectedFilter === "all" ? catalog : catalog.filter((p) => p.group === selectedFilter);
+  const products = full ? filteredGoods : catalog.slice(0, FEATURED_COUNT);
   const Heading = full ? "h1" : "h2";
 
   const handleQuickAdd = (product: StoreItem) => {
@@ -55,47 +52,37 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
     addedTimer.current = setTimeout(() => setAddedProductId(null), 2200);
   };
 
-  const card = isLight ? "bg-white border-stone-200 hover:border-stone-400" : "bg-[#11100F] border-stone-800 hover:border-stone-600";
-  const chip = isLight ? "bg-stone-100 text-stone-700" : "bg-stone-900 text-stone-300";
-
   return (
     <section
       id="movement-goods"
-      className={`${full ? "pt-10 sm:pt-16" : "py-20 sm:py-28 border-t"} pb-20 sm:pb-28 scroll-mt-20 transition-colors duration-500 ${
-        isLight ? "border-stone-200" : "border-stone-800"
+      className={`scroll-mt-20 bg-page text-ink transition-colors duration-500 ${
+        full ? "pb-16 pt-10 sm:pb-24 sm:pt-16" : "border-t border-line py-16 sm:py-24"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="max-w-2xl">
-            <Heading className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-              Dụng cụ & trang phục tập
-            </Heading>
-            <p className={`mt-3 text-base leading-relaxed ${isLight ? "text-stone-600" : "text-stone-300"}`}>
+            <Heading className={SECTION_HEADING}>Dụng cụ &amp; trang phục tập</Heading>
+            <p className="mt-4 max-w-[60ch] text-base leading-relaxed text-ink-muted">
               Trang phục và dụng cụ dùng được với các bài tập trong lộ trình 28 ngày, tập ngay tại nhà.
             </p>
           </div>
 
           {full ? (
-            <SlidingTabs
-              ariaLabel="Lọc sản phẩm"
-              value={filter}
-              onChange={setFilter}
-              options={[
-                { value: "all", label: "Tất cả" },
-                { value: "equipment", label: "Dụng cụ" },
-                { value: "apparel", label: "Trang phục" },
-              ]}
+            <SegmentedControl
+              label="Lọc sản phẩm"
+              options={FILTERS}
+              value={selectedFilter}
+              onChange={setSelectedFilter}
+              className="self-start md:self-auto"
             />
           ) : (
             <Link
               href="/store"
-              className={`min-h-11 inline-flex items-center gap-1.5 text-base font-semibold underline-offset-4 decoration-2 hover:underline ${
-                isLight ? "text-stone-900" : "text-white"
-              }`}
+              className={`inline-flex min-h-11 items-center gap-1.5 self-start rounded text-base font-semibold text-ink underline decoration-2 underline-offset-[6px] transition-opacity duration-200 hover:opacity-75 md:self-auto ${FOCUS_RING}`}
             >
               Xem tất cả sản phẩm
-              <ArrowRight className="w-4 h-4" aria-hidden />
+              <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           )}
         </div>
@@ -103,89 +90,76 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
         {full && (!STORE_PRICES_PUBLISHED || source === "sample") && (
           <p
             role="status"
-            className={`mb-8 flex items-start gap-2 p-3.5 rounded-2xl border text-sm ${
-              isLight ? "bg-amber-50 border-amber-200 text-amber-900" : "bg-amber-500/10 border-amber-500/30 text-amber-100"
-            }`}
+            className="mb-6 flex items-start gap-2.5 rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-ink-muted"
           >
-            <Info className="w-4 h-4 shrink-0 mt-0.5" aria-hidden />
-            {STORE_PRICES_PUBLISHED
-              ? "Cửa hàng đang ở chế độ xem thử (chưa kết nối máy chủ). Bạn có thể xem sản phẩm, nhưng chưa thể đặt hàng."
-              : "Giá và đặt hàng sẽ mở khi cửa hàng ra mắt. Hiện bạn có thể xem sản phẩm và size có sẵn."}
+            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>
+              {STORE_PRICES_PUBLISHED
+                ? "Cửa hàng đang ở chế độ xem thử (chưa kết nối máy chủ). Bạn có thể xem sản phẩm, nhưng chưa thể đặt hàng."
+                : "Giá và đặt hàng sẽ mở khi cửa hàng ra mắt. Hiện bạn có thể xem sản phẩm và size có sẵn."}
+            </span>
           </p>
         )}
 
-        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" aria-busy={source === "loading"}>
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy={source === "loading"}>
           {source === "loading" &&
             Array.from({ length: FEATURED_COUNT }, (_, i) => (
-              <li key={i} className={`rounded-3xl border h-80 animate-pulse ${card}`} />
+              <li key={i} className="h-[480px] animate-pulse rounded-3xl bg-sunken" />
             ))}
           {source !== "loading" && products.length === 0 && (
-            <li className="col-span-full text-center text-sm text-muted py-12">Chưa có sản phẩm trong mục này.</li>
+            <li className="col-span-full py-12 text-center text-base text-ink-muted">Chưa có sản phẩm trong mục này.</li>
           )}
           {source !== "loading" &&
-            products.map((product) => {
+            products.map((product, index) => {
+              const isAdded = addedProductId === product.id;
               const soldOut = product.stock === 0;
               const lowStock = product.stock != null && product.stock > 0 && product.stock <= 5;
               const size = chosenSize[product.id] ?? product.sizes[0];
-              const Icon = product.group === "apparel" ? Shirt : Dumbbell;
-              const ink = inkFor(product.colorHex);
-              const isAdded = addedProductId === product.id;
               // Skip specs that repeat the category label shown above the name.
-              const specs = product.specs.filter((spec) => spec !== product.categoryLabel);
+              const specs = [product.colorName, ...product.specs].filter(
+                (spec) => spec && spec !== product.categoryLabel
+              );
 
-              const index = products.indexOf(product);
               return (
                 <li
                   key={product.id}
-                  className={`group rounded-3xl overflow-hidden border flex-col transition-[border-color,transform] duration-200 hover:-translate-y-0.5 ${card} ${
+                  className={`group flex-col overflow-hidden rounded-3xl border border-line bg-surface transition-colors duration-300 hover:border-ink-faint ${
+                    // Featured row: two cards on phones, three from sm up.
                     !full && index >= 2 ? "hidden sm:flex" : "flex"
                   }`}
                 >
-                  {/* No product photography yet: the tile shows the product's own colour. */}
-                  <div
-                    className="relative aspect-[4/3] flex items-center justify-center"
-                    style={{ backgroundColor: product.colorHex }}
-                  >
-                    <Icon
-                      className="w-14 h-14 transition-transform duration-300 group-hover:scale-[1.03]"
-                      style={{ color: ink, opacity: 0.55 }}
-                      strokeWidth={1.25}
-                      aria-hidden
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-sunken">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      unoptimized={!canOptimizeImage(product.image)}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className={`object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03] ${
+                        soldOut ? "opacity-70 grayscale" : ""
+                      }`}
                     />
                     {(soldOut || product.badge) && (
-                      <span className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-white text-stone-900">
+                      <span className="absolute left-3.5 top-3.5 rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white">
                         {soldOut ? "Hết hàng" : product.badge}
                       </span>
                     )}
                   </div>
 
-                  <div className="p-5 sm:p-6 flex-1 flex flex-col gap-4">
-                    <div>
-                      <p className="text-sm text-muted">
-                        {product.categoryLabel} · {product.colorName}
-                      </p>
-                      <h3 className={`mt-1 text-lg font-bold tracking-tight leading-snug ${isLight ? "text-stone-950" : "text-white"}`}>
-                        {product.name}
-                      </h3>
-                      <p className={`mt-1.5 text-sm line-clamp-2 leading-relaxed ${isLight ? "text-stone-600" : "text-stone-300"}`}>
-                        {product.description}
-                      </p>
-                    </div>
+                  <div className="flex flex-1 flex-col p-5 sm:p-6">
+                    <p className="text-sm text-ink-muted">{product.categoryLabel}</p>
 
-                    {full && specs.length > 0 && (
-                      <ul className="flex flex-wrap gap-1.5">
-                        {specs.map((spec) => (
-                          <li key={spec} className={`text-xs px-2 py-0.5 rounded-md ${chip}`}>
-                            {spec}
-                          </li>
-                        ))}
-                      </ul>
+                    <h3 className="mt-3 text-lg font-semibold leading-snug text-ink">{product.name}</h3>
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">{product.description}</p>
+
+                    {specs.length > 0 && (
+                      <p className="mt-3 text-sm leading-relaxed text-ink-faint">{specs.join(" · ")}</p>
                     )}
 
                     {/* Ordering needs prices; until then show which sizes exist. */}
                     {addToCart && product.sizes.length > 1 ? (
-                      <fieldset disabled={soldOut}>
-                        <legend className="text-sm text-muted mb-1.5">Chọn size</legend>
+                      <fieldset className="mt-4" disabled={soldOut}>
+                        <legend className="mb-2 text-sm text-ink-muted">Chọn size</legend>
                         <div className="flex flex-wrap gap-1.5">
                           {product.sizes.map((s) => (
                             <button
@@ -193,14 +167,10 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
                               type="button"
                               onClick={() => setChosenSize((prev) => ({ ...prev, [product.id]: s }))}
                               aria-pressed={size === s}
-                              className={`min-w-11 min-h-11 px-2.5 rounded-lg border text-sm font-semibold transition-colors disabled:opacity-40 ${
+                              className={`h-11 min-w-11 rounded-full border px-3 text-sm font-semibold transition-colors duration-200 disabled:opacity-40 ${FOCUS_RING} ${
                                 size === s
-                                  ? isLight
-                                    ? "bg-stone-900 border-stone-900 text-white"
-                                    : "bg-white border-white text-stone-950"
-                                  : isLight
-                                    ? "border-stone-300 text-stone-700 hover:border-stone-500"
-                                    : "border-stone-700 text-stone-300 hover:border-stone-500"
+                                  ? "border-ink bg-ink text-page"
+                                  : "border-line text-ink-muted hover:border-ink-faint hover:text-ink"
                               }`}
                             >
                               {s}
@@ -209,25 +179,23 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
                         </div>
                       </fieldset>
                     ) : (
-                      <p className="text-sm text-muted">
+                      <p className="mt-4 text-sm text-ink-muted">
                         {product.sizes.length > 1 ? `Size ${product.sizes.join(", ")}` : product.sizes[0]}
                       </p>
                     )}
 
-                    <div
-                      className={`mt-auto pt-4 border-t flex items-center justify-between gap-3 ${
-                        isLight ? "border-stone-100" : "border-stone-800"
-                      }`}
-                    >
+                    <div className="mt-auto flex items-end justify-between gap-3 pt-6">
                       {STORE_PRICES_PUBLISHED ? (
                         <div>
-                          <span className="text-sm text-muted">{lowStock ? `Chỉ còn ${product.stock}` : "Giá"}</span>
-                          <div className={`text-xl font-extrabold tracking-tight ${isLight ? "text-stone-950" : "text-white"}`}>
+                          <span className={`text-sm ${lowStock ? "font-medium text-brand-text" : "text-ink-muted"}`}>
+                            {lowStock ? `Chỉ còn ${product.stock}` : "Giá"}
+                          </span>
+                          <div className="text-xl font-bold tracking-tight tabular-nums text-ink">
                             {formatPrice(product.price)}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm font-semibold text-muted">Giá sẽ công bố</span>
+                        <span className="text-sm font-semibold text-ink-muted">Giá sẽ công bố</span>
                       )}
 
                       {addToCart && (
@@ -235,23 +203,21 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
                           type="button"
                           onClick={() => handleQuickAdd(product)}
                           disabled={soldOut}
-                          className={`min-h-11 px-4 rounded-full text-sm font-semibold transition-colors flex items-center gap-1.5 active:translate-y-px shrink-0 disabled:cursor-not-allowed disabled:opacity-50 ${
-                            isAdded
-                              ? "bg-emerald-700 text-white"
-                              : isLight
-                                ? "bg-stone-900 text-white hover:bg-stone-800"
-                                : "bg-white text-stone-950 hover:bg-stone-200"
+                          className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold text-page transition-[background-color,opacity,transform] duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
+                            isAdded ? "bg-positive" : "bg-ink hover:opacity-85"
                           }`}
                         >
                           {soldOut ? (
-                            "Hết hàng"
+                            <span>Hết hàng</span>
                           ) : isAdded ? (
                             <>
-                              <Check className="w-4 h-4" aria-hidden /> Đã thêm
+                              <Check className="h-4 w-4" aria-hidden />
+                              <span>Đã thêm</span>
                             </>
                           ) : (
                             <>
-                              <ShoppingBag className="w-4 h-4" aria-hidden /> Thêm vào giỏ
+                              <ShoppingBag className="h-4 w-4" aria-hidden />
+                              <span>Thêm vào giỏ</span>
                             </>
                           )}
                         </button>

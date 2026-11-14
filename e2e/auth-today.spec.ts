@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { uniqueEmail } from "./helpers";
+import { ADD_WATER_BUTTON, uniqueEmail, waterLine, waterText } from "./helpers";
 import { URLS } from "./urls";
 
 const PASSWORD = "e2e-password-123";
@@ -18,10 +18,10 @@ test("register → Today shows server numbers that persist across sessions", asy
   await page.getByRole("button", { name: "Đăng ký", exact: true }).click();
 
   await expect(page).toHaveURL(`${URLS.app}/today`);
-  // Signed in: the guest banner disappears and a new account starts at 0 ml (guests see demo values).
+  // Signed in: the guest banner disappears and a new account starts at 0 ml.
   await expect(page.getByRole("link", { name: "Đăng nhập để lưu tiến trình" })).toBeHidden();
-  const water = page.getByText(/^\d+ \/ \d+ ml$/);
-  await expect(water).toHaveText(/^0 \/ /);
+  const water = waterLine(page);
+  await expect(water).toHaveText(waterText(0));
 
   // The session cookie is first-party: /api/v1 is proxied to FastAPI by the app.
   const me = await page.request.get("/api/v1/auth/me");
@@ -29,9 +29,9 @@ test("register → Today shows server numbers that persist across sessions", asy
   expect((await me.json()).email).toBe(email);
 
   const added = page.waitForResponse((r) => r.url().endsWith("/api/v1/today/water") && r.ok());
-  await page.getByRole("button", { name: "+250ml" }).click();
-  await added;
-  await expect(water).toHaveText(/^250 \/ /);
+  await page.getByRole("button", ADD_WATER_BUTTON).click();
+  expect((await (await added).json()).water_intake_ml).toBe(250);
+  await expect(water).toHaveText(waterText(250));
 
   // Stored on the server, not in the browser: a fresh browser context sees it after logging in.
   const other = await browser.newContext();
@@ -41,7 +41,7 @@ test("register → Today shows server numbers that persist across sessions", asy
   await page2.getByLabel("Mật khẩu").fill(PASSWORD);
   await page2.getByRole("button", { name: "Đăng nhập", exact: true }).click();
   await expect(page2).toHaveURL(`${URLS.app}/today`);
-  await expect(page2.getByText(/^\d+ \/ \d+ ml$/)).toHaveText(/^250 \/ /);
+  await expect(waterLine(page2)).toHaveText(waterText(250));
   await other.close();
 });
 

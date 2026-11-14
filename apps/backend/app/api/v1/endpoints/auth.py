@@ -62,7 +62,12 @@ async def register(payload: UserCreate, response: Response, db: AsyncSession = D
     if existing is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already registered")
 
-    user = User(email=email, full_name=payload.full_name.strip(), hashed_password=hash_password(payload.password))
+    user = User(
+        email=email,
+        full_name=payload.full_name.strip(),
+        hashed_password=hash_password(payload.password),
+        timezone=payload.timezone,
+    )
     db.add(user)
     try:
         await db.commit()

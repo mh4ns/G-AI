@@ -1,19 +1,24 @@
 import React from "react";
 import { BrandLogo } from "./BrandLogo";
+import { homeUrl } from "./links";
 
 interface NotFoundPageProps {
-  /** Where "back" goes: the app's own home. */
+  /** The app's own main page, offered as the way out of the 404. */
   homeHref: string;
   homeLabel: string;
+  /** Where the logo goes: the brand site's home. Inside apps/site pass "/". */
+  logoHref?: string;
 }
 
 /** Shared 404 for every G-AI app, in Vietnamese and on the shared canvas. */
-export function NotFoundPage({ homeHref, homeLabel }: NotFoundPageProps) {
+export function NotFoundPage({ homeHref, homeLabel, logoHref = homeUrl() }: NotFoundPageProps) {
   return (
     <main className="min-h-screen bg-canvas text-stone-900 flex items-center justify-center px-4">
       <div className="max-w-md text-center">
         <div className="flex justify-center">
-          <BrandLogo isLight size="lg" />
+          <a href={logoHref} aria-label="G-AI – trang chủ" className="inline-flex rounded-lg">
+            <BrandLogo isLight size="lg" />
+          </a>
         </div>
         <p className="mt-8 text-sm font-semibold text-stone-600">Lỗi 404</p>
         <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">Không tìm thấy trang này</h1>

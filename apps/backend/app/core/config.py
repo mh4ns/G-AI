@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./g_ai.db"
+    # Optional elevated role URL for Alembic DDL; falls back to DATABASE_URL when unset.
+    MIGRATION_DATABASE_URL: Optional[str] = None
     # Create tables on startup instead of running Alembic migrations.
     # Convenient for local SQLite; production must use `alembic upgrade head`.
     AUTO_CREATE_SCHEMA: bool = True
@@ -33,6 +35,14 @@ class Settings(BaseSettings):
     # Disable server-side prepared statements for a transaction-mode pooler (PgBouncer/Supavisor).
     # Unset = auto-detect from the URL's port (6543 is Supabase's transaction pooler).
     DB_TRANSACTION_POOLER: Optional[bool] = None
+
+    # Supabase Private Storage (server-side only; never exposed to browser clients)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_SECRET_KEY: Optional[str] = None
+
+    # Application-layer encryption for CBT messages (AES-256-GCM, base64-encoded 32-byte key)
+    CBT_ENCRYPTION_KEY: Optional[str] = None
+    CBT_ENCRYPTION_KEY_VERSION: int = 1
 
     # Security
     SECRET_KEY: str = INSECURE_DEV_SECRET
@@ -58,6 +68,11 @@ class Settings(BaseSettings):
         case_sensitive=True,
         extra="ignore",
     )
+
+    @property
+    def effective_migration_database_url(self) -> str:
+        """Database URL used by Alembic migrations, preferring MIGRATION_DATABASE_URL over DATABASE_URL."""
+        return self.MIGRATION_DATABASE_URL or self.DATABASE_URL
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod

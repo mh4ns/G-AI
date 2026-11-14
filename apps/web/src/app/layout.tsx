@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Inter } from "next/font/google";
+import { Archivo, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,11 +8,11 @@ const inter = Inter({
   display: "swap",
 });
 
-// Display face for headings: drawn for Vietnamese, so stacked diacritics sit
-// cleanly at large sizes. Body text stays in Inter.
-const display = Be_Vietnam_Pro({
+// Display face for headlines (`font-display`). The width axis lets the preset
+// set it condensed; the Vietnamese subset covers stacked diacritics.
+const archivo = Archivo({
   subsets: ["latin", "vietnamese"],
-  weight: ["600", "700", "800"],
+  axes: ["wdth"],
   variable: "--font-display",
   display: "swap",
 });
@@ -40,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${inter.variable} ${display.variable}`}>
+    <html lang="vi" className={`${inter.variable} ${archivo.variable}`}>
       <body className={`${inter.className} font-sans antialiased bg-canvas text-stone-900 selection:bg-brand-action selection:text-white`}>
         {children}
       </body>

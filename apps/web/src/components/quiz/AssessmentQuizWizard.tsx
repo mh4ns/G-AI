@@ -192,8 +192,6 @@ export const AssessmentQuizWizard: React.FC = () => {
     setStep(8);
   };
 
-
-
   const renderStep = (n: number) => (
     <>
         {n === 1 && (
@@ -296,15 +294,16 @@ export const AssessmentQuizWizard: React.FC = () => {
     <div
       className="min-h-screen flex flex-col justify-between transition-colors duration-500 bg-canvas text-stone-900 selection:bg-brand/20 selection:text-brand-action"
     >
-      {/* Header with progress line (shown for steps 2 to 6) */}
-      {step >= 2 && step <= 6 && (
+      {/* Header with logo, back button and progress line (steps 1 to 6) */}
+      {step <= 6 && (
         <StepHeader
-          // Steps 1-5 are the five questions (step 1 has no header); step 6 is the optional photo.
+          // Steps 1-5 are the five questions; step 6 is the optional photo.
           questionNumber={step <= 5 ? step : undefined}
           totalQuestions={5}
           progress={step / 6}
           onBack={handleBack}
-          canGoBack={true}
+          // On step 1, back leaves the quiz for the page the visitor came from.
+          canGoBack={step > 1}
         />
       )}
 
