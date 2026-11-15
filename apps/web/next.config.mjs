@@ -10,7 +10,7 @@ if (process.env.VERCEL && !process.env.BACKEND_URL) {
 
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@g-ai/ui"],
+  transpilePackages: ["@g-ai/ui", "@g-ai/motion"],
   images: {
     remotePatterns: [
       {
