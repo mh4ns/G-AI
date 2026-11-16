@@ -55,3 +55,10 @@ graphify-out/
 /test-results/
 /playwright-report/
 /blob-report/
+
+# Remotion
+.remotion/
+packages/motion/out/
+
+# Legacy / Duplicate Agent Staging
+agent/

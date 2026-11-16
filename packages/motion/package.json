@@ -1,0 +1,34 @@
+{
+  "name": "@g-ai/motion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remotion compositions and 3D motion for G-AI ecosystem.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./Root": "./src/Root.tsx"
+  },
+  "scripts": {
+    "dev": "remotion preview src/index.ts",
+    "preview": "remotion preview src/index.ts",
+    "build": "remotion bundle src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.8.2",
+    "@remotion/three": "4.0.543",
+    "@remotion/transitions": "4.0.543",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "4.0.543",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.543",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.187.0",
+    "typescript": "^5.6.3"
+  }
+}

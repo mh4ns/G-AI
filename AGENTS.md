@@ -18,6 +18,28 @@ Canonical 5-role triage vocabulary mapped directly to GitHub labels (`needs-tria
 
 Single-context layout with root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
 
+### Sprint team
+
+The team focuses on Frontend and CI/CD development with four specialized agents:
+- **UI/UX Agent** (`ui-ux`): Frontend visual design, components, micro-interactions, responsive layout, motion & 3D (`apps/web`, `apps/site`, `apps/hub`, `packages/ui`, `packages/motion`).
+- **CI/CD Agent** (`devops`): Build pipelines, Next.js proxy, testing automation (Playwright e2e), Docker/Vercel deployments, dependencies and environment configurations.
+- **Code Reviewer Agent** (`code-reviewer`): Code-level review (standards, TypeScript type safety, linting, error handling, unit test coverage, and spec compliance).
+- **Codebase Reviewer Agent** (`codebase-reviewer`): Architectural and system-level review (pipeline integrity, module deepening, security audits including OWASP/RLS/zero secrets, performance, and cross-package consistency).
+
+Read `docs/agents/team.md` before starting sprint work. Subagents are in `.claude/agents/`.
+
+### Mandatory Repo Grilling Protocol
+
+Before implementing or modifying **ANYTHING** in the project:
+1. **Never implement silently**: Do not edit or create code before reaching a shared understanding with the user.
+2. **Always invoke Grilling (`.agents/skills/grilling`)**: Formulate questions in structured rounds (`❓ Q<n> - <title>`, `➡️ <recommended answer>`), mapping out the decision tree and exploring the frontier of choices.
+3. **Educate on the pipeline**: Every grill round must explicitly explain the end-to-end pipeline involved (Client ↔ Next.js Proxy ↔ FastAPI ↔ PostgreSQL/Supabase Storage ↔ CI/CD) so the user understands how the feature forms and interacts with the overall architecture.
+4. **Wait for user confirmation**: Only proceed to implementation after the user confirms the recommended answers or provides adjustments.
+
+### Motion, transitions and 3D
+
+CSS and SVG for UI motion, three.js (through `@react-three/fiber`) for real-time 3D, Remotion for scene transitions and video. See `docs/agents/motion-media.md` before adding animation, video or 3D.
+
 ---
 
 ## Architecture & Monorepo Layout
@@ -54,7 +76,7 @@ Single-context layout with root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/
    - Follow the principle of least privilege, zero-trust network boundaries, and secure logging without leaking sensitive personal health data (PHI/BIA biometrics).
 
 2. **Frontend Standards (`apps/web`)**:
-   - 60 FPS silky micro-interactions with hardware-accelerated CSS/SVG rather than heavy blocking 3D assets.
+   - 60 FPS silky micro-interactions with hardware-accelerated CSS/SVG rather than heavy blocking 3D assets. 3D and video are lazy-loaded enhancements under `docs/agents/motion-media.md`.
    - Dynamic responsiveness across mobile, tablet, and widescreen viewports.
    - Strict TypeScript safety with zero build errors (`npm run build`).
 

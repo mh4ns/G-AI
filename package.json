@@ -4,6 +4,7 @@
   "description": "G-AI monorepo: main hub site, brand site, coaching app, shared UI package (backend is Python, see apps/backend).",
   "workspaces": [
     "packages/ui",
+    "packages/motion",
     "apps/hub",
     "apps/site",
     "apps/web"
