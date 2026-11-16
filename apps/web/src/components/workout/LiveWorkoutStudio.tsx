@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
 import {
   Camera,
   CameraOff,
@@ -18,30 +18,10 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
-import confetti from "canvas-confetti";
-import { api } from "@/lib/api-client";
-import { SEMANTIC_COLORS } from "@/lib/design-tokens";
-import {
-  DEFAULT_EXERCISES,
-  RepTracker,
-  estimateCalories,
-  exercisesFromApi,
-  measureExerciseAngle,
-  overallFormScore,
-  type PosePoint,
-  type StudioExercise,
-  type ZonePosition,
-} from "./pose-math";
-import { createPoseLandmarker, type PoseLandmarker } from "./pose-detector";
-import { drawDemo, drawLivePose } from "./skeleton-canvas";
+import { useWorkoutSession } from "./useWorkoutSession";
+import { type WorkoutSummaryData } from "./workout-session-engine";
 
-export interface WorkoutSummaryData {
-  caloriesBurned: number;
-  /** 0–100 from camera tracking, or null when no frame was scored (camera off). */
-  averageFormScore: number | null;
-  durationMinutes: number;
-  repsCompleted: number;
-}
+export type { WorkoutSummaryData };
 
 interface LiveWorkoutStudioProps {
   isOpen: boolean;
@@ -50,28 +30,11 @@ interface LiveWorkoutStudioProps {
   archetype?: "female_pilates" | "male_strength";
 }
 
-type CameraState = "off" | "starting" | "loading-model" | "on";
-type CatalogSource = "loading" | "server" | "default";
-
-const HUD_INTERVAL_MS = 250;
-const CATALOG_TIMEOUT_MS = 4000;
-const CUE_GAP_MS = 4500;
-const FORM_CUE_AFTER_MS = 1500;
-
 function formLabel(score: number | null): { text: string; className: string } {
   if (score == null) return { text: "Chưa đo", className: "text-stone-400" };
   if (score >= 85) return { text: "Rất tốt", className: "text-emerald-400" };
   if (score >= 65) return { text: "Khá", className: "text-amber-400" };
   return { text: "Cần chỉnh", className: "text-brand" };
-}
-
-function zoneHint(ex: StudioExercise, zone: ZonePosition, working: boolean): string {
-  if (zone === "in") return "Chuẩn! Đang trong vùng góc mục tiêu";
-  if (!working) return ex.holdSeconds ? "Vào tư thế để bắt đầu tính giờ" : "Sẵn sàng — bắt đầu động tác";
-  // Below the zone = joint more bent than the target; above = more open.
-  return zone === "below"
-    ? `Góc nhỏ hơn mục tiêu — mở khớp ra tới ${Math.round(ex.targetMin)}°`
-    : `Góc lớn hơn mục tiêu — gập sâu tới ${Math.round(ex.targetMax)}°`;
 }
 
 export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
@@ -80,386 +43,34 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
   onFinishWorkout,
   archetype = "female_pilates",
 }) => {
-  const [exercises, setExercises] = useState<StudioExercise[]>(DEFAULT_EXERCISES);
-  const [catalogSource, setCatalogSource] = useState<CatalogSource>("loading");
-  const [exerciseIndex, setExerciseIndex] = useState(0);
-  const [count, setCount] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [cameraState, setCameraState] = useState<CameraState>("off");
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [formScore, setFormScore] = useState<number | null>(null);
-  const [liveAngle, setLiveAngle] = useState<number | null>(null);
-  const [formStatus, setFormStatus] = useState("Chế độ minh hoạ — chưa bật camera");
-  const [summary, setSummary] = useState<WorkoutSummaryData | null>(null);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const landmarkerRef = useRef<PoseLandmarker | null>(null);
-  /** Bumped on every camera start/stop so stale async starts can bail out. */
-  const cameraGenRef = useRef(0);
-
-  // Mutable session state read by the rAF loop (no React re-render per frame).
-  const exercisesRef = useRef(exercises);
-  const indexRef = useRef(0);
-  const countRef = useRef(0);
-  const pausedRef = useRef(false);
-  const mutedRef = useRef(false);
-  const cameraOnRef = useRef(false);
-  const trackerRef = useRef(new RepTracker(DEFAULT_EXERCISES[0]!.targetMin, DEFAULT_EXERCISES[0]!.targetMax));
-  const partsRef = useRef<{ working: number; inZone: number }[]>([]);
-  const holdMsRef = useRef(0);
-  const totalRepsRef = useRef(0);
-  const startedAtRef = useRef(0);
-  const lastCueAtRef = useRef(0);
-  const outOfZoneSinceRef = useRef<number | null>(null);
-  const completedRef = useRef(false);
-
-  const isMale = archetype === "male_strength";
-  const primaryColor = isMale ? SEMANTIC_COLORS.success : SEMANTIC_COLORS.primary;
-  const currentExercise = exercises[exerciseIndex] ?? exercises[0] ?? DEFAULT_EXERCISES[0]!;
-
-  useEffect(() => {
-    mutedRef.current = isMuted;
-    if (isMuted && typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-  }, [isMuted]);
-  useEffect(() => {
-    pausedRef.current = isPaused;
-  }, [isPaused]);
-
-  const speak = useCallback((text: string, force = false) => {
-    if (mutedRef.current || typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    const now = Date.now();
-    if (!force && now - lastCueAtRef.current < CUE_GAP_MS) return;
-    lastCueAtRef.current = now;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "vi-VN";
-      u.rate = 1.05;
-      window.speechSynthesis.speak(u);
-    } catch {
-      // Speech synthesis is optional.
-    }
-  }, []);
-
-  const resetExerciseTracking = useCallback((ex: StudioExercise) => {
-    trackerRef.current = new RepTracker(ex.targetMin, ex.targetMax);
-    holdMsRef.current = 0;
-    countRef.current = 0;
-    outOfZoneSinceRef.current = null;
-    setCount(0);
-    setFormScore(null);
-    setLiveAngle(null);
-  }, []);
-
-  const resetSession = useCallback(
-    (list: StudioExercise[]) => {
-      exercisesRef.current = list;
-      indexRef.current = 0;
-      partsRef.current = [];
-      totalRepsRef.current = 0;
-      completedRef.current = false;
-      startedAtRef.current = Date.now();
-      setExercises(list);
-      setExerciseIndex(0);
-      setSummary(null);
-      setIsPaused(false);
-      resetExerciseTracking(list[0] ?? DEFAULT_EXERCISES[0]!);
-    },
-    [resetExerciseTracking]
-  );
-
-  // --- Camera ----------------------------------------------------------------
-
-  const stopCamera = useCallback(() => {
-    cameraGenRef.current++;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    if (videoRef.current) videoRef.current.srcObject = null;
-    landmarkerRef.current?.close();
-    landmarkerRef.current = null;
-    cameraOnRef.current = false;
-    setCameraState("off");
-  }, []);
-
-  const startCamera = useCallback(async () => {
-    const gen = ++cameraGenRef.current;
-    setCameraError(null);
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError("Trình duyệt không hỗ trợ camera. Bạn vẫn có thể tập và bấm +1 thủ công.");
-      return;
-    }
-    setCameraState("starting");
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-        audio: false,
-      });
-    } catch {
-      if (gen === cameraGenRef.current) {
-        setCameraState("off");
-        setCameraError("Chưa được cấp quyền camera. Bạn vẫn có thể tập và bấm +1 thủ công.");
-      }
-      return;
-    }
-    if (gen !== cameraGenRef.current) {
-      stream.getTracks().forEach((t) => t.stop());
-      return;
-    }
-    streamRef.current = stream;
-    const video = videoRef.current;
-    if (video) {
-      video.srcObject = stream;
-      await video.play().catch(() => undefined);
-    }
-
-    setCameraState("loading-model");
-    try {
-      const landmarker = await createPoseLandmarker();
-      if (gen !== cameraGenRef.current) {
-        landmarker.close();
-        return;
-      }
-      landmarkerRef.current = landmarker;
-    } catch {
-      if (gen === cameraGenRef.current) {
-        stopCamera();
-        setCameraError("Không tải được mô hình nhận diện tư thế. Kiểm tra kết nối mạng rồi thử lại.");
-      }
-      return;
-    }
-    cameraOnRef.current = true;
-    resetExerciseTracking(exercisesRef.current[indexRef.current] ?? DEFAULT_EXERCISES[0]!);
-    setCameraState("on");
-    setFormStatus("Đang tìm cơ thể…");
-    speak("Camera AI đã sẵn sàng. Hãy lùi ra xa để camera thấy toàn thân.", true);
-  }, [resetExerciseTracking, speak, stopCamera]);
-
-  // --- Exercise flow ------------------------------------------------------------
-
-  const completeWorkout = useCallback(() => {
-    if (completedRef.current) return;
-    completedRef.current = true;
-    const durationSec = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
-    const result: WorkoutSummaryData = {
-      caloriesBurned: estimateCalories(durationSec),
-      averageFormScore: overallFormScore(partsRef.current),
-      durationMinutes: Math.max(1, Math.round(durationSec / 60)),
-      repsCompleted: totalRepsRef.current,
-    };
-    setSummary(result);
-    stopCamera();
-    try {
-      confetti({ particleCount: 120, spread: 90, origin: { y: 0.55 }, colors: ["#FF5A36", "#10B981", "#FFFFFF", "#F59E0B"] });
-    } catch {
-      // Confetti is decorative.
-    }
-    speak("Chúc mừng bạn đã hoàn thành buổi tập hôm nay!", true);
-  }, [speak, stopCamera]);
-
-  const nextExercise = useCallback(() => {
-    partsRef.current.push(trackerRef.current.frames);
-    const list = exercisesRef.current;
-    const next = indexRef.current + 1;
-    if (next >= list.length) {
-      completeWorkout();
-      return;
-    }
-    indexRef.current = next;
-    setExerciseIndex(next);
-    const ex = list[next]!;
-    resetExerciseTracking(ex);
-    speak(`Chuyển sang bài: ${ex.name}. ${ex.cue}`, true);
-  }, [completeWorkout, resetExerciseTracking, speak]);
-
-  const addCount = useCallback(
-    (amount: number) => {
-      const ex = exercisesRef.current[indexRef.current];
-      if (!ex || completedRef.current) return;
-      const value = countRef.current + amount;
-      countRef.current = value;
-      if (!ex.holdSeconds) totalRepsRef.current += amount;
-      setCount(value);
-      if (value >= ex.targetCount) {
-        nextExercise();
-      } else if (!ex.holdSeconds && value === Math.ceil(ex.targetCount / 2)) {
-        speak(`Tốt lắm! Còn ${ex.targetCount - value} lần nữa.`);
-      }
-    },
-    [nextExercise, speak]
-  );
-
-  // Load the exercise catalog whenever the studio opens; fall back to defaults.
-  useEffect(() => {
-    if (!isOpen) return;
-    resetSession(DEFAULT_EXERCISES);
-    setCatalogSource("loading");
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), CATALOG_TIMEOUT_MS);
-    (async () => {
-      const [ex, routines] = await Promise.allSettled([
-        api.workouts.exercises({ signal: controller.signal }),
-        api.workouts.routines({ signal: controller.signal }),
-      ]);
-      if (controller.signal.aborted && ex.status !== "fulfilled") {
-        setCatalogSource("default");
-        return;
-      }
-      const repsByCode: Record<string, number> = {};
-      let order: string[] = [];
-      if (routines.status === "fulfilled") {
-        const routine = routines.value.find((r) => r.is_featured) ?? routines.value[0];
-        for (const step of routine?.exercises_sequence ?? []) {
-          if (step.exercise_code && typeof step.reps === "number") repsByCode[step.exercise_code] = step.reps;
-        }
-        order = (routine?.exercises_sequence ?? []).map((s) => s.exercise_code ?? "");
-      }
-      const list = ex.status === "fulfilled" ? exercisesFromApi(ex.value, repsByCode) : [];
-      if (order.length) list.sort((a, b) => rank(order, a.code) - rank(order, b.code));
-      // Only swap the catalog if the user has not started yet.
-      const untouched = indexRef.current === 0 && countRef.current === 0;
-      if (list.length > 0 && untouched) {
-        resetSession(list);
-        setCatalogSource("server");
-      } else {
-        setCatalogSource("default");
-      }
-    })().finally(() => clearTimeout(timer));
-    speak(DEFAULT_EXERCISES[0]!.cue);
-    return () => {
-      controller.abort();
-      clearTimeout(timer);
-    };
-  }, [isOpen, resetSession, speak]);
-
-  // Camera only runs while the studio is open.
-  useEffect(() => {
-    if (!isOpen) stopCamera();
-    return () => stopCamera();
-  }, [isOpen, stopCamera]);
-
-  // Without a camera a hold is a plain timer (nothing is measured).
-  useEffect(() => {
-    if (!isOpen || isPaused || summary || cameraState === "on" || !currentExercise.holdSeconds) return;
-    const t = setInterval(() => addCount(1), 1000);
-    return () => clearInterval(t);
-  }, [isOpen, isPaused, summary, cameraState, currentExercise, addCount]);
-
-  // --- Render loop: detection + drawing at display rate -------------------------
-
-  useEffect(() => {
-    if (!isOpen || summary) return;
-    const canvas = canvasRef.current;
-    const box = containerRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !box || !ctx) return;
-
-    let raf = 0;
-    let lastVideoTime = -1;
-    let lastFrameAt = performance.now();
-    let lastHudAt = 0;
-    let landmarks: PosePoint[] | null = null;
-    let measured: { joints: [number, number, number]; angle: number; zone: ZonePosition } | null = null;
-    let lastStatus = "";
-
-    const tick = (now: number) => {
-      raf = requestAnimationFrame(tick);
-      const dt = Math.min(100, now - lastFrameAt);
-      lastFrameAt = now;
-
-      const dpr = window.devicePixelRatio || 1;
-      const w = box.clientWidth;
-      const h = box.clientHeight;
-      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-      }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, w, h);
-
-      const ex = exercisesRef.current[indexRef.current];
-      if (!ex) return;
-      const video = videoRef.current;
-      const landmarker = landmarkerRef.current;
-
-      if (!cameraOnRef.current || !landmarker || !video) {
-        drawDemo(ctx, { width: w, height: h }, now, ex, primaryColor);
-        return;
-      }
-
-      if (video.readyState >= 2 && video.currentTime !== lastVideoTime) {
-        lastVideoTime = video.currentTime;
-        try {
-          const result = landmarker.detectForVideo(video, now);
-          landmarks = result.landmarks[0] ?? null;
-        } catch {
-          landmarks = null;
-        }
-
-        measured = null;
-        let status: string;
-        if (!landmarks) {
-          status = "Chưa thấy cơ thể — lùi ra xa camera";
-        } else {
-          const m = measureExerciseAngle(landmarks, ex.joints);
-          if (!m) {
-            status = "Chưa thấy rõ khớp cần đo — xoay người hoặc lùi xa hơn";
-          } else if (pausedRef.current) {
-            status = "Đang tạm dừng";
-            measured = { ...m, zone: "in" };
-          } else {
-            const u = trackerRef.current.update(m.angle);
-            measured = { ...m, zone: u.zone };
-            status = zoneHint(ex, u.zone, u.working);
-
-            if (ex.holdSeconds) {
-              if (u.zone === "in") {
-                const before = Math.floor(holdMsRef.current / 1000);
-                holdMsRef.current += dt;
-                const after = Math.floor(holdMsRef.current / 1000);
-                if (after > before) addCount(after - before);
-              }
-            } else if (u.repCompleted) {
-              addCount(1);
-            }
-
-            if (u.working && u.zone !== "in") {
-              outOfZoneSinceRef.current ??= now;
-              if (now - outOfZoneSinceRef.current > FORM_CUE_AFTER_MS) speak(status);
-            } else {
-              outOfZoneSinceRef.current = null;
-            }
-          }
-        }
-
-        if (now - lastHudAt > HUD_INTERVAL_MS || status !== lastStatus) {
-          lastHudAt = now;
-          lastStatus = status;
-          setFormStatus(status);
-          setFormScore(trackerRef.current.formScore);
-          setLiveAngle(measured ? Math.round(measured.angle) : null);
-        }
-      }
-
-      if (landmarks) {
-        drawLivePose(ctx, { width: w, height: h }, landmarks, video.videoWidth || 1280, video.videoHeight || 720, {
-          color: primaryColor,
-          measured,
-        });
-      }
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [isOpen, summary, primaryColor, addCount, speak]);
-
-  useEffect(() => {
-    if (cameraState === "off") setFormStatus("Chế độ minh hoạ — chưa bật camera");
-  }, [cameraState]);
+  const {
+    exercises,
+    exerciseIndex,
+    currentExercise,
+    count,
+    isPaused,
+    isMuted,
+    cameraState,
+    cameraError,
+    formScore,
+    liveAngle,
+    formStatus,
+    catalogSource,
+    summary,
+    containerRef,
+    videoRef,
+    canvasRef,
+    addCount,
+    nextExercise,
+    startCamera,
+    stopCamera,
+    togglePause,
+    toggleMute,
+  } = useWorkoutSession({
+    isOpen,
+    archetype,
+    onFinishWorkout,
+  });
 
   const handleFinishAndSave = () => {
     if (summary) onFinishWorkout(summary);
@@ -500,7 +111,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
 
         <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => setIsMuted((m) => !m)}
+            onClick={toggleMute}
             className="w-11 h-11 flex items-center justify-center rounded-full border bg-stone-900 border-stone-700 text-stone-300 hover:text-white transition-colors"
             title={isMuted ? "Bật hướng dẫn giọng nói" : "Tắt giọng nói"}
             aria-label={isMuted ? "Bật hướng dẫn giọng nói" : "Tắt giọng nói"}
@@ -693,7 +304,7 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
                   +1 {currentExercise.holdSeconds ? "giây" : "rep"} (thủ công)
                 </button>
                 <button
-                  onClick={() => setIsPaused((p) => !p)}
+                  onClick={togglePause}
                   className="min-h-12 px-4 rounded-2xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 active:scale-95"
                 >
                   {isPaused ? <Play className="w-3.5 h-3.5 fill-white" /> : <Pause className="w-3.5 h-3.5" />}
@@ -772,8 +383,3 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
     </div>
   );
 };
-
-function rank(order: string[], code: string): number {
-  const i = order.indexOf(code);
-  return i === -1 ? order.length : i;
-}
