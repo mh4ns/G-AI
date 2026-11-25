@@ -2,11 +2,10 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SweepHighlight } from "@/components/home/KineticText";
-import { FOCUS_RING, SegmentedControl } from "@/components/home/SegmentedControl";
-import { appUrl } from "@g-ai/ui";
+import { FOCUS_RING } from "@/components/home/styles";
+import { SlidingTabs, appUrl, type SlidingTabOption } from "@g-ai/ui";
 
 /**
  * Landing hero: one headline, one action, one photograph.
@@ -46,7 +45,10 @@ const PROGRAMMES: Programme[] = [
   },
 ];
 
-const PROGRAMME_TABS = PROGRAMMES.map((p) => ({ id: p.id, label: p.tab }));
+const PROGRAMME_TABS: readonly SlidingTabOption<ProgrammeId>[] = PROGRAMMES.map((p) => ({
+  value: p.id,
+  label: p.tab,
+}));
 
 export const DualAthleteHero: React.FC = () => {
   const [programmeId, setProgrammeId] = useState<ProgrammeId>("pilates");
@@ -69,13 +71,13 @@ export const DualAthleteHero: React.FC = () => {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <Link
+            <a
               href={appUrl("/quiz")}
               className={`group inline-flex h-14 items-center gap-2.5 rounded-full bg-brand px-8 text-base font-semibold text-brand-contrast transition-[background-color,transform] duration-200 hover:bg-brand-soft active:scale-[0.98] ${FOCUS_RING}`}
             >
               <span>Bắt đầu khảo sát</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
-            </Link>
+            </a>
             <p className="text-sm text-ink-muted">Miễn phí · 2 phút</p>
           </div>
         </div>
@@ -100,13 +102,16 @@ export const DualAthleteHero: React.FC = () => {
               );
             })}
 
-            <SegmentedControl
-              label="Chọn chương trình"
-              options={PROGRAMME_TABS}
-              value={current.id}
-              onChange={setProgrammeId}
-              className="absolute left-4 top-4 border-transparent shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
-            />
+            <div className="absolute left-4 top-4 max-w-[calc(100%-2rem)]">
+              <SlidingTabs
+                ariaLabel="Chọn chương trình"
+                options={PROGRAMME_TABS}
+                value={current.id}
+                onChange={setProgrammeId}
+                size="sm"
+                className="border-transparent shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
+              />
+            </div>
           </div>
 
           <div

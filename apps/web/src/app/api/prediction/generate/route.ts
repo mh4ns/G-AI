@@ -9,7 +9,13 @@ import {
   serializeJob,
   updatePredictionJob,
 } from "@/lib/prediction-jobs";
-import { MILESTONE_DAYS, MilestoneDay, hasMilestone, saveMilestone } from "@/lib/prediction-storage";
+import {
+  MILESTONE_DAYS,
+  MilestoneDay,
+  detectImageMimeFromBytes,
+  hasMilestone,
+  saveMilestone,
+} from "@/lib/prediction-storage";
 import {
   assessPhoto,
   buildPromptFor,
@@ -77,8 +83,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const mimeType = mimeMatch[1];
-    const rawBase64 = userPhotoBase64.replace(/^data:image\/\w+;base64,/, "");
+    const rawBase64 = userPhotoBase64.slice(mimeMatch[0].length);
+    if (rawBase64.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "INVALID_MIME",
+          error: "Định dạng ảnh không hợp lệ. Vui lòng sử dụng tệp JPEG, PNG hoặc WebP.",
+        },
+        { status: 400 }
+      );
+    }
 
     // Check base64 byte size (< 10MB approx 13.5MB base64)
     if (rawBase64.length > 14 * 1024 * 1024) {
@@ -87,6 +102,19 @@ export async function POST(req: NextRequest) {
           success: false,
           code: "FILE_TOO_LARGE",
           error: "Kích thước ảnh vượt quá giới hạn 10MB. Vui lòng thu nhỏ ảnh trước khi gửi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const photoBuffer = Buffer.from(rawBase64, "base64");
+    const mimeType = detectImageMimeFromBytes(photoBuffer);
+    if (!mimeType) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "INVALID_MIME",
+          error: "Định dạng ảnh không hợp lệ. Vui lòng sử dụng tệp JPEG, PNG hoặc WebP.",
         },
         { status: 400 }
       );
@@ -246,6 +274,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, jobToken: job.accessToken, ...serializeJob(job) });
   } catch (error: unknown) {
     console.error("[Prediction API] Generate error:", error instanceof Error ? error.message : "unknown error");
+    if (error instanceof GenerationError) {
+      const status =
+        error.code === "SAFETY"
+          ? 422
+          : error.code === "QUOTA"
+            ? 429
+            : error.code === "CONFIG"
+              ? 503
+              : 502;
+      return NextResponse.json(
+        {
+          success: false,
+          code: error.code,
+          error: error.userMessage,
+        },
+        { status }
+      );
+    }
     return NextResponse.json(
       {
         success: false,

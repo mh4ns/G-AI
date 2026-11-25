@@ -18,6 +18,7 @@ function isPrivateImage(src: string | undefined): boolean {
   return !!src && (src.startsWith("data:") || src.startsWith("/api/prediction/image/"));
 }
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 export interface MorphingAvatarProps {
   progress: number; // 0.0 to 1.0 (from currentDay / 28)
@@ -70,10 +71,8 @@ export const MorphingAvatar: React.FC<MorphingAvatarProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isMale = archetype === "male_strength";
 
-  // Check prefers-reduced-motion
-  const isReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Check prefers-reduced-motion (hydration-safe)
+  const isReducedMotion = useReducedMotion();
 
   // 4 Calibrated Milestone Images for 28-day protocol: Day 0, Day 7, Day 14, Day 28
   const defaultCutouts = isMale

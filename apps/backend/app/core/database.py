@@ -3,10 +3,10 @@ from uuid import uuid4
 
 from sqlalchemy import event
 from sqlalchemy.engine import URL, make_url
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-from app.core.config import settings
+from app.core.config import Settings, settings
 
 # Supabase's transaction pooler (Supavisor/PgBouncer in transaction mode) listens on 6543.
 _TRANSACTION_POOLER_PORT = 6543
@@ -41,8 +41,9 @@ def uses_transaction_pooler(url: URL, override: Optional[bool]) -> bool:
     return url.drivername.startswith("postgresql") and url.port == _TRANSACTION_POOLER_PORT
 
 
-def engine_options(raw_url: str) -> Tuple[URL, Dict[str, Any]]:
+def engine_options(raw_url: str, config: Optional[Settings] = None) -> Tuple[URL, Dict[str, Any]]:
     """URL and `create_async_engine` keyword arguments for the configured database."""
+    cfg = config or settings
     url, connect_args = normalize_database_url(raw_url)
     options: Dict[str, Any] = {"echo": False}
 
@@ -52,13 +53,13 @@ def engine_options(raw_url: str) -> Tuple[URL, Dict[str, Any]]:
         # Free tiers allow few connections and drop idle ones: keep the pool small and test
         # connections before use so a recycled connection never surfaces as a 500.
         options.update(
-            pool_size=settings.DB_POOL_SIZE,
-            max_overflow=settings.DB_MAX_OVERFLOW,
-            pool_recycle=settings.DB_POOL_RECYCLE_SECONDS,
+            pool_size=cfg.DB_POOL_SIZE,
+            max_overflow=cfg.DB_MAX_OVERFLOW,
+            pool_recycle=cfg.DB_POOL_RECYCLE_SECONDS,
             pool_pre_ping=True,
             pool_timeout=30,
         )
-        if uses_transaction_pooler(url, settings.DB_TRANSACTION_POOLER):
+        if uses_transaction_pooler(url, cfg.DB_TRANSACTION_POOLER):
             # A transaction pooler hands each transaction to any server connection, so
             # server-side prepared statements from one transaction are missing in the next.
             connect_args.update(
@@ -71,22 +72,31 @@ def engine_options(raw_url: str) -> Tuple[URL, Dict[str, Any]]:
     return url, options
 
 
-_url, _options = engine_options(settings.DATABASE_URL)
-engine = create_async_engine(_url, **_options)
+def create_engine_and_sessionmaker(
+    database_url: Optional[str] = None,
+    config: Optional[Settings] = None,
+) -> Tuple[AsyncEngine, async_sessionmaker[AsyncSession]]:
+    cfg = config or settings
+    url, options = engine_options(database_url or cfg.DATABASE_URL, config=cfg)
+    db_engine = create_async_engine(url, **options)
 
-if _url.drivername.startswith("sqlite"):
-    @event.listens_for(engine.sync_engine, "connect")
-    def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+    if url.drivername.startswith("sqlite"):
+        @event.listens_for(db_engine.sync_engine, "connect")
+        def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
-async_session_maker = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,
-)
+    session_factory = async_sessionmaker(
+        bind=db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+    return db_engine, session_factory
+
+
+engine, async_session_maker = create_engine_and_sessionmaker()
 
 
 class Base(DeclarativeBase):

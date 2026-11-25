@@ -6,7 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import client_ip, get_current_user, get_optional_user
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    hash_password,
+    hash_password_async,
+    verify_password_async,
+)
 from app.models import User
 from app.schemas.user import PasswordChange, Token, UserCreate, UserLogin, UserResponse
 from app.services import login_throttle
@@ -65,7 +70,7 @@ async def register(payload: UserCreate, response: Response, db: AsyncSession = D
     user = User(
         email=email,
         full_name=payload.full_name.strip(),
-        hashed_password=hash_password(payload.password),
+        hashed_password=await hash_password_async(payload.password),
         timezone=payload.timezone,
     )
     db.add(user)
@@ -92,7 +97,7 @@ async def login(payload: UserLogin, request: Request, response: Response, db: As
         raise _too_many(retry_after)
 
     user = await db.scalar(select(User).where(func.lower(User.email) == email))
-    password_ok = verify_password(payload.password, user.hashed_password if user else _DUMMY_HASH)
+    password_ok = await verify_password_async(payload.password, user.hashed_password if user else _DUMMY_HASH)
     if user is None or not password_ok or not user.is_active:
         await login_throttle.record_failure(db, keys)
         await _commit_ignoring_races(db)
@@ -130,14 +135,14 @@ async def change_password(
     retry_after = await login_throttle.retry_after_seconds(db, keys)
     if retry_after:
         raise _too_many(retry_after)
-    if not verify_password(payload.current_password, user.hashed_password):
+    if not await verify_password_async(payload.current_password, user.hashed_password):
         await login_throttle.record_failure(db, keys)
         await _commit_ignoring_races(db)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
     if payload.new_password == payload.current_password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must differ from the current one")
 
-    user.hashed_password = hash_password(payload.new_password)
+    user.hashed_password = await hash_password_async(payload.new_password)
     user.token_version += 1
     await login_throttle.clear(db, keys[0])
     await db.commit()

@@ -8,11 +8,12 @@ FastAPI + async SQLAlchemy 2.0 service behind the web app.
 |---|---|---|
 | Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/password`, `GET /auth/me` | — / required for password |
 | Quiz & plan | `POST /quiz/submit`, `GET /quiz/plans/me` | optional / required |
-| Today dashboard | `GET /today`, `POST /today/{water,calories,fasting,habits/toggle}` | required |
+| Today dashboard | `GET /today`, `GET /today/summary`, `POST /today/{water,calories,fasting,habits/toggle}` | required |
+| Nutrition | `GET /nutrition/foods`, `POST /nutrition/foods`, `GET /nutrition/meals`, `POST /nutrition/meals`, `DELETE /nutrition/meals/{meal_id}` | required |
 | Workouts | `GET /workouts/{exercises,routines}`, `POST /workouts/logs`, `GET /workouts/logs/me` | public / required |
-| Store | `GET /store/products[/{id}]` (`?category=&activity=`), `POST /store/orders`, `GET /store/orders/me` | public / optional / required |
+| Store | `GET /store/products[/{id}]` (`?category=&activity=`), `POST /store/orders`, `GET /store/orders/me` | public / optional (throttled) / required |
 
-Not implemented yet (see the root README roadmap): nutrition logging, body-fat tools, CBT journal, payments.
+Not implemented yet (see the root README roadmap): body-fat endpoints (data/service layer present), CBT journal endpoints (data/crypto layer present), payments.
 
 ### Security model
 
@@ -24,6 +25,8 @@ Not implemented yet (see the root README roadmap): nutrition logging, body-fat t
 - Passwords: PBKDF2-HMAC-SHA256, 600k iterations, per-user salt (legacy 100k hashes still verify).
 - Failed logins are throttled per email+IP (5), email (20) and IP (50) per 15 minutes, stored in
   `auth_throttles` under keyed hashes; over the limit, login answers `429` with `Retry-After`.
+  Store checkout (`POST /store/orders`) is also rate-limited per IP and customer email (10 per 15 minutes
+  by default) in `auth_throttles` to prevent unauthenticated stock exhaustion.
   Behind proxies set `TRUSTED_PROXY_HOPS` (Vercel rewrite + Render = 2) so the real client IP is used.
 - Every JWT carries the user's `token_version`. Logout and password change bump it, which revokes all
   earlier tokens on every device (see ADR-0003).
@@ -33,14 +36,17 @@ Not implemented yet (see the root README roadmap): nutrition logging, body-fat t
 
 ```text
 app/
-├── api/deps.py   # get_current_user / get_optional_user
-├── api/v1/       # Versioned routers
-├── core/         # Settings, security (hashing, JWT), database session
-├── models/       # SQLAlchemy entities
-├── schemas/      # Pydantic request / response models
-└── services/     # Pure business logic (plan_calculator.py)
-alembic/          # Migrations
-tests/            # pytest suite (isolated SQLite DB per run)
+├── api/deps.py        # get_current_user / get_optional_user
+├── api/v1/            # Versioned thin HTTP routers
+├── core/              # Settings, security (hashing, JWT), database engine/session factory
+├── data/              # Seed catalogs (store_catalog.json, food_catalog.json)
+├── models/            # SQLAlchemy entities
+├── schemas/           # Pydantic request / response models & shared validators (_common.py)
+├── services/          # Domain & persistence services (daily_metrics, nutrition, store, quiz,
+│                      # plan_calculator, login_throttle, catalog, body_metrics, cbt_crypto, rls)
+└── export_openapi.py  # Exports OpenAPI contract to packages/shared-types/openapi/backend-v1.json
+alembic/               # Migrations
+tests/                 # pytest suite (isolated SQLite DB per run)
 ```
 
 ## Running locally

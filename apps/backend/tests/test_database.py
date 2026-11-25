@@ -36,3 +36,35 @@ async def test_healthz(client):
     res = await client.get("/healthz")
     assert res.status_code == 200
     assert res.json() == {"status": "healthy", "database": "connected"}
+
+
+async def test_create_engine_and_application_seam(tmp_path):
+    from httpx import ASGITransport, AsyncClient
+    from sqlalchemy import text
+
+    from app.core.config import Settings
+    from app.main import create_application
+
+    db_path = tmp_path / "isolated_seam.db"
+    custom_settings = Settings(
+        _env_file=None,
+        ENVIRONMENT="test",
+        AUTO_CREATE_SCHEMA=False,
+        DATABASE_URL=f"sqlite+aiosqlite:///{db_path}",
+    )
+    custom_engine, custom_session_maker = database.create_engine_and_sessionmaker(config=custom_settings)
+    try:
+        async with custom_session_maker() as session:
+            assert (await session.execute(text("SELECT 1"))).scalar_one() == 1
+
+        custom_app = create_application(
+            app_settings=custom_settings,
+            db_engine=custom_engine,
+            session_factory=custom_session_maker,
+        )
+        async with AsyncClient(transport=ASGITransport(app=custom_app), base_url="http://test") as c:
+            res = await c.get("/healthz")
+            assert res.status_code == 200
+            assert res.json() == {"status": "healthy", "database": "connected"}
+    finally:
+        await custom_engine.dispose()

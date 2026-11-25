@@ -47,25 +47,26 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <a
       href={product.href}
-      className={`group relative flex flex-col justify-between rounded-2xl border p-6 sm:p-8 min-h-[340px] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand ${
+      data-theme={product.tone}
+      className={`group relative flex flex-col justify-between rounded-2xl border border-line p-6 sm:p-8 min-h-[340px] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand text-ink ${
         dark
-          ? "bg-canvas-dark text-white border-stone-800 hover:border-brand/60 hover:shadow-[0_24px_60px_-24px_rgba(255,90,54,0.45)]"
-          : "bg-white text-stone-900 border-stone-200 hover:border-brand/50 hover:shadow-[0_24px_60px_-28px_rgba(43,31,28,0.35)]"
+          ? "bg-page hover:border-brand/60 hover:shadow-[0_24px_60px_-24px_rgba(255,90,54,0.45)]"
+          : "bg-surface hover:border-brand/50 hover:shadow-[0_24px_60px_-28px_rgba(43,31,28,0.35)]"
       }`}
     >
       <div>
         {/* Product logo: the shared G mark plus the product name */}
         <div className="flex items-center gap-3">
-          <BrandLogo isLight={!dark} size="lg" />
+          <BrandLogo tone={product.tone} size="lg" />
           <span className="text-2xl font-extrabold tracking-tight">
-            G-AI <span className="text-brand">{product.name}</span>
+            G-AI <span className="text-brand-text">{product.name}</span>
           </span>
         </div>
 
-        <p className={`mt-6 text-xs ${dark ? "text-stone-400" : "text-stone-500"}`}>
+        <p className="mt-6 text-xs text-ink-faint">
           {product.tagline}
         </p>
-        <p className={`mt-3 max-w-md text-sm leading-relaxed ${dark ? "text-stone-300" : "text-stone-600"}`}>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-muted">
           {product.description}
         </p>
 
@@ -73,9 +74,7 @@ function ProductCard({ product }: { product: Product }) {
           {product.highlights.map((h) => (
             <li
               key={h}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                dark ? "bg-stone-800/80 text-stone-200" : "bg-canvas text-stone-700"
-              }`}
+              className="rounded-full bg-sunken px-3 py-1 text-xs font-medium text-ink"
             >
               {h}
             </li>
@@ -83,9 +82,9 @@ function ProductCard({ product }: { product: Product }) {
         </ul>
       </div>
 
-      <div className={`mt-8 flex items-center justify-between border-t pt-5 ${dark ? "border-stone-800" : "border-stone-200"}`}>
+      <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
         <span className="text-sm font-bold">{product.cta}</span>
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-white transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-contrast transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
           <ArrowUpRight className="h-5 w-5" aria-hidden />
         </span>
       </div>
@@ -95,14 +94,14 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function HubPage() {
   return (
-    <div className="min-h-screen bg-canvas text-stone-900">
+    <div className="min-h-screen bg-page text-ink">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
         <a href={homeUrl()} aria-label="G-AI – trang chủ" className="group flex items-center rounded-lg">
-          <BrandLogo isLight size="md" />
+          <BrandLogo tone="light" size="md" />
         </a>
         <a
           href={appUrl("/login")}
-          className="min-h-11 inline-flex items-center text-sm font-semibold text-stone-600 transition-colors hover:text-stone-900"
+          className="min-h-11 inline-flex items-center text-sm font-semibold text-ink-muted transition-colors hover:text-ink"
         >
           Đăng nhập
         </a>
@@ -113,7 +112,7 @@ export default function HubPage() {
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
             Huấn luyện tại nhà với AI, theo đúng cơ thể bạn
           </h1>
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-stone-600">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-muted">
             Làm khảo sát 2 phút để nhận lộ trình calo và bài tập 28 ngày, hoặc xem các chương trình và dụng cụ tập của G-AI.
           </p>
         </section>
@@ -125,13 +124,13 @@ export default function HubPage() {
         </section>
       </main>
 
-      <footer className="border-t border-stone-200">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <footer className="border-t border-line">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-ink-faint sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <span>© {new Date().getFullYear()} G-AI</span>
           <nav className="flex gap-5">
-            <a href={appUrl("/quiz")} className="min-h-11 inline-flex items-center hover:text-stone-900">Coach</a>
-            <a href={siteUrl("/")} className="min-h-11 inline-flex items-center hover:text-stone-900">Movement</a>
-            <a href={siteUrl("/store")} className="min-h-11 inline-flex items-center hover:text-stone-900">Cửa hàng</a>
+            <a href={appUrl("/quiz")} className="min-h-11 inline-flex items-center hover:text-ink">Coach</a>
+            <a href={siteUrl("/")} className="min-h-11 inline-flex items-center hover:text-ink">Movement</a>
+            <a href={siteUrl("/store")} className="min-h-11 inline-flex items-center hover:text-ink">Cửa hàng</a>
           </nav>
         </div>
       </footer>

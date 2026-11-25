@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isMilestoneDay, readMilestone, verifyMilestoneSignature } from "@/lib/prediction-storage";
+import { isMilestoneDay, readMilestoneWithMime, verifyMilestoneSignature } from "@/lib/prediction-storage";
 
 export async function GET(
   request: NextRequest,
@@ -16,12 +16,12 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const image = readMilestone(cacheKey, dayNum);
-  if (!image) return new NextResponse("Not found", { status: 404 });
+  const result = readMilestoneWithMime(cacheKey, dayNum);
+  if (!result) return new NextResponse("Not found", { status: 404 });
 
-  return new NextResponse(new Uint8Array(image), {
+  return new NextResponse(new Uint8Array(result.buffer), {
     headers: {
-      "Content-Type": "image/jpeg",
+      "Content-Type": result.mimeType,
       // Personal biometric image: browser may cache privately, shared caches must not.
       "Cache-Control": "private, max-age=3600",
       "X-Content-Type-Options": "nosniff",

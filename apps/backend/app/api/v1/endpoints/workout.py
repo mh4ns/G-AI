@@ -5,10 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-from app.api.v1.endpoints.today import get_or_create_today
 from app.core.database import get_db
 from app.models import Exercise, User, WorkoutLog, WorkoutRoutine
 from app.schemas.workout import ExerciseResponse, WorkoutLogCreate, WorkoutLogResponse, WorkoutRoutineResponse
+from app.services import daily_metrics
 
 router = APIRouter(prefix="/workouts", tags=["Workouts & AI Live PT"])
 
@@ -32,10 +32,10 @@ async def log_workout(
     if payload.routine_id is not None and await db.get(WorkoutRoutine, payload.routine_id) is None:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Unknown routine_id")
 
-    metric = await get_or_create_today(db, user.id, user.timezone)
+    metric = await daily_metrics.get_or_create_today(db, user.id, user.timezone)
     log = WorkoutLog(user_id=user.id, **payload.model_dump())
     db.add(log)
-    metric.calories_burned = (metric.calories_burned or 0) + payload.calories_burned
+    daily_metrics.apply_calories_burned(metric, payload.calories_burned)
 
     await db.commit()
     await db.refresh(log)

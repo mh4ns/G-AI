@@ -5,7 +5,9 @@
  * file and then adds the @tailwind layers.
  */
 
-:root {
+:root,
+[data-theme="light"] {
+  color-scheme: light;
   /* Keep in sync with `canvas` in tailwind-preset.js */
   --background: #faf8f5;
   --background-dark: #0a0908;
@@ -60,24 +62,6 @@ h1,
 h2,
 h3 {
   text-wrap: balance;
-}
-
-/* Secondary text that passes 4.5:1 on both grounds. Pages that switch theme
-   set data-theme="dark" on their root. */
-.text-muted {
-  color: #78716c; /* stone-500 on light: 4.8:1 */
-}
-[data-theme="dark"] .text-muted {
-  color: #a8a29e; /* stone-400 on dark: 7.5:1 */
-}
-
-/* Orange text that passes on both grounds: brand-action on light (4.7:1),
-   brand on dark (6.4:1). */
-.text-accent {
-  color: #c93e1a;
-}
-[data-theme="dark"] .text-accent {
-  color: #ff5a36;
 }
 
 /* Impeccable Neutral Adaptive Scrollbar */

@@ -6,6 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # Lowest BMI a target weight may sit at (WHO healthy range starts at 18.5).
 HEALTHY_BMI_MIN = 18.5
+ARCHETYPE_GENDER_MAP = {
+    "female_pilates": "female",
+    "male_strength": "male",
+}
 
 
 class QuizSubmitRequest(BaseModel):
@@ -30,6 +34,18 @@ class QuizSubmitRequest(BaseModel):
         for tag in [*self.focus_areas, *self.obstacles]:
             if not (1 <= len(tag) <= 50) or not tag.replace("_", "").isalnum():
                 raise ValueError(f"Invalid tag: {tag!r}")
+        return self
+
+    @model_validator(mode="after")
+    def _archetype_matches_gender(self) -> "QuizSubmitRequest":
+        if self.archetype is not None:
+            expected_gender = ARCHETYPE_GENDER_MAP[self.archetype]
+            if "gender" not in self.model_fields_set:
+                self.gender = expected_gender
+            elif self.gender != expected_gender:
+                raise ValueError(
+                    f"archetype {self.archetype!r} is inconsistent with gender {self.gender!r}"
+                )
         return self
 
     @model_validator(mode="after")

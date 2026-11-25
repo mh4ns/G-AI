@@ -9,6 +9,7 @@ if (process.env.VERCEL && !process.env.BACKEND_URL) {
 }
 
 const nextConfig = {
+  poweredByHeader: false,
   reactStrictMode: true,
   transpilePackages: ["@g-ai/ui", "@g-ai/motion"],
   images: {

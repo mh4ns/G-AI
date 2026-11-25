@@ -15,6 +15,7 @@ from httpx import ASGITransport, AsyncClient  # noqa: E402
 from app.core.database import Base, async_session_maker, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Product  # noqa: E402
+from app.services.nutrition import load_food_catalog, sync_food_catalog  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -63,6 +64,13 @@ async def products():
                 ),
             ]
         )
+        await session.commit()
+
+
+@pytest.fixture
+async def curated_foods():
+    async with async_session_maker() as session:
+        await sync_food_catalog(session, load_food_catalog())
         await session.commit()
 
 

@@ -3,18 +3,23 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, Loader2, Minus, Plus, ShieldCheck, ShoppingBag, Trash2, X } from "lucide-react";
+import type { OrderDTO } from "@g-ai/shared-types";
+import { ApiError } from "@g-ai/ui/api";
 import {
-  MAX_QUANTITY_PER_LINE,
-  StoreApiError,
   canOptimizeImage,
   createOrder,
   formatPrice,
-  type CartLine,
   type CatalogSource,
-  type OrderResponse,
   type StoreItem,
 } from "@/lib/store-api";
-import { FOCUS_RING } from "@/components/home/SegmentedControl";
+import {
+  MAX_QUANTITY_PER_LINE,
+  buildOrderItems,
+  describeError,
+  summarizeCart,
+  type CartLine,
+} from "@/lib/store-cart";
+import { FOCUS_RING } from "@/components/home/styles";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -25,21 +30,12 @@ interface CartDrawerProps {
   onUpdateQuantity: (key: string, delta: number) => void;
   onRemoveItem: (key: string) => void;
   /** Called after the server accepted the order; the parent clears the cart. */
-  onOrderPlaced: (order: OrderResponse) => void;
+  onOrderPlaced: (order: OrderDTO) => void;
   /** Called when the server rejected the order over stock or availability. */
   onCatalogStale?: () => void;
 }
 
 type Step = "cart" | "checkout" | "done";
-
-/** Why a line cannot be ordered right now, or null when it can. */
-function lineProblem(line: CartLine, item: StoreItem | undefined): string | null {
-  if (!item) return "Sản phẩm không còn bán";
-  if (!item.sizes.includes(line.size)) return `Size ${line.size} không còn`;
-  if (item.stock === 0) return "Hết hàng";
-  if (item.stock != null && line.quantity > item.stock) return `Chỉ còn ${item.stock} sản phẩm`;
-  return null;
-}
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
   isOpen,
@@ -58,9 +54,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [order, setOrder] = useState<OrderResponse | null>(null);
+  const [order, setOrder] = useState<OrderDTO | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const formId = useId();
+  const titleId = useId();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -76,28 +73,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // A finished order is shown once; reopening the bag starts fresh.
+  // Reset transient checkout/done state whenever the drawer closes; reopening starts fresh at the bag.
   useEffect(() => {
     if (!isOpen) {
       setError(null);
-      if (step === "done") {
-        setStep("cart");
-        setOrder(null);
-      }
+      setStep("cart");
+      setOrder(null);
     }
-  }, [isOpen, step]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const rows = lines.map((line) => {
-    const item = catalog.get(line.productId);
-    return { line, item, problem: lineProblem(line, item) };
-  });
-  const orderable = rows.filter((r) => !r.problem);
-  const hasProblems = rows.some((r) => r.problem);
-  const subtotal = orderable.reduce((sum, r) => sum + (r.item?.price ?? 0) * r.line.quantity, 0);
-  const totalCount = lines.reduce((sum, l) => sum + l.quantity, 0);
-  const canCheckout = source === "server" && orderable.length > 0 && !hasProblems;
+  const { rows, orderable, subtotal, itemCount: totalCount, hasProblems, canCheckout } = summarizeCart(
+    lines,
+    catalog,
+    source
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,14 +100,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         customer_name: name.trim(),
         customer_email: email.trim(),
         shipping_address: address.trim(),
-        items: orderable.map(({ line }) => ({ product_id: line.productId, size: line.size, quantity: line.quantity })),
+        items: buildOrderItems(orderable),
       });
       setOrder(created);
       setStep("done");
       onOrderPlaced(created);
     } catch (err) {
-      setError(err instanceof StoreApiError ? err.message : "Không tạo được đơn hàng. Vui lòng thử lại.");
-      if (err instanceof StoreApiError && (err.status === 409 || err.status === 422)) onCatalogStale?.();
+      setError(describeError(err));
+      if (err instanceof ApiError && (err.status === 409 || err.status === 422)) onCatalogStale?.();
     } finally {
       setSubmitting(false);
     }
@@ -125,7 +116,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const title = step === "checkout" ? "Thông tin giao hàng" : step === "done" ? "Đã nhận đơn" : "Giỏ hàng";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label="Giỏ hàng">
+    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <div onClick={onClose} className="absolute inset-0 bg-black/60" />
 
       <div className="absolute inset-y-0 right-0 flex w-full max-w-lg">
@@ -136,7 +127,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               {step === "checkout" && (
                 <button
                   type="button"
-                  onClick={() => setStep("cart")}
+                  onClick={() => {
+                    setError(null);
+                    setStep("cart");
+                  }}
                   className={`-ml-2 ${ICON_BUTTON}`}
                   aria-label="Quay lại giỏ hàng"
                 >
@@ -145,7 +139,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               )}
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5">
-                  <h2 className="truncate text-lg font-semibold tracking-tight">{title}</h2>
+                  <h2 id={titleId} className="truncate text-lg font-semibold tracking-tight">
+                    {title}
+                  </h2>
                   {step === "cart" && totalCount > 0 && (
                     <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-bold tabular-nums text-brand-contrast">
                       {totalCount}
@@ -240,12 +236,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </label>
 
                 <ul className="divide-y divide-line rounded-2xl border border-line bg-surface text-sm">
-                  {orderable.map(({ line, item }) => (
+                  {orderable.map(({ line, item, lineTotal }) => (
                     <li key={line.key} className="flex justify-between gap-3 px-4 py-3">
                       <span className="min-w-0 truncate">
                         {line.quantity} × {item!.name} <span className="text-ink-muted">({line.size})</span>
                       </span>
-                      <span className="shrink-0 font-medium tabular-nums">{formatPrice(item!.price * line.quantity)}</span>
+                      <span className="shrink-0 font-medium tabular-nums">{formatPrice(lineTotal)}</span>
                     </li>
                   ))}
                 </ul>
@@ -293,7 +289,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       {problem && <p className="mt-1 text-sm font-medium text-danger">{problem}</p>}
                       <div className="mt-2 flex items-center justify-between gap-3">
                         <span className="text-base font-semibold tabular-nums">
-                          {item ? formatPrice(item.price * line.quantity) : "—"}
+                          {item ? formatPrice((Math.round(item.price * 100) * line.quantity) / 100) : "—"}
                         </span>
                         <div className="flex items-center rounded-full border border-line">
                           <button

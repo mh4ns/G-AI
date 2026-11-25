@@ -1,7 +1,9 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.schemas._common import ensure_tz_aware
 
 FoodSource = Literal["curated", "user", "usda", "openfoodfacts"]
 MealType = Literal["breakfast", "lunch", "dinner", "snack"]
@@ -45,9 +47,7 @@ class MealLogCreateRequest(BaseModel):
     @field_validator("logged_at")
     @classmethod
     def _ensure_tz_aware(cls, value: Optional[datetime]) -> Optional[datetime]:
-        if value is not None and value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value
+        return ensure_tz_aware(value)
 
 
 class MealLogResponse(BaseModel):
@@ -65,3 +65,12 @@ class MealLogResponse(BaseModel):
     local_date: date
     logged_at: datetime
     created_at: datetime
+
+
+class MealLogDayResponse(BaseModel):
+    date: date
+    total_calories: int
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    meals: list[MealLogResponse]

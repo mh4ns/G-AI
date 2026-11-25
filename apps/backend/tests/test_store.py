@@ -86,3 +86,48 @@ async def test_my_orders_requires_login_and_returns_only_own(client, products):
     assert {o["id"] for o in mine} == {first["id"], second["id"]}
     assert mine[0]["items"][0]["color_name"] is not None
     assert (await client.get("/api/v1/store/orders/me", headers=bearer(bob))).json() == []
+
+
+def test_merge_order_items_combines_duplicate_lines():
+    from types import SimpleNamespace
+
+    from app.services.store import merge_order_items
+
+    merged = merge_order_items(
+        [
+            SimpleNamespace(product_id="p1", size="S", quantity=2),
+            SimpleNamespace(product_id="p1", size="M", quantity=1),
+            SimpleNamespace(product_id="p1", size="S", quantity=3),
+        ]
+    )
+    assert merged == {("p1", "S"): 5, ("p1", "M"): 1}
+
+
+async def test_order_creation_is_throttled_per_ip_and_email(client, products, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "TRUSTED_PROXY_HOPS", 1)
+    monkeypatch.setattr(settings, "ORDER_MAX_ATTEMPTS_PER_IP", 2)
+    monkeypatch.setattr(settings, "ORDER_MAX_ATTEMPTS_PER_EMAIL", 2)
+
+    async def place(email: str, ip: str):
+        return await client.post(
+            "/api/v1/store/orders",
+            json={
+                "customer_email": email,
+                "customer_name": "Buyer",
+                "shipping_address": "1 Test Street, Hanoi",
+                "items": [{"product_id": "ga-test-01", "size": "S", "quantity": 1}],
+            },
+            headers={"X-Forwarded-For": ip},
+        )
+
+    assert (await place("burst@example.com", "203.0.113.10")).status_code == 201
+    assert (await place("burst@example.com", "203.0.113.10")).status_code == 201
+    throttled = await place("burst@example.com", "203.0.113.10")
+    assert throttled.status_code == 429
+    assert int(throttled.headers["Retry-After"]) > 0
+
+    # A different IP and email is unaffected.
+    other = await place("other@example.com", "203.0.113.11")
+    assert other.status_code == 201

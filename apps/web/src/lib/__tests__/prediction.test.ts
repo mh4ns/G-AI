@@ -4,6 +4,7 @@ import {
   calculateMilestoneDeltas,
   buildImageEditPrompt,
   checkRateLimit,
+  getClientId,
 } from "../prediction-jobs";
 import { cleanNumberInput } from "../../components/prediction/BodyCalibrationModal";
 
@@ -48,9 +49,14 @@ test("cleanNumberInput completely strips leading zeros from inputs", () => {
   assert.strictEqual(cleanNumberInput("0170"), "170");
   assert.strictEqual(cleanNumberInput("08"), "8");
   assert.strictEqual(cleanNumberInput("00"), "0");
+  assert.strictEqual(cleanNumberInput("000"), "0");
   assert.strictEqual(cleanNumberInput("0"), "0");
   assert.strictEqual(cleanNumberInput(""), "");
   assert.strictEqual(cleanNumberInput("0.5"), "0.5");
+  assert.strictEqual(cleanNumberInput("00.5"), "0.5");
+  assert.strictEqual(cleanNumberInput("000.5"), "0.5");
+  assert.strictEqual(cleanNumberInput("65"), "65");
+  assert.strictEqual(cleanNumberInput("170.5"), "170.5");
   assert.strictEqual(cleanNumberInput("0052.5"), "52.5");
   assert.strictEqual(cleanNumberInput("abc75.2xyz"), "75.2");
 });
@@ -66,4 +72,44 @@ test("checkRateLimit limits excessive calls per IP/client", () => {
   const blockedRes = checkRateLimit(testClientId);
   assert.strictEqual(blockedRes.allowed, false);
   assert.strictEqual(blockedRes.remaining, 0);
+});
+
+test("weight-gain deltas and prompts avoid fat-loss / smaller-waist wording", () => {
+  const gainDeltas = calculateMilestoneDeltas(60, 66, true);
+  for (const day of [7, 14, 28] as const) {
+    const spec = gainDeltas[day];
+    assert.strictEqual(spec.goalDirection, "gain");
+    assert.strictEqual(spec.deltas.bodyFatChangePct, 0);
+    assert.strictEqual(spec.deltas.waistChangeCm, 0);
+    assert.ok((spec.deltas.leanMassGainKg ?? 0) > 0);
+    const prompt = buildImageEditPrompt(spec).toLowerCase();
+    assert.ok(!prompt.includes("lower body fat"), `unexpected fat-loss text in day ${day}`);
+    assert.ok(!prompt.includes("smaller"), `unexpected smaller-waist text in day ${day}`);
+    assert.ok(!prompt.includes("slimmer"), `unexpected slimmer text in day ${day}`);
+  }
+});
+
+test("getClientId ignores spoofed x-forwarded-for unless TRUST_PROXY=1", () => {
+  const prevTrust = process.env.TRUST_PROXY;
+  const prevVercel = process.env.VERCEL;
+  delete process.env.TRUST_PROXY;
+  delete process.env.VERCEL;
+  try {
+    const spoofedOnly = new Headers({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" });
+    assert.strictEqual(getClientId(spoofedOnly), "anonymous");
+
+    const withRealIp = new Headers({
+      "x-real-ip": "203.0.113.10",
+      "x-forwarded-for": "1.2.3.4",
+    });
+    assert.strictEqual(getClientId(withRealIp), "203.0.113.10");
+
+    process.env.TRUST_PROXY = "1";
+    assert.strictEqual(getClientId(spoofedOnly), "5.6.7.8");
+  } finally {
+    if (prevTrust === undefined) delete process.env.TRUST_PROXY;
+    else process.env.TRUST_PROXY = prevTrust;
+    if (prevVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = prevVercel;
+  }
 });

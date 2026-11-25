@@ -1,46 +1,26 @@
-export type Gender = 'female' | 'male';
+import type {
+  ActivityLevel,
+  AthleticArchetype,
+  BodyFocusArea,
+  DietPreference,
+  EquipmentAccess,
+  FitnessObstacle,
+  Gender,
+  JointInjury,
+  PrimaryGoal,
+} from "@g-ai/shared-types";
 
-export type AthleticArchetype = 'female_pilates' | 'male_strength';
-
-export type EquipmentAccess = 'home' | 'gym';
-
-export type JointInjury = 'lower_back' | 'knee' | 'neck_shoulder';
-
-export type PrimaryGoal = 
-  | 'lose_weight' 
-  | 'tone_muscle' 
-  | 'improve_posture' 
-  | 'boost_energy'
-  | 'tone_glutes'
-  | 'fix_posture'
-  | 'mindful_flexibility'
-  | 'hypertrophy'
-  | 'explosive_power'
-  | 'cardio_stamina';
-
-export type BodyFocusArea = 
-  | 'belly' 
-  | 'thighs' 
-  | 'glutes' 
-  | 'back' 
-  | 'arms' 
-  | 'chest'
-  | 'full_body';
-
-export type ActivityLevel = 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
-
-export type DietPreference = 'balanced' | 'vegetarian' | 'low_carb' | 'intermittent_fasting' | 'high_protein';
-
-export type FitnessObstacle = 
-  | 'stress_eating' 
-  | 'lack_of_time' 
-  | 'low_motivation' 
-  | 'sore_back' 
-  | 'sweet_cravings'
-  | 'busy_schedule'
-  | 'lack_of_motivation'
-  | 'joint_fatigue'
-  | 'irregular_sleep';
+export type {
+  ActivityLevel,
+  AthleticArchetype,
+  BodyFocusArea,
+  DietPreference,
+  EquipmentAccess,
+  FitnessObstacle,
+  Gender,
+  JointInjury,
+  PrimaryGoal,
+};
 
 export interface QuizResponses {
   archetype: AthleticArchetype;

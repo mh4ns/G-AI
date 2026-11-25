@@ -18,7 +18,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import confetti from "canvas-confetti";
-import { syncQuizForSignedInUser } from "@/lib/api-client";
+import { planSessionStore } from "@/lib/plan-session-store";
+import { formatCalorieGap } from "@/lib/quiz-calculations";
 import Link from "next/link";
 
 interface PlanResultViewProps {
@@ -54,7 +55,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
     // The ref keeps React Strict Mode's double effect from saving the quiz twice.
     if (!syncedRef.current) {
       syncedRef.current = true;
-      syncQuizForSignedInUser(responses).catch(() => {
+      planSessionStore.syncQuizForSignedInUser(responses).catch(() => {
         // Backend offline: the plan is still saved locally.
       });
     }
@@ -64,7 +65,7 @@ export const PlanResultView: React.FC<PlanResultViewProps> = ({
   const isLosing = weightDiff > 0;
   const isGaining = weightDiff < 0;
   // The calorie floor can shrink the planned deficit, so show the real gap.
-  const dailyCalorieGap = Math.abs(result.tdee - result.dailyCalorieTarget);
+  const { absGapKcal: dailyCalorieGap } = formatCalorieGap(result.tdee, result.dailyCalorieTarget);
 
   // Mini Digital Twin Avatar Morphing Vector
   // Day 0: slouch, curved spine, wider waist. Day 28: upright spine, cinched waist.

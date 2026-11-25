@@ -612,7 +612,7 @@ export class WorkoutSessionEngine {
           list.sort((a, b) => rank(order, a.code) - rank(order, b.code));
         }
 
-        const untouched = this.exerciseIndex === 0 && this.count === 0;
+        const untouched = !this.completed && this.exerciseIndex === 0 && this.count === 0;
         if (list.length > 0 && untouched) {
           this.resetSession(list);
           this.catalogSource = "server";

@@ -10,6 +10,7 @@ import {
   AthleticArchetype 
 } from "@/types/quiz";
 import { calculatePersonalizedPlan, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
+import { planSessionStore } from "@/lib/plan-session-store";
 import { StepHeader } from "./StepHeader";
 import { ArchetypeSelectionStep } from "./ArchetypeSelectionStep";
 import { AgeGoalStep } from "./AgeGoalStep";
@@ -175,19 +176,7 @@ export const AssessmentQuizWizard: React.FC = () => {
       result.userPhotoBase64 = responses.userPhotoBase64;
     }
     setPlanResult(result);
-
-    try {
-      localStorage.setItem("g_ai_user_quiz", JSON.stringify(responses));
-      localStorage.setItem("g_ai_user_plan", JSON.stringify(result));
-      if (responses.userPhotoBase64) {
-        localStorage.setItem("g_ai_user_twin_photo", responses.userPhotoBase64);
-      }
-    } catch (e) {
-      console.error("Local storage error", e);
-    }
-
-    // Photo-based predictions are generated on /prediction, after explicit consent.
-    localStorage.removeItem("g_ai_twin_milestones");
+    planSessionStore.saveQuizAndPlan(responses, result);
 
     setStep(8);
   };

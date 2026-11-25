@@ -13,9 +13,22 @@ import path from "path";
 
 export const MILESTONE_DAYS = [7, 14, 28] as const;
 export type MilestoneDay = (typeof MILESTONE_DAYS)[number];
+export type SupportedImageMime = "image/jpeg" | "image/png" | "image/webp";
 
 const CACHE_KEY_PATTERN = /^[a-f0-9]{64}$/;
 const DEFAULT_URL_TTL_SECONDS = 24 * 60 * 60;
+
+const EXT_TO_MIME: ReadonlyArray<{ ext: "png" | "webp" | "jpg"; mime: SupportedImageMime }> = [
+  { ext: "png", mime: "image/png" },
+  { ext: "webp", mime: "image/webp" },
+  { ext: "jpg", mime: "image/jpeg" },
+];
+
+const MIME_TO_EXT: Record<SupportedImageMime, "jpg" | "png" | "webp"> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 
 export function storageDir(): string {
   if (process.env.PREDICTION_STORAGE_DIR) return process.env.PREDICTION_STORAGE_DIR;
@@ -32,40 +45,109 @@ export function isMilestoneDay(day: number): day is MilestoneDay {
   return (MILESTONE_DAYS as readonly number[]).includes(day);
 }
 
-function milestonePath(cacheKey: string, day: MilestoneDay): string {
+export function detectImageMimeFromBytes(buf: Buffer): SupportedImageMime | null {
+  if (
+    buf.length >= 8 &&
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47 &&
+    buf[4] === 0x0d &&
+    buf[5] === 0x0a &&
+    buf[6] === 0x1a &&
+    buf[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (
+    buf.length >= 12 &&
+    buf.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buf.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return "image/webp";
+  }
+  return null;
+}
+
+function milestonePath(cacheKey: string, day: MilestoneDay, ext: "jpg" | "png" | "webp"): string {
   if (!isValidCacheKey(cacheKey)) throw new Error("Invalid cache key");
-  return path.join(storageDir(), `${cacheKey}_day_${day}.jpg`);
+  return path.join(storageDir(), `${cacheKey}_day_${day}.${ext}`);
 }
 
 export function saveMilestone(cacheKey: string, day: MilestoneDay, dataUrl: string): void {
-  const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+  if (!isValidCacheKey(cacheKey)) throw new Error("Invalid cache key");
+  const match = /^data:(image\/(?:jpeg|jpg|png|webp));base64,([\s\S]+)$/i.exec(dataUrl);
+  if (!match) {
+    throw new Error("Unsupported image MIME type");
+  }
+  const buffer = Buffer.from(match[2], "base64");
+  const actualMime = detectImageMimeFromBytes(buffer);
+  if (!actualMime) {
+    throw new Error("Invalid or unsupported image payload");
+  }
+  const targetExt = MIME_TO_EXT[actualMime];
+
   fs.mkdirSync(storageDir(), { recursive: true, mode: 0o700 });
-  fs.writeFileSync(milestonePath(cacheKey, day), Buffer.from(base64Data, "base64"), { mode: 0o600 });
+  for (const { ext } of EXT_TO_MIME) {
+    if (ext !== targetExt) {
+      try {
+        fs.unlinkSync(milestonePath(cacheKey, day, ext));
+      } catch {
+        // ignore missing sibling
+      }
+    }
+  }
+  fs.writeFileSync(milestonePath(cacheKey, day, targetExt), buffer, { mode: 0o600 });
 }
 
 export function hasMilestone(cacheKey: string, day: MilestoneDay): boolean {
+  if (!isValidCacheKey(cacheKey)) return false;
   try {
-    return fs.existsSync(milestonePath(cacheKey, day));
+    return EXT_TO_MIME.some(({ ext }) => fs.existsSync(milestonePath(cacheKey, day, ext)));
   } catch {
     return false;
   }
 }
 
-export function readMilestone(cacheKey: string, day: MilestoneDay): Buffer | null {
-  try {
-    return fs.readFileSync(milestonePath(cacheKey, day));
-  } catch {
-    return null;
+export function readMilestoneWithMime(
+  cacheKey: string,
+  day: MilestoneDay
+): { buffer: Buffer; mimeType: SupportedImageMime } | null {
+  if (!isValidCacheKey(cacheKey)) return null;
+  for (const { ext } of EXT_TO_MIME) {
+    const filePath = milestonePath(cacheKey, day, ext);
+    try {
+      if (!fs.existsSync(filePath)) continue;
+      const buffer = fs.readFileSync(filePath);
+      const actualMime = detectImageMimeFromBytes(buffer);
+      if (!actualMime) return null;
+      return {
+        buffer,
+        mimeType: actualMime,
+      };
+    } catch {
+      return null;
+    }
   }
+  return null;
+}
+
+export function readMilestone(cacheKey: string, day: MilestoneDay): Buffer | null {
+  return readMilestoneWithMime(cacheKey, day)?.buffer ?? null;
 }
 
 export function deleteMilestones(cacheKey: string): void {
   if (!isValidCacheKey(cacheKey)) return;
   for (const day of MILESTONE_DAYS) {
-    try {
-      fs.unlinkSync(milestonePath(cacheKey, day));
-    } catch {
-      // already gone
+    for (const { ext } of EXT_TO_MIME) {
+      try {
+        fs.unlinkSync(milestonePath(cacheKey, day, ext));
+      } catch {
+        // already gone
+      }
     }
   }
 }

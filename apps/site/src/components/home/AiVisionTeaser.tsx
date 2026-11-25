@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { appUrl } from "@g-ai/ui";
-import { FOCUS_RING, SECTION_HEADING } from "@/components/home/SegmentedControl";
+import { FOCUS_RING, SECTION_HEADING } from "@/components/home/styles";
 
 const CAPABILITIES = [
   {
@@ -51,13 +50,13 @@ export const AiVisionTeaser: React.FC = () => {
             </ul>
 
             <div className="mt-9">
-              <Link
+              <a
                 href={appUrl("/quiz")}
                 className={`group inline-flex h-12 items-center gap-2.5 rounded-full bg-ink px-6 text-[15px] font-semibold text-page transition-[opacity,transform] duration-200 hover:opacity-85 active:scale-[0.98] ${FOCUS_RING}`}
               >
                 <span>Làm khảo sát để bắt đầu tập</span>
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
-              </Link>
+              </a>
             </div>
           </div>
 

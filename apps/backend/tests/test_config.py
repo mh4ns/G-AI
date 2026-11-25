@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
-from app.core.config import INSECURE_DEV_SECRET, Settings
+from app.core.config import ENV_FILE, INSECURE_DEV_SECRET, Settings, get_settings, settings
 
 
 def test_production_rejects_default_secret():
@@ -62,3 +64,17 @@ def test_harden_public_tables_sql_emits_rls_and_guarded_revokes():
     assert "anon" in joined
     assert "authenticated" in joined
     assert "ALTER DEFAULT PRIVILEGES" in joined
+
+
+def test_env_file_resolves_relative_to_backend_dir_not_cwd(tmp_path, monkeypatch):
+    expected_env = Path(__file__).resolve().parents[1] / ".env"
+    assert ENV_FILE == expected_env
+    assert Settings.model_config["env_file"] == expected_env
+    assert get_settings() is settings
+
+    # Even from a different CWD with a decoy .env, Settings resolves ENV_FILE.
+    (tmp_path / ".env").write_text("PROJECT_NAME=DecoyFromCwd\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("PROJECT_NAME", raising=False)
+    loaded = Settings()
+    assert loaded.PROJECT_NAME != "DecoyFromCwd"

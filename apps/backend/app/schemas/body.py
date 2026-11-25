@@ -1,17 +1,13 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.schemas._common import ensure_tz_aware
+
 BodyFatCategory = Literal["essential", "athlete", "fitness", "average", "obese"]
 ProgressPhotoAngle = Literal["front", "side", "back"]
 ProgressPhotoMimeType = Literal["image/webp", "image/jpeg", "image/png"]
-
-
-def _ensure_tz_aware(value: Optional[datetime]) -> Optional[datetime]:
-    if value is not None and value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value
 
 
 class BodyMeasurementCreateRequest(BaseModel):
@@ -27,7 +23,7 @@ class BodyMeasurementCreateRequest(BaseModel):
     @field_validator("measured_at")
     @classmethod
     def _tz_aware_measured_at(cls, value: Optional[datetime]) -> Optional[datetime]:
-        return _ensure_tz_aware(value)
+        return ensure_tz_aware(value)
 
 
 class BodyMeasurementResponse(BaseModel):
@@ -57,7 +53,7 @@ class ProgressPhotoCreateRequest(BaseModel):
     @field_validator("taken_at")
     @classmethod
     def _tz_aware_taken_at(cls, value: Optional[datetime]) -> Optional[datetime]:
-        return _ensure_tz_aware(value)
+        return ensure_tz_aware(value)
 
 
 class ProgressPhotoResponse(BaseModel):

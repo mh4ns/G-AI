@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { SECTION_HEADING, SegmentedControl } from "@/components/home/SegmentedControl";
+import { SlidingTabs, type SlidingTabOption } from "@g-ai/ui";
+import { SECTION_HEADING } from "@/components/home/styles";
 
 type GalleryFilter = "all" | "female" | "male";
 
@@ -87,11 +88,11 @@ const GALLERY_ITEMS: GalleryItem[] = [
   },
 ];
 
-const FILTERS = [
-  { id: "all", label: "Tất cả" },
-  { id: "female", label: "Pilates & cơ lõi" },
-  { id: "male", label: "Sức mạnh" },
-] as const;
+const FILTERS: readonly SlidingTabOption<GalleryFilter>[] = [
+  { value: "all", label: "Tất cả" },
+  { value: "female", label: "Pilates & cơ lõi" },
+  { value: "male", label: "Sức mạnh" },
+];
 
 export const DualAthleteGallery: React.FC = () => {
   const [filter, setFilter] = useState<GalleryFilter>("all");
@@ -110,12 +111,13 @@ export const DualAthleteGallery: React.FC = () => {
             </p>
           </div>
 
-          <SegmentedControl
-            label="Lọc động tác theo chương trình"
+          <SlidingTabs
+            ariaLabel="Lọc động tác theo chương trình"
             options={FILTERS}
             value={filter}
             onChange={setFilter}
-            className="self-start md:self-auto"
+            size="lg"
+            className="self-start overflow-x-auto md:self-auto"
           />
         </div>
 

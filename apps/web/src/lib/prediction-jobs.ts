@@ -5,7 +5,7 @@ import {
   signedMilestoneUrl,
 } from "./prediction-storage";
 
-export const PROMPT_VERSION = "v3.0-identity-preserving";
+export const PROMPT_VERSION = "v3.1-goal-aware";
 
 const GENERIC_GENERATION_MESSAGE =
   "Không thể sinh ảnh dự đoán lúc này. Vui lòng thử lại sau ít phút.";
@@ -29,9 +29,12 @@ export class GenerationError extends Error {
   }
 }
 
+export type PredictionGoalDirection = "lose" | "gain" | "maintain";
+
 export interface BiometricDeltas {
   bodyFatChangePct: number;
   waistChangeCm: number;
+  leanMassGainKg?: number;
   muscleChanges: string;
 }
 
@@ -39,6 +42,7 @@ export interface MilestoneSpec {
   day: number;
   week: number;
   title: string;
+  goalDirection: PredictionGoalDirection;
   deltas: BiometricDeltas;
 }
 
@@ -85,7 +89,10 @@ export interface PredictionJob {
 // NOTE: this only works on a single long-lived Node process (`next start`).
 // Serverless deployments need the durable job store planned in docs/adr/0002.
 const JOB_TTL_MS = 60 * 60 * 1000;
-const globalForJobs = globalThis as unknown as { __gAiJobs?: Map<string, PredictionJob> };
+const globalForJobs = globalThis as unknown as {
+  __gAiJobs?: Map<string, PredictionJob>;
+  __gAiPredictionRateLimit?: Map<string, { count: number; resetAt: number }>;
+};
 const globalJobs = (globalForJobs.__gAiJobs ??= new Map<string, PredictionJob>());
 
 function pruneExpiredJobs(now: number = Date.now()) {
@@ -94,21 +101,35 @@ function pruneExpiredJobs(now: number = Date.now()) {
   }
 }
 
-// Rate limiter: IP/Session tracking (max 5 generation calls per 10 minutes)
-const rateLimiterStore = new Map<string, { count: number; resetAt: number }>();
+// Rate limiter: IP/Session tracking (max 5 generation calls per 10 minutes),
+// persisted on globalThis so Next.js HMR / chunk reloads do not reset quotas.
+const rateLimiterStore = (globalForJobs.__gAiPredictionRateLimit ??= new Map<
+  string,
+  { count: number; resetAt: number }
+>());
 
 /**
- * Best-effort client identifier for rate limiting. On Vercel and behind a
- * correctly configured reverse proxy, x-real-ip is set by the platform; the
- * first x-forwarded-for hop is client-controlled and only used as a fallback.
- * Per-user limits replace this once generation moves behind authentication.
+ * Best-effort client identifier for rate limiting. Prefers trusted platform/proxy
+ * headers (`x-vercel-forwarded-for` when running on Vercel, `x-real-ip`, or the
+ * rightmost `x-forwarded-for` hop only when `TRUST_PROXY=1`) so client-spoofed
+ * leftmost `x-forwarded-for` hops cannot bypass rate limits.
  */
 export function getClientId(headers: Headers): string {
-  return (
-    headers.get("x-real-ip")?.trim() ||
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "anonymous"
-  );
+  const vercelIp = process.env.VERCEL
+    ? headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    : undefined;
+  const realIp = headers.get("x-real-ip")?.trim();
+  const trustedForwarded =
+    process.env.TRUST_PROXY === "1"
+      ? headers
+          .get("x-forwarded-for")
+          ?.split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .at(-1)
+      : undefined;
+
+  return (vercelIp || realIp || trustedForwarded || "anonymous").slice(0, 128);
 }
 
 export function checkRateLimit(clientId: string): { allowed: boolean; remaining: number } {
@@ -141,6 +162,95 @@ export function calculateMilestoneDeltas(
   targetWeight: number,
   isMale: boolean
 ): Record<number, MilestoneSpec> {
+  if (targetWeight > currentWeight) {
+    const gainDelta = targetWeight - currentWeight;
+    const factor = Math.min(1.4, Math.max(0.6, gainDelta / 4.0));
+
+    return {
+      7: {
+        day: 7,
+        week: 1,
+        title: "Tuần 1: Kích hoạt cơ bắp & Cân bằng tư thế",
+        goalDirection: "gain",
+        deltas: {
+          bodyFatChangePct: 0,
+          waistChangeCm: 0,
+          leanMassGainKg: Number((0.3 * factor).toFixed(1)),
+          muscleChanges:
+            "slightly fuller muscle glycogen volume, upright relaxed shoulders and activated core support",
+        },
+      },
+      14: {
+        day: 14,
+        week: 2,
+        title: "Tuần 2: Tăng độ đầy cơ & Vững khung thân",
+        goalDirection: "gain",
+        deltas: {
+          bodyFatChangePct: 0,
+          waistChangeCm: 0,
+          leanMassGainKg: Number((0.7 * factor).toFixed(1)),
+          muscleChanges: isMale
+            ? "subtly fuller upper chest, shoulders and arms with stronger upright torso alignment"
+            : "subtly firmer glutes, toned legs and balanced core with improved upright posture",
+        },
+      },
+      28: {
+        day: 28,
+        week: 4,
+        title: "Tuần 4: Tăng cơ nạc khỏe khoắn & Trục thẳng 0°",
+        goalDirection: "gain",
+        deltas: {
+          bodyFatChangePct: 0,
+          waistChangeCm: 0,
+          leanMassGainKg: Number((1.3 * factor).toFixed(1)),
+          muscleChanges: isMale
+            ? "fuller lean muscle across pectorals, deltoids, arms and upper back with broad upright posture and firm core"
+            : "firmer lifted glutes, sculpted toned legs, balanced shoulders and upright elongated posture with healthy athletic fullness",
+        },
+      },
+    };
+  }
+
+  if (targetWeight === currentWeight) {
+    return {
+      7: {
+        day: 7,
+        week: 1,
+        title: "Tuần 1: Căn chỉnh trục cột sống & Giảm căng vai cổ",
+        goalDirection: "maintain",
+        deltas: {
+          bodyFatChangePct: 0,
+          waistChangeCm: 0,
+          muscleChanges: "released upper trapezius tension and subtly steadier upright core posture",
+        },
+      },
+      14: {
+        day: 14,
+        week: 2,
+        title: "Tuần 2: Săn chắc cơ lõi & Giữ cân khỏe mạnh",
+        goalDirection: "maintain",
+        deltas: {
+          bodyFatChangePct: 0.4,
+          waistChangeCm: 0.5,
+          muscleChanges: "engaged deep abdominal core, balanced shoulder alignment and subtle muscle tone",
+        },
+      },
+      28: {
+        day: 28,
+        week: 4,
+        title: "Tuần 4: Tái cân bằng cơ – mỡ & Tư thế vững vàng",
+        goalDirection: "maintain",
+        deltas: {
+          bodyFatChangePct: 0.8,
+          waistChangeCm: 1.0,
+          muscleChanges: isMale
+            ? "balanced athletic muscle tone, open chest, retracted scapulae and firm core at a healthy steady weight"
+            : "balanced toned silhouette, upright elongated neck and firm core at a healthy steady weight",
+        },
+      },
+    };
+  }
+
   const totalWeightDelta = Math.max(0, currentWeight - targetWeight);
   const factor = Math.min(1.4, Math.max(0.6, totalWeightDelta / 4.0));
 
@@ -149,6 +259,7 @@ export function calculateMilestoneDeltas(
       day: 7,
       week: 1,
       title: "Tuần 1: Giảm phù nề & Kích hoạt cơ hoành",
+      goalDirection: "lose",
       deltas: {
         bodyFatChangePct: Number((0.6 * factor).toFixed(1)),
         waistChangeCm: Number((1.0 * factor).toFixed(1)),
@@ -160,6 +271,7 @@ export function calculateMilestoneDeltas(
       day: 14,
       week: 2,
       title: "Tuần 2: Căn chỉnh cột sống & Siết cơ ngang bụng",
+      goalDirection: "lose",
       deltas: {
         bodyFatChangePct: Number((1.4 * factor).toFixed(1)),
         waistChangeCm: Number((2.0 * factor).toFixed(1)),
@@ -171,6 +283,7 @@ export function calculateMilestoneDeltas(
       day: 28,
       week: 4,
       title: "Tuần 4: Vóc dáng chuẩn mực & Trục thẳng 0°",
+      goalDirection: "lose",
       deltas: {
         bodyFatChangePct: Number((2.5 * factor).toFixed(1)),
         waistChangeCm: Number((3.5 * factor).toFixed(1)),
@@ -184,8 +297,20 @@ export function calculateMilestoneDeltas(
 
 // Build standardized rule-based prompt string
 export function buildImageEditPrompt(spec: MilestoneSpec): string {
-  const { deltas, week } = spec;
-  return `Edit this photo of the same person. Keep the face, identity, gender, skin tone, hairstyle, pose, clothing, background, camera angle and lighting EXACTLY the same. Change ONLY the body shape: ${deltas.bodyFatChangePct}% lower body fat, waist about ${deltas.waistChangeCm} cm smaller, ${deltas.muscleChanges}. The result must look realistic and natural for ${week} weeks of training, subtle to moderate, no exaggeration, no airbrushing, no added muscle definition beyond what is described. Do not change the person's age, ethnicity or gender.`;
+  const { deltas, week, goalDirection } = spec;
+  let bodyChangeClause: string;
+  if (goalDirection === "gain") {
+    bodyChangeClause = `about ${deltas.leanMassGainKg ?? 0.5} kg fuller lean muscle mass, ${deltas.muscleChanges}`;
+  } else if (goalDirection === "maintain") {
+    bodyChangeClause =
+      deltas.bodyFatChangePct > 0
+        ? `${deltas.bodyFatChangePct}% subtle body recomposition, ${deltas.muscleChanges}`
+        : deltas.muscleChanges;
+  } else {
+    bodyChangeClause = `${deltas.bodyFatChangePct}% lower body fat, waist about ${deltas.waistChangeCm} cm smaller, ${deltas.muscleChanges}`;
+  }
+
+  return `Edit this photo of the same person. Keep the face, identity, gender, skin tone, hairstyle, pose, clothing, background, camera angle and lighting EXACTLY the same. Change ONLY the body shape: ${bodyChangeClause}. The result must look realistic and natural for ${week} weeks of training, subtle to moderate, no exaggeration, no airbrushing, no added muscle definition beyond what is described. Do not change the person's age, ethnicity or gender.`;
 }
 
 // Cache key over the FULL photo plus every input that affects the output.
@@ -205,259 +330,6 @@ export function computePredictionHash(
     .update("\u0000")
     .update(JSON.stringify([archetype, weight, targetWeight, planSummary, PROMPT_VERSION, modelName]))
     .digest("hex");
-}
-
-// Step 4: Validate Day 0 Photo (Quality, 1 person, lighting, and gender consistency)
-export async function assessPhotoQualityAndGender(
-  apiKey: string,
-  visionModel: string,
-  rawBase64: string,
-  mimeType: string,
-  quizArchetype: "female_pilates" | "male_strength"
-): Promise<PhotoQualityAssessment> {
-  const quizGender = quizArchetype === "male_strength" ? "male" : "female";
-
-  if (!apiKey || apiKey === "your_gemini_api_key_here") {
-    // Graceful offline assessment for dev environments
-    return {
-      isValid: true,
-      onePerson: true,
-      isNearFullBody: true,
-      goodLighting: true,
-      detectedGender: quizGender,
-    };
-  }
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${visionModel}:generateContent`;
-
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are an AI biometric intake validator for a body adaptation fitness app. Analyze this photo and respond ONLY with a JSON object:
-{
-  "onePerson": boolean (true if exactly one adult is in the frame),
-  "isNearFullBody": boolean (true if visible at least from mid-thigh up),
-  "goodLighting": boolean (true if lighting and focus are clear without severe blur or dark shadows),
-  "detectedGender": "male" | "female" | "uncertain" (perceived biological gender presentation of the person in the photo),
-  "safetyOk": boolean (true if apparel is appropriate athletic wear and not violating safety policies)
-}`,
-              },
-              {
-                inlineData: {
-                  mimeType,
-                  data: rawBase64,
-                },
-              },
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (rawText) {
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-
-          if (!parsed.onePerson) {
-            return {
-              isValid: false,
-              onePerson: false,
-              isNearFullBody: parsed.isNearFullBody ?? true,
-              goodLighting: parsed.goodLighting ?? true,
-              detectedGender: parsed.detectedGender || "uncertain",
-              errorMessage: "Ảnh cần có đúng 1 người. Vui lòng chụp một mình để AI nhận diện vóc dáng chính xác.",
-            };
-          }
-
-          if (!parsed.isNearFullBody) {
-            return {
-              isValid: false,
-              onePerson: true,
-              isNearFullBody: false,
-              goodLighting: parsed.goodLighting ?? true,
-              detectedGender: parsed.detectedGender || "uncertain",
-              errorMessage: "Ảnh chưa thấy đủ vóc dáng (cần thấy từ đùi trở lên hoặc toàn thân). Vui lòng đứng lùi xa hơn.",
-            };
-          }
-
-          if (!parsed.goodLighting) {
-            return {
-              isValid: false,
-              onePerson: true,
-              isNearFullBody: true,
-              goodLighting: false,
-              detectedGender: parsed.detectedGender || "uncertain",
-              errorMessage: "Ảnh quá tối hoặc bị mờ. Vui lòng chụp ở nơi đủ ánh sáng và đứng vững.",
-            };
-          }
-
-          // Check gender mismatch
-          let genderMismatchWarning: string | undefined = undefined;
-          if (
-            parsed.detectedGender &&
-            parsed.detectedGender !== "uncertain" &&
-            parsed.detectedGender !== quizGender
-          ) {
-            genderMismatchWarning = `Thông tin quiz (${
-              quizGender === "female" ? "Nữ" : "Nam"
-            }) và người trong ảnh (${
-              parsed.detectedGender === "female" ? "Nữ" : "Nam"
-            }) có vẻ không khớp. Mô hình sẽ giữ nguyên giới tính của người trong ảnh để đảm bảo hình ảnh tự nhiên nhất.`;
-          }
-
-          return {
-            isValid: true,
-            onePerson: true,
-            isNearFullBody: true,
-            goodLighting: true,
-            detectedGender: parsed.detectedGender || quizGender,
-            genderMismatchWarning,
-          };
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("[Prediction Intake] Photo validation warning:", err);
-  }
-
-  // Fallback to valid if network fails
-  return {
-    isValid: true,
-    onePerson: true,
-    isNearFullBody: true,
-    goodLighting: true,
-    detectedGender: quizGender,
-  };
-}
-
-// Image-to-Image editing via Gemini API with retry & timeout
-export async function callGeminiImageToImage(
-  apiKey: string,
-  modelName: string,
-  base64Image: string,
-  mimeType: string,
-  promptText: string,
-  maxRetries: number = 2
-): Promise<string> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-  let lastError: unknown = null;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s timeout
-
-    try {
-      if (attempt > 0) {
-        await new Promise((r) => setTimeout(r, 1500 * Math.pow(2, attempt - 1)));
-      }
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  inlineData: {
-                    mimeType,
-                    data: base64Image,
-                  },
-                },
-                {
-                  text: promptText,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            responseModalities: ["IMAGE"],
-          },
-        }),
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!res.ok) {
-        const errText = await res.text().catch(() => "");
-        let errMsg = errText;
-        try {
-          const parsed = JSON.parse(errText);
-          if (parsed?.error?.message) errMsg = parsed.error.message;
-        } catch {
-          // ignore
-        }
-
-        // 1. Quota exceeded on Free Tier
-        if (res.status === 429 || errMsg.includes("Quota exceeded") || errMsg.includes("free_tier")) {
-          throw new GenerationError(
-            "Tài khoản Google Gemini của bạn đang ở gói Miễn phí (Free Tier), Google quy định hạn mức tạo sinh ảnh là 0 lượt/ngày. Vui lòng kích hoạt thanh toán (Pay-as-you-go) tại aistudio.google.com/app/plan_information.",
-            "QUOTA"
-          );
-        }
-
-        // 2. Unregistered caller / Missing API key
-        if (res.status === 403 && (errMsg.includes("unregistered callers") || errMsg.includes("API Key"))) {
-          throw new GenerationError(
-            "Chưa nhận diện được Gemini API Key (Lỗi 403 unregistered caller). Hãy kiểm tra GEMINI_API_KEY trong .env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev).",
-            "CONFIG"
-          );
-        }
-
-        // 3. Model not found or deprecated
-        if (res.status === 404) {
-          throw new GenerationError(
-            `Mô hình ${modelName} không tồn tại hoặc đã ngừng hỗ trợ. Vui lòng kiểm tra biến IMAGE_MODEL trong file .env.local.`,
-            "CONFIG"
-          );
-        }
-
-        // 4. Content Safety Filter
-        if (res.status === 400 && (errText.includes("SAFETY") || errMsg.includes("safety"))) {
-          const safetyMessage = "Ảnh không đáp ứng tiêu chuẩn an toàn nội dung. Vui lòng chọn ảnh trang phục thể thao kín đáo hơn.";
-          throw new GenerationError(safetyMessage, "SAFETY", safetyMessage);
-        }
-
-        throw new GenerationError(`Gemini API error [${res.status}]: ${errMsg.slice(0, 200)}`, "UPSTREAM");
-      }
-
-      const data = await res.json();
-      const parts = data.candidates?.[0]?.content?.parts || [];
-
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          const outMime = part.inlineData.mimeType || "image/jpeg";
-          return `data:${outMime};base64,${part.inlineData.data}`;
-        }
-      }
-
-      throw new Error("Mô hình phản hồi nhưng không chứa dữ liệu ảnh kết quả.");
-    } catch (err: unknown) {
-      clearTimeout(timeoutId);
-      lastError = err;
-      // Safety blocks and configuration problems will not fix themselves on retry.
-      if (err instanceof GenerationError && (err.code === "SAFETY" || err.code === "CONFIG")) break;
-    }
-  }
-
-  throw lastError || new Error("Thao tác tạo sinh ảnh vượt quá thời gian chờ.");
 }
 
 // Job store management

@@ -1,9 +1,11 @@
+import type { ProductActivity, ProductCategory } from "@g-ai/shared-types";
+
 export interface StoreProduct {
   id: string;
   name: string;
-  category: "apparel" | "equipment" | "device" | "supplement";
+  category: ProductCategory;
   subcategory?: string;
-  activity: "pilates" | "gym" | "running" | "lounge" | "yoga";
+  activity: ProductActivity;
   colorName: string;
   colorHex: string;
   price: number;
@@ -16,16 +18,4 @@ export interface StoreProduct {
   description: string;
   rating?: number;
   reviewsCount?: number;
-}
-
-export interface CartItem {
-  id: string;
-  productId: string;
-  name: string;
-  colorName: string;
-  size: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  quantity: number;
 }

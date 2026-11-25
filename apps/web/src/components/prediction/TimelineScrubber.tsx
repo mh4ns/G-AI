@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, RotateCcw } from "lucide-react";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
 export interface TimelineMilestone {
   day: number;
@@ -37,10 +38,8 @@ export const TimelineScrubber: React.FC<TimelineScrubberProps> = ({
     return Math.abs(day - currentDay) < Math.abs(STEP_DAYS[closestIdx] - currentDay) ? idx : closestIdx;
   }, 0);
 
-  // Check user preference for reduced motion
-  const isReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Check user preference for reduced motion (hydration-safe)
+  const isReducedMotion = useReducedMotion();
 
   // Auto-play cycling through the 4 milestone weeks every ~1.2s
   useEffect(() => {

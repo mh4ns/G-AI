@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { appUrl } from "@g-ai/ui";
 import { DualAthleteHero } from "@/components/home/DualAthleteHero";
@@ -39,20 +38,20 @@ function HomeContent() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
-            <Link
+            <a
               href={appUrl("/quiz")}
               className="group inline-flex h-14 items-center gap-2.5 rounded-full bg-brand-contrast px-8 text-base font-semibold text-white transition-[opacity,transform] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-contrast"
             >
               <span>Làm khảo sát thể trạng miễn phí</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
-            </Link>
+            </a>
 
-            <Link
+            <a
               href={appUrl("/prediction")}
               className="inline-flex min-h-11 items-center rounded text-base font-semibold underline decoration-2 underline-offset-[6px] transition-opacity duration-200 hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-contrast"
             >
               Xem dự đoán vóc dáng
-            </Link>
+            </a>
           </div>
         </div>
       </section>

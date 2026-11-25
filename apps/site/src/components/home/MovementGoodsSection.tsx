@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, Info, ShoppingBag } from "lucide-react";
 
+import { SlidingTabs, type SlidingTabOption } from "@g-ai/ui";
 import { useStorefront } from "@/components/store/Storefront";
 import { STORE_PRICES_PUBLISHED, canOptimizeImage, formatPrice, type StoreItem } from "@/lib/store-api";
-import { FOCUS_RING, SECTION_HEADING, SegmentedControl } from "@/components/home/SegmentedControl";
+import { FOCUS_RING, SECTION_HEADING } from "@/components/home/styles";
 
 interface MovementGoodsSectionProps {
   /**
@@ -21,11 +22,11 @@ type GoodsFilter = "all" | StoreItem["group"];
 
 const FEATURED_COUNT = 3;
 
-const FILTERS = [
-  { id: "all", label: "Tất cả" },
-  { id: "equipment", label: "Dụng cụ" },
-  { id: "apparel", label: "Trang phục" },
-] as const;
+const FILTERS: readonly SlidingTabOption<GoodsFilter>[] = [
+  { value: "all", label: "Tất cả" },
+  { value: "equipment", label: "Dụng cụ" },
+  { value: "apparel", label: "Trang phục" },
+];
 
 export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode }) => {
   const { catalog, source, addToCart } = useStorefront();
@@ -69,12 +70,13 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
           </div>
 
           {full ? (
-            <SegmentedControl
-              label="Lọc sản phẩm"
+            <SlidingTabs
+              ariaLabel="Lọc sản phẩm"
               options={FILTERS}
               value={selectedFilter}
               onChange={setSelectedFilter}
-              className="self-start md:self-auto"
+              size="lg"
+              className="self-start overflow-x-auto md:self-auto"
             />
           ) : (
             <Link
@@ -115,10 +117,7 @@ export const MovementGoodsSection: React.FC<MovementGoodsSectionProps> = ({ mode
               const soldOut = product.stock === 0;
               const lowStock = product.stock != null && product.stock > 0 && product.stock <= 5;
               const size = chosenSize[product.id] ?? product.sizes[0];
-              // Skip specs that repeat the category label shown above the name.
-              const specs = [product.colorName, ...product.specs].filter(
-                (spec) => spec && spec !== product.categoryLabel
-              );
+              const specs = [product.colorName, ...product.specs].filter(Boolean);
 
               return (
                 <li

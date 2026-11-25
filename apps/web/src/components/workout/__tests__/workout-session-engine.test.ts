@@ -6,6 +6,7 @@ import {
   zoneHint,
   WorkoutSummaryData,
 } from "../workout-session-engine";
+import { createSaveOnceGuard } from "../LiveWorkoutStudio";
 import { DEFAULT_EXERCISES, StudioExercise, PosePoint } from "../pose-math";
 
 describe("VoiceCoach", () => {
@@ -155,5 +156,65 @@ describe("WorkoutSessionEngine", () => {
     assert.equal(zoneHint(ex, "in", true), "Chuẩn! Đang trong vùng góc mục tiêu");
     assert.ok(zoneHint(ex, "below", true).includes("Góc nhỏ hơn mục tiêu"));
     assert.ok(zoneHint(ex, "above", true).includes("Góc lớn hơn mục tiêu"));
+  });
+
+  it("completeWorkout invokes onSummary at most once even if triggered repeatedly", () => {
+    let summaryCalls = 0;
+    const engine = new WorkoutSessionEngine({
+      onSummary: () => {
+        summaryCalls++;
+      },
+    });
+
+    engine.completeWorkout();
+    engine.completeWorkout();
+    assert.equal(summaryCalls, 1);
+    assert.ok(engine.getSnapshot().summary !== null);
+    engine.dispose();
+  });
+
+  it("completed single-exercise session keeps summary even when exerciseIndex and count are 0", () => {
+    const oneExercise: StudioExercise[] = [
+      {
+        code: "single_plank",
+        name: "Plank",
+        cue: "Hold",
+        criteria: "Straight back",
+        targetCount: 10,
+        holdSeconds: true,
+        joints: [11, 23, 25],
+        targetMin: 165,
+        targetMax: 185,
+      },
+    ];
+    const engine = new WorkoutSessionEngine({ exercises: oneExercise });
+    engine.nextExercise();
+    const snap = engine.getSnapshot();
+    assert.equal(snap.exerciseIndex, 0);
+    assert.equal(snap.count, 0);
+    assert.ok(snap.summary !== null);
+    engine.dispose();
+  });
+});
+
+describe("createSaveOnceGuard", () => {
+  it("invokes onSave at most once per completed workout and resets only for a new session", () => {
+    const guard = createSaveOnceGuard();
+    const saved: WorkoutSummaryData[] = [];
+    const summary: WorkoutSummaryData = {
+      caloriesBurned: 95,
+      averageFormScore: 88,
+      durationMinutes: 12,
+      repsCompleted: 40,
+    };
+
+    assert.equal(guard.trySave<WorkoutSummaryData>(null, (s) => saved.push(s)), false);
+    assert.equal(guard.trySave(summary, (s) => saved.push(s)), true);
+    assert.equal(guard.trySave(summary, (s) => saved.push(s)), false);
+    assert.equal(saved.length, 1);
+
+    guard.reset();
+    assert.equal(guard.trySave(summary, (s) => saved.push(s)), true);
+    assert.equal(saved.length, 2);
   });
 });

@@ -1,27 +1,32 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { DEFAULT_THEME, readStoredTheme, toggleStoredTheme, type ThemeMode } from "@g-ai/ui/theme";
 import { HomeNavbar } from "@/components/home/HomeNavbar";
 import { CartDrawer } from "@/components/home/CartDrawer";
 import { STORE_PRODUCTS } from "@/data/mockStoreData";
 import {
-  MAX_QUANTITY_PER_LINE,
   STORE_PRICES_PUBLISHED,
-  cartKey,
   fetchCatalog,
   fromMockProduct,
-  parseStoredCart,
-  type CartLine,
   type CatalogSource,
   type StoreItem,
 } from "@/lib/store-api";
+import {
+  addCartItem,
+  readStoredCart,
+  removeCartItem,
+  summarizeCart,
+  updateCartItemQuantity,
+  writeStoredCart,
+  type CartLine,
+} from "@/lib/store-cart";
 
-const CART_STORAGE_KEY = "g_ai_cart_v2";
 // Offline fallback: the same p1..p8 catalog the backend serves, browse-only.
 const SAMPLE_CATALOG: StoreItem[] = STORE_PRODUCTS.map(fromMockProduct);
 
 interface StorefrontValue {
-  theme: "dark" | "light";
+  theme: ThemeMode;
   isLight: boolean;
   catalog: StoreItem[];
   source: CatalogSource | "loading";
@@ -42,7 +47,7 @@ export function useStorefront(): StorefrontValue {
  * catalog and (once prices are published) the bag and checkout drawer.
  */
 export function Storefront({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<"dark" | "light">("light");
+  const [theme, setTheme] = useState<ThemeMode>(DEFAULT_THEME);
   const [cartLines, setCartLines] = useState<CartLine[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [catalog, setCatalog] = useState<StoreItem[]>([]);
@@ -50,13 +55,8 @@ export function Storefront({ children }: { children: React.ReactNode }) {
 
   // Restore theme preference and bag from this browser.
   useEffect(() => {
-    try {
-      const savedTheme = localStorage.getItem("g_ai_theme") as "dark" | "light" | null;
-      if (localStorage.getItem("g_ai_theme_manual") === "true" && savedTheme) setTheme(savedTheme);
-      if (STORE_PRICES_PUBLISHED) setCartLines(parseStoredCart(localStorage.getItem(CART_STORAGE_KEY)));
-    } catch {
-      // Storage can be unavailable (private mode); the page still works.
-    }
+    setTheme(readStoredTheme());
+    if (STORE_PRICES_PUBLISHED) setCartLines(readStoredCart());
   }, []);
 
   // Live catalog from the backend; the sample catalog is browse-only.
@@ -84,62 +84,59 @@ export function Storefront({ children }: { children: React.ReactNode }) {
   const saveCart = useCallback((update: (prev: CartLine[]) => CartLine[]) => {
     setCartLines((prev) => {
       const next = update(prev);
-      try {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
-      }
+      writeStoredCart(next);
       return next;
     });
   }, []);
 
   const addToCart = useCallback(
     (product: StoreItem, size: string) => {
-      const key = cartKey(product.id, size);
-      const limit = Math.min(MAX_QUANTITY_PER_LINE, product.stock ?? MAX_QUANTITY_PER_LINE);
-      saveCart((prev) =>
-        prev.some((l) => l.key === key)
-          ? prev.map((l) => (l.key === key ? { ...l, quantity: Math.min(limit, l.quantity + 1) } : l))
-          : [...prev, { key, productId: product.id, size, quantity: 1 }]
-      );
+      saveCart((prev) => addCartItem(prev, product, size));
       setIsCartOpen(true);
     },
     [saveCart]
   );
 
-  const updateQuantity = (key: string, delta: number) =>
-    saveCart((prev) =>
-      prev
-        .map((l) => (l.key === key ? { ...l, quantity: Math.min(MAX_QUANTITY_PER_LINE, l.quantity + delta) } : l))
-        .filter((l) => l.quantity > 0)
-    );
+  const updateQuantity = useCallback(
+    (key: string, delta: number) => {
+      saveCart((prev) => {
+        const target = prev.find((l) => l.key === key);
+        if (!target) return prev;
+        return updateCartItemQuantity(prev, key, target.quantity + delta, catalogById.get(target.productId));
+      });
+    },
+    [saveCart, catalogById]
+  );
 
-  const removeItem = (key: string) => saveCart((prev) => prev.filter((l) => l.key !== key));
+  const removeItem = useCallback(
+    (key: string) => saveCart((prev) => removeCartItem(prev, key)),
+    [saveCart]
+  );
 
   // Stock changes on the server; refresh what the cards and the bag show.
   const refreshCatalog = useCallback(() => {
     fetchCatalog()
       .then((items) => {
-        if (items.length) setCatalog(items);
+        if (items.length > 0) {
+          setCatalog(items);
+          setSource("server");
+        }
       })
       .catch(() => undefined);
   }, []);
 
   const closeCart = useCallback(() => setIsCartOpen(false), []);
 
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
+  const toggleTheme = useCallback(() => {
+    const next = toggleStoredTheme(theme);
     setTheme(next);
-    try {
-      localStorage.setItem("g_ai_theme", next);
-      localStorage.setItem("g_ai_theme_manual", "true");
-    } catch {
-      // Storage can be unavailable; the theme still applies for this visit.
-    }
-  };
+  }, [theme]);
 
   const isLight = theme === "light";
-  const cartCount = cartLines.reduce((sum, l) => sum + l.quantity, 0);
+  const cartCount = useMemo(
+    () => summarizeCart(cartLines, catalogById, source).itemCount,
+    [cartLines, catalogById, source]
+  );
   const value = useMemo<StorefrontValue>(
     () => ({ theme, isLight, catalog, source, addToCart: STORE_PRICES_PUBLISHED ? addToCart : null }),
     [theme, isLight, catalog, source, addToCart]

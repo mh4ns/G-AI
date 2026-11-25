@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 from app.core.config import settings
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, hash_password_async, verify_password, verify_password_async
 from tests.conftest import bearer, register
 
 
@@ -82,3 +82,27 @@ def test_password_hash_roundtrip_and_legacy_format():
     legacy = f"{salt.hex()}${hashlib.pbkdf2_hmac('sha256', b'old-pass', salt, 100_000).hex()}"
     assert verify_password("old-pass", legacy)
     assert not verify_password("anything", "garbage")
+
+
+async def test_async_password_helpers_offload_to_thread_and_verify_legacy(monkeypatch):
+    import asyncio
+    import hashlib
+
+    calls = []
+    real_to_thread = asyncio.to_thread
+
+    async def spy_to_thread(func, /, *args, **kwargs):
+        calls.append(func.__name__)
+        return await real_to_thread(func, *args, **kwargs)
+
+    monkeypatch.setattr(asyncio, "to_thread", spy_to_thread)
+
+    hashed = await hash_password_async("async-s3cret")
+    assert hashed.startswith("pbkdf2_sha256$600000$")
+    assert await verify_password_async("async-s3cret", hashed) is True
+    assert await verify_password_async("wrong-pass", hashed) is False
+
+    salt = bytes(16)
+    legacy = f"{salt.hex()}${hashlib.pbkdf2_hmac('sha256', b'old-pass', salt, 100_000).hex()}"
+    assert await verify_password_async("old-pass", legacy) is True
+    assert calls == ["hash_password", "verify_password", "verify_password", "verify_password"]

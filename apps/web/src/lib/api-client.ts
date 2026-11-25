@@ -6,132 +6,99 @@
  * session cookie work without exposing the token to JavaScript.
  */
 
-export const API_BASE = "/api/v1";
+import { API_BASE, ApiError, createApiRequest } from "@g-ai/ui/api";
+import type {
+  DailyMetricDTO,
+  ExerciseDTO,
+  FastingProtocol,
+  FoodItemCreateRequest,
+  FoodItemDTO,
+  MealLogDTO,
+  MealLogDayDTO,
+  MealType,
+  PersonalizedPlanDTO,
+  QuizAssessmentDTO,
+  QuizSubmitRequest,
+  SessionDTO,
+  TodaySummaryDTO,
+  TodaySummaryDayDTO,
+  UserDTO,
+  WorkoutLogCreateRequest,
+  WorkoutRoutineDTO,
+} from "@g-ai/shared-types";
 
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-    public detail?: unknown,
-    /** Seconds from a 429 response's Retry-After header, when present. */
-    public retryAfterSec?: number
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
+export { API_BASE, ApiError, createApiRequest };
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json", ...(init.headers || {}) },
-  });
-  if (res.status === 204) return undefined as T;
-  const body = await res.json().catch(() => null);
-  if (!res.ok) {
-    const detail = body?.detail;
-    const message = typeof detail === "string" ? detail : `Request failed (${res.status})`;
-    const retryAfter = Number(res.headers.get("Retry-After"));
-    throw new ApiError(res.status, message, detail, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined);
-  }
-  return body as T;
-}
+const request = createApiRequest();
 
 const post = <T>(path: string, data?: unknown) =>
   request<T>(path, { method: "POST", body: data === undefined ? undefined : JSON.stringify(data) });
 
-// --- Types mirroring app/schemas (see apps/backend/app/schemas) ---------------
+const del = <T = void>(path: string) => request<T>(path, { method: "DELETE" });
 
-export interface ApiUser {
-  id: number;
-  email: string;
-  full_name: string;
-  avatar_url: string | null;
-  is_active: boolean;
-  created_at: string;
-}
+// --- Types mirrored from @g-ai/shared-types -----------------------------------
 
-export interface ApiDailyMetric {
-  id: number;
-  date: string;
-  calories_consumed: number;
-  calories_burned: number;
-  water_intake_ml: number;
-  fasting_minutes: number;
-  fasting_state: "idle" | "fasting" | "eating_window";
-  habits_completed: string[];
-  notes: string | null;
-}
+export type {
+  FastingProtocol,
+  MealType,
+  PersonalizedPlanDTO,
+  QuizAssessmentDTO,
+  SessionDTO,
+};
 
-export interface ApiQuizSubmit {
-  session_id: string;
-  archetype?: "female_pilates" | "male_strength";
-  gender: "female" | "male";
-  age: number;
-  height_cm: number;
-  current_weight_kg: number;
-  target_weight_kg: number;
-  activity_level?: "sedentary" | "lightly_active" | "moderately_active" | "very_active";
-  primary_goal: string;
-  focus_areas: string[];
-  obstacles: string[];
-}
-
-export interface ApiWorkoutLogCreate {
-  duration_sec: number;
-  calories_burned: number;
-  reps_completed: number;
-  /** 0–100 from camera tracking; null when the session was not scored (camera off). */
-  form_accuracy_pct?: number | null;
-  routine_id?: number;
-}
-
-export interface ApiExercise {
-  id: number;
-  code: string;
-  name: string;
-  category: string;
-  primary_muscle: string;
-  difficulty: string;
-  description: string;
-  instructions: string[];
-  /** Three MediaPipe Pose landmark indices; the angle is measured at the middle one. */
-  landmark_joints: number[];
-  target_angle_min: number | null;
-  target_angle_max: number | null;
-  thumbnail_url: string | null;
-}
-
-export interface ApiWorkoutRoutine {
-  id: number;
-  slug: string;
-  title: string;
-  duration_min: number;
-  calorie_burn_est: number;
-  intensity: string;
-  exercises_sequence: { exercise_code?: string; reps?: number; duration_sec?: number; rest_sec?: number }[];
-  is_featured: boolean;
-}
+export type ApiUser = UserDTO;
+export type ApiDailyMetric = DailyMetricDTO;
+export type ApiTodaySummaryDay = TodaySummaryDayDTO;
+export type ApiTodaySummary = TodaySummaryDTO;
+export type ApiFoodItem = FoodItemDTO;
+export type ApiFoodCreateRequest = FoodItemCreateRequest;
+export type ApiMealLog = MealLogDTO;
+export type ApiMealLogDay = MealLogDayDTO;
+export type ApiQuizSubmit = QuizSubmitRequest;
+export type ApiWorkoutLogCreate = WorkoutLogCreateRequest;
+export type ApiExercise = ExerciseDTO;
+export type ApiWorkoutRoutine = WorkoutRoutineDTO;
 
 // --- Endpoints ----------------------------------------------------------------
 
 export const api = {
   auth: {
     me: () => request<ApiUser>("/auth/me"),
-    login: (email: string, password: string) => post<{ user: ApiUser }>("/auth/login", { email, password }),
+    login: (email: string, password: string) => post<SessionDTO>("/auth/login", { email, password }),
     register: (email: string, password: string, full_name: string) =>
-      post<{ user: ApiUser }>("/auth/register", { email, password, full_name }),
+      post<SessionDTO>("/auth/register", { email, password, full_name }),
     logout: () => post<void>("/auth/logout"),
   },
   quiz: {
-    submit: (payload: ApiQuizSubmit) => post<{ id: number }>("/quiz/submit", payload),
+    submit: (payload: ApiQuizSubmit) => post<QuizAssessmentDTO>("/quiz/submit", payload),
+    myPlan: () => request<PersonalizedPlanDTO>("/quiz/plans/me"),
   },
   today: {
     get: () => request<ApiDailyMetric>("/today"),
+    summary: () => request<ApiTodaySummary>("/today/summary"),
     addWater: (amount_ml: number) => post<ApiDailyMetric>("/today/water", { amount_ml }),
     addCalories: (amount_kcal: number) => post<ApiDailyMetric>("/today/calories", { amount_kcal }),
+    updateFasting: (payload: {
+      fasting_state: "idle" | "fasting" | "eating_window";
+      fasting_minutes?: number | null;
+      fasting_started_at?: string | null;
+      fasting_protocol?: FastingProtocol | null;
+    }) => post<ApiDailyMetric>("/today/fasting", payload),
     toggleHabit: (habit_key: string) => post<ApiDailyMetric>("/today/habits/toggle", { habit_key }),
+  },
+  nutrition: {
+    searchFoods: (q = "", limit = 20) =>
+      request<ApiFoodItem[]>(`/nutrition/foods?q=${encodeURIComponent(q)}&limit=${limit}`),
+    createFood: (payload: ApiFoodCreateRequest) => post<ApiFoodItem>("/nutrition/foods", payload),
+    getMeals: (day?: string) =>
+      request<ApiMealLogDay>(day ? `/nutrition/meals?day=${encodeURIComponent(day)}` : "/nutrition/meals"),
+    logMeal: (payload: {
+      food_item_id: number;
+      meal_type: MealType;
+      serving_grams: number;
+      logged_at?: string;
+    }) => post<ApiMealLog>("/nutrition/meals", payload),
+    deleteMeal: (mealId: number) => del<void>(`/nutrition/meals/${mealId}`),
   },
   workouts: {
     log: (payload: ApiWorkoutLogCreate) => post<{ id: number }>("/workouts/logs", payload),
@@ -140,21 +107,25 @@ export const api = {
   },
 };
 
-/** Returns the signed-in user, or null for guests and when the backend is unreachable. */
-export async function getSessionUser(): Promise<ApiUser | null> {
+/**
+ * Returns the signed-in user, or null for guests (`401`).
+ * Rethrows `5xx` and network (`status === 0`) errors so callers can distinguish
+ * a guest session from a backend outage.
+ */
+export async function getSessionUser(
+  fetchMe: () => Promise<ApiUser> = () => api.auth.me()
+): Promise<ApiUser | null> {
   try {
-    return await api.auth.me();
-  } catch {
-    return null;
+    return await fetchMe();
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      return null;
+    }
+    throw err;
   }
 }
 
-/**
- * Saves a finished quiz to the signed-in user's account. Guests are skipped on
- * purpose: their answers stay in this browser instead of becoming anonymous
- * health records on the server.
- */
-export async function syncQuizForSignedInUser(responses: {
+export interface QuizSyncInput {
   archetype: "female_pilates" | "male_strength";
   gender: "female" | "male";
   goal: string;
@@ -165,7 +136,14 @@ export async function syncQuizForSignedInUser(responses: {
   targetWeightKg: number;
   activityLevel: ApiQuizSubmit["activity_level"];
   obstacles: string[];
-}): Promise<boolean> {
+}
+
+/**
+ * Saves a finished quiz to the signed-in user's account. Guests (`401`) are
+ * skipped on purpose: their answers stay in this browser instead of becoming
+ * anonymous health records on the server.
+ */
+export async function syncQuizForSignedInUser(responses: QuizSyncInput): Promise<boolean> {
   const user = await getSessionUser();
   if (!user) return false;
   await api.quiz.submit({

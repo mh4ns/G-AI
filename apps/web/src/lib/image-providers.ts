@@ -4,8 +4,6 @@ import {
   MilestoneSpec,
   PhotoQualityAssessment,
   buildImageEditPrompt,
-  assessPhotoQualityAndGender,
-  callGeminiImageToImage,
 } from "./prediction-jobs";
 
 /**
@@ -29,6 +27,10 @@ export type ImageProvider =
   | { name: "cloudflare"; accountId: string; apiToken: string; imageModel: string };
 
 const PLACEHOLDER_KEYS = new Set(["", "your_gemini_api_key_here"]);
+const SAFETY_BLOCK_MESSAGE =
+  "Ảnh không đáp ứng tiêu chuẩn an toàn nội dung. Vui lòng chọn ảnh trang phục thể thao kín đáo hơn.";
+const VISION_UNAVAILABLE_MESSAGE =
+  "Không thể kiểm tra chất lượng ảnh lúc này. Vui lòng thử lại sau ít phút.";
 
 function geminiFromEnv(): ImageProvider | null {
   const apiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "").trim();
@@ -41,7 +43,9 @@ function geminiFromEnv(): ImageProvider | null {
   };
 }
 
-// Overridable for tests only; production always talks to Vercel's gateway.
+// Overridable for tests only; production always talks to Google / Vercel endpoints.
+const geminiBaseUrl = () =>
+  process.env.GEMINI_API_BASE_URL || "https://generativelanguage.googleapis.com/v1beta";
 const aiGatewayUrl = () => process.env.AI_GATEWAY_BASE_URL || "https://ai-gateway.vercel.sh/v1";
 
 /**
@@ -122,7 +126,356 @@ export function providerModelLabel(provider: ImageProvider): string {
 export function buildPromptFor(provider: ImageProvider, spec: MilestoneSpec): string {
   if (provider.name !== "cloudflare") return buildImageEditPrompt(spec);
   const intensity = spec.week >= 4 ? "noticeably" : spec.week >= 2 ? "moderately" : "slightly";
-  return `realistic photo of the same person, same face and clothes, ${intensity} slimmer waist, toned core, upright posture, natural lighting`;
+  const bodyClause =
+    spec.goalDirection === "gain"
+      ? `${intensity} fuller athletic muscle tone`
+      : spec.goalDirection === "maintain"
+        ? `${intensity} more toned core`
+        : `${intensity} slimmer waist, toned core`;
+  return `realistic photo of the same person, same face and clothes, ${bodyClause}, upright posture, natural lighting`;
+}
+
+export async function assessPhotoQualityAndGender(
+  apiKey: string,
+  visionModel: string,
+  rawBase64: string,
+  mimeType: string,
+  quizArchetype: "female_pilates" | "male_strength"
+): Promise<PhotoQualityAssessment> {
+  const quizGender = quizArchetype === "male_strength" ? "male" : "female";
+  const trimmedKey = (apiKey || "").trim();
+
+  if (PLACEHOLDER_KEYS.has(trimmedKey)) {
+    throw new GenerationError("Gemini vision API key is missing or placeholder.", "CONFIG");
+  }
+
+  const endpoint = `${geminiBaseUrl()}/models/${visionModel}:generateContent`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": trimmedKey,
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are an AI biometric intake validator for a body adaptation fitness app. Analyze this photo and respond ONLY with a JSON object:
+{
+  "onePerson": boolean (true if exactly one adult is in the frame),
+  "isNearFullBody": boolean (true if visible at least from mid-thigh up),
+  "goodLighting": boolean (true if lighting and focus are clear without severe blur or dark shadows),
+  "detectedGender": "male" | "female" | "uncertain" (perceived biological gender presentation of the person in the photo),
+  "safetyOk": boolean (true if apparel is appropriate athletic wear and not violating safety policies)
+}`,
+              },
+              {
+                inlineData: {
+                  mimeType,
+                  data: rawBase64,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      let errMsg = errText;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson?.error?.message) errMsg = errJson.error.message;
+      } catch {
+        // ignore
+      }
+
+      if (res.status === 429 || errMsg.includes("Quota exceeded") || errMsg.includes("free_tier")) {
+        throw new GenerationError(`Gemini vision quota exceeded [${res.status}]`, "QUOTA");
+      }
+      if (res.status === 403 || res.status === 404) {
+        throw new GenerationError(`Gemini vision configuration error [${res.status}]`, "CONFIG");
+      }
+      if (res.status === 400 && (errText.includes("SAFETY") || errMsg.toLowerCase().includes("safety"))) {
+        return {
+          isValid: false,
+          onePerson: true,
+          isNearFullBody: true,
+          goodLighting: true,
+          detectedGender: "uncertain",
+          errorMessage: SAFETY_BLOCK_MESSAGE,
+        };
+      }
+
+      throw new GenerationError(
+        `Gemini vision HTTP error [${res.status}]: ${errMsg.slice(0, 200)}`,
+        "UPSTREAM",
+        VISION_UNAVAILABLE_MESSAGE
+      );
+    }
+
+    const data = await res.json();
+    if (
+      data?.promptFeedback?.blockReason === "SAFETY" ||
+      data?.candidates?.[0]?.finishReason === "SAFETY"
+    ) {
+      return {
+        isValid: false,
+        onePerson: true,
+        isNearFullBody: true,
+        goodLighting: true,
+        detectedGender: "uncertain",
+        errorMessage: SAFETY_BLOCK_MESSAGE,
+      };
+    }
+
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const jsonMatch = typeof rawText === "string" ? rawText.match(/\{[\s\S]*\}/) : null;
+    if (!jsonMatch) {
+      throw new GenerationError(
+        "Gemini vision response missing JSON payload.",
+        "UPSTREAM",
+        VISION_UNAVAILABLE_MESSAGE
+      );
+    }
+
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+    } catch (err) {
+      throw new GenerationError(
+        `Gemini vision JSON parse failed: ${err instanceof Error ? err.message : "unknown"}`,
+        "UPSTREAM",
+        VISION_UNAVAILABLE_MESSAGE
+      );
+    }
+
+    if (parsed.safetyOk === false) {
+      return {
+        isValid: false,
+        onePerson: Boolean(parsed.onePerson ?? true),
+        isNearFullBody: Boolean(parsed.isNearFullBody ?? true),
+        goodLighting: Boolean(parsed.goodLighting ?? true),
+        detectedGender: (parsed.detectedGender as PhotoQualityAssessment["detectedGender"]) || "uncertain",
+        errorMessage: SAFETY_BLOCK_MESSAGE,
+      };
+    }
+
+    if (!parsed.onePerson) {
+      return {
+        isValid: false,
+        onePerson: false,
+        isNearFullBody: Boolean(parsed.isNearFullBody ?? true),
+        goodLighting: Boolean(parsed.goodLighting ?? true),
+        detectedGender: (parsed.detectedGender as PhotoQualityAssessment["detectedGender"]) || "uncertain",
+        errorMessage: "Ảnh cần có đúng 1 người. Vui lòng chụp một mình để AI nhận diện vóc dáng chính xác.",
+      };
+    }
+
+    if (!parsed.isNearFullBody) {
+      return {
+        isValid: false,
+        onePerson: true,
+        isNearFullBody: false,
+        goodLighting: Boolean(parsed.goodLighting ?? true),
+        detectedGender: (parsed.detectedGender as PhotoQualityAssessment["detectedGender"]) || "uncertain",
+        errorMessage:
+          "Ảnh chưa thấy đủ vóc dáng (cần thấy từ đùi trở lên hoặc toàn thân). Vui lòng đứng lùi xa hơn.",
+      };
+    }
+
+    if (!parsed.goodLighting) {
+      return {
+        isValid: false,
+        onePerson: true,
+        isNearFullBody: true,
+        goodLighting: false,
+        detectedGender: (parsed.detectedGender as PhotoQualityAssessment["detectedGender"]) || "uncertain",
+        errorMessage: "Ảnh quá tối hoặc bị mờ. Vui lòng chụp ở nơi đủ ánh sáng và đứng vững.",
+      };
+    }
+
+    const detectedGender =
+      parsed.detectedGender === "male" ||
+      parsed.detectedGender === "female" ||
+      parsed.detectedGender === "uncertain"
+        ? parsed.detectedGender
+        : quizGender;
+
+    let genderMismatchWarning: string | undefined = undefined;
+    if (detectedGender !== "uncertain" && detectedGender !== quizGender) {
+      genderMismatchWarning = `Thông tin quiz (${
+        quizGender === "female" ? "Nữ" : "Nam"
+      }) và người trong ảnh (${
+        detectedGender === "female" ? "Nữ" : "Nam"
+      }) có vẻ không khớp. Mô hình sẽ giữ nguyên giới tính của người trong ảnh để đảm bảo hình ảnh tự nhiên nhất.`;
+    }
+
+    return {
+      isValid: true,
+      onePerson: true,
+      isNearFullBody: true,
+      goodLighting: true,
+      detectedGender,
+      genderMismatchWarning,
+    };
+  } catch (err) {
+    if (err instanceof GenerationError) throw err;
+    throw new GenerationError(
+      `Gemini vision validation failed: ${err instanceof Error ? err.message : "unknown"}`,
+      "UPSTREAM",
+      VISION_UNAVAILABLE_MESSAGE
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Image-to-Image editing via Gemini API with retry & timeout
+export async function callGeminiImageToImage(
+  apiKey: string,
+  modelName: string,
+  base64Image: string,
+  mimeType: string,
+  promptText: string,
+  maxRetries: number = 2,
+  timeoutMs: number = 35_000
+): Promise<string> {
+  const trimmedKey = (apiKey || "").trim();
+  if (!trimmedKey || PLACEHOLDER_KEYS.has(trimmedKey)) {
+    throw new GenerationError("Gemini image API key is missing or placeholder.", "CONFIG");
+  }
+
+  const endpoint = `${geminiBaseUrl()}/models/${modelName}:generateContent`;
+  let lastError: GenerationError | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 1500 * Math.pow(2, attempt - 1)));
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": trimmedKey,
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType,
+                    data: base64Image,
+                  },
+                },
+                {
+                  text: promptText,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseModalities: ["IMAGE"],
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        let errMsg = errText;
+        try {
+          const parsed = JSON.parse(errText);
+          if (parsed?.error?.message) errMsg = parsed.error.message;
+        } catch {
+          // ignore
+        }
+
+        // 1. Quota exceeded on Free Tier
+        if (res.status === 429 || errMsg.includes("Quota exceeded") || errMsg.includes("free_tier")) {
+          throw new GenerationError(
+            "Tài khoản Google Gemini của bạn đang ở gói Miễn phí (Free Tier), Google quy định hạn mức tạo sinh ảnh là 0 lượt/ngày. Vui lòng kích hoạt thanh toán (Pay-as-you-go) tại aistudio.google.com/app/plan_information.",
+            "QUOTA"
+          );
+        }
+
+        // 2. Unregistered caller / Missing API key
+        if (res.status === 403 && (errMsg.includes("unregistered callers") || errMsg.includes("API Key"))) {
+          throw new GenerationError(
+            "Chưa nhận diện được Gemini API Key (Lỗi 403 unregistered caller). Hãy kiểm tra GEMINI_API_KEY trong .env.local và khởi động lại server Next.js (Ctrl+C rồi npm run dev).",
+            "CONFIG"
+          );
+        }
+
+        // 3. Model not found or deprecated
+        if (res.status === 404) {
+          throw new GenerationError(
+            `Mô hình ${modelName} không tồn tại hoặc đã ngừng hỗ trợ. Vui lòng kiểm tra biến IMAGE_MODEL trong file .env.local.`,
+            "CONFIG"
+          );
+        }
+
+        // 4. Content Safety Filter
+        if (
+          res.status === 400 &&
+          (errText.toLowerCase().includes("safety") || errMsg.toLowerCase().includes("safety"))
+        ) {
+          throw new GenerationError(SAFETY_BLOCK_MESSAGE, "SAFETY", SAFETY_BLOCK_MESSAGE);
+        }
+
+        throw new GenerationError(`Gemini API error [${res.status}]: ${errMsg.slice(0, 200)}`, "UPSTREAM");
+      }
+
+      const data = await res.json();
+      const finishReason = data?.candidates?.[0]?.finishReason;
+      if (
+        data?.promptFeedback?.blockReason === "SAFETY" ||
+        finishReason === "SAFETY" ||
+        finishReason === "IMAGE_SAFETY"
+      ) {
+        throw new GenerationError(SAFETY_BLOCK_MESSAGE, "SAFETY", SAFETY_BLOCK_MESSAGE);
+      }
+
+      const parts = data.candidates?.[0]?.content?.parts || [];
+
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          const outMime = part.inlineData.mimeType || "image/jpeg";
+          return `data:${outMime};base64,${part.inlineData.data}`;
+        }
+      }
+
+      throw new GenerationError("Mô hình phản hồi nhưng không chứa dữ liệu ảnh kết quả.", "UPSTREAM");
+    } catch (err: unknown) {
+      const wrapped =
+        err instanceof GenerationError
+          ? err
+          : new GenerationError(
+              `Gemini image request failed: ${err instanceof Error ? err.message : "unknown"}`,
+              "UPSTREAM"
+            );
+      lastError = wrapped;
+      // Safety blocks, configuration problems, and quota exhaustion will not fix themselves on retry.
+      if (wrapped.code === "SAFETY" || wrapped.code === "CONFIG" || wrapped.code === "QUOTA") break;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  throw lastError ?? new GenerationError("Thao tác tạo sinh ảnh vượt quá thời gian chờ.", "UPSTREAM");
 }
 
 export async function assessPhoto(
@@ -134,7 +487,7 @@ export async function assessPhoto(
   if (provider.name === "gemini") {
     return assessPhotoQualityAndGender(provider.apiKey, provider.visionModel, rawBase64, mimeType, archetype);
   }
-  // Workers AI path has no vision pre-check: accept the photo and rely on the
+  // Other providers have no vision pre-check: accept the photo and rely on the
   // client-side size/MIME validation already done by the route.
   return {
     isValid: true,
@@ -298,8 +651,7 @@ async function callAiGatewayImageEdit(
         );
       }
       if (res.status === 400 && /safety|moderation|policy/i.test(detail)) {
-        const msg = "Ảnh không đáp ứng tiêu chuẩn an toàn nội dung. Vui lòng chọn ảnh trang phục thể thao kín đáo hơn.";
-        throw new GenerationError(detail, "SAFETY", msg);
+        throw new GenerationError(detail, "SAFETY", SAFETY_BLOCK_MESSAGE);
       }
       throw new GenerationError(`AI Gateway error [${res.status}] (${provider.imageModel}): ${detail}`, "UPSTREAM");
     }

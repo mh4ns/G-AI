@@ -17,8 +17,9 @@ from sqlalchemy import select
 from app.core.database import engine, Base, async_session_maker
 from app.core.config import settings
 from app.core.security import hash_password
-from app.api.v1.endpoints.today import local_today
 from app.services.catalog import load_catalog, sync_catalog
+from app.services.daily_metrics import local_today
+from app.services.nutrition import load_food_catalog, sync_food_catalog
 from app.services.plan_calculator import PlanInputs, calculate_plan
 from app.models import (
     User,
@@ -207,8 +208,9 @@ async def init_and_seed():
         )
         session.add(daily_metric)
 
-        # 6. E-Commerce Store Products: the same catalog production uses (app/data/store_catalog.json).
+        # 6. E-Commerce Store Products & Curated Food Catalog.
         await sync_catalog(session, load_catalog())
+        await sync_food_catalog(session, load_food_catalog())
 
         # 7. Demo Order
         sample_order = Order(

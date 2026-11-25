@@ -1,7 +1,9 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.schemas._common import ensure_tz_aware
 
 FastingProtocol = Literal["14:10", "16:8", "18:6", "20:4"]
 
@@ -41,10 +43,25 @@ class FastingUpdateRequest(BaseModel):
     @field_validator("fasting_started_at")
     @classmethod
     def _ensure_tz_aware(cls, value: Optional[datetime]) -> Optional[datetime]:
-        if value is not None and value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value
+        return ensure_tz_aware(value)
 
 
 class HabitToggleRequest(BaseModel):
     habit_key: str = Field(..., pattern=r"^[a-z][a-z0-9_]{1,49}$", description="e.g. morning_stretch, water, workout")
+
+
+class TodaySummaryDay(BaseModel):
+    date: date
+    calories_consumed: int
+    calories_burned: int
+    water_intake_ml: int
+    habits_count: int
+    fasting_state: str
+    active: bool
+
+
+class TodaySummaryResponse(BaseModel):
+    today: DailyMetricResponse
+    streak_days: int
+    best_streak_days: int
+    history_7d: List[TodaySummaryDay]

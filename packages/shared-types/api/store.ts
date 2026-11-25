@@ -35,12 +35,19 @@ export interface ProductDTO {
   is_active: boolean;
 }
 
+export interface OrderItemRequest {
+  product_id: string;
+  size: string;
+  /** Defaults to 1 on the backend (1..20). */
+  quantity?: number;
+}
+
 /** POST /store/orders body. Prices, names and images are always taken from the catalog. */
 export interface OrderCreateRequest {
   customer_email: string;
   customer_name: string; // 2..100 chars
   shipping_address: string; // 5..500 chars
-  items: Array<{ product_id: string; size: string; quantity: number /* 1..20 */ }>; // 1..50 lines
+  items: OrderItemRequest[]; // 1..50 lines
 }
 
 export interface OrderLineItemDTO {
@@ -53,6 +60,9 @@ export interface OrderLineItemDTO {
   color_name: string | null;
 }
 
+export type PaymentStatus = 'pending' | 'paid' | 'refunded';
+export type OrderStatus = 'awaiting_payment' | 'processing' | 'shipped' | 'delivered';
+
 /** POST /store/orders (201) and GET /store/orders/me (array, newest first, requires sign-in). */
 export interface OrderDTO {
   id: string; // "ORD-XXXXXXXXXXXX"
@@ -60,8 +70,8 @@ export interface OrderDTO {
   customer_name: string;
   total_amount: number;
   shipping_address: string;
-  payment_status: 'pending' | 'paid' | 'refunded';
-  order_status: 'awaiting_payment' | 'processing' | 'shipped' | 'delivered';
+  payment_status: PaymentStatus;
+  order_status: OrderStatus;
   items: OrderLineItemDTO[];
   created_at: string; // ISO 8601
 }
@@ -71,8 +81,23 @@ export interface UserDTO {
   email: string;
   full_name: string;
   avatar_url: string | null;
+  timezone: string;
   is_active: boolean;
   created_at: string;
+}
+
+/** POST /auth/register body. */
+export interface UserCreateRequest {
+  email: string;
+  full_name: string; // 2..100 chars
+  password: string; // 8..128 chars
+  timezone?: string; // default "Asia/Ho_Chi_Minh"
+}
+
+/** POST /auth/login body. */
+export interface UserLoginRequest {
+  email: string;
+  password: string; // 1..128 chars
 }
 
 /** POST /auth/register (201), /auth/login, /auth/password. The session itself is an httpOnly cookie. */

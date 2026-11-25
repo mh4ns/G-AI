@@ -1,237 +1,63 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Lightbulb, Play, Plus, RotateCcw, ShoppingBag } from "lucide-react";
-import { PersonalizedPlanResult } from "@/types/quiz";
 import { BrandLogo, homeUrl, siteUrl } from "@g-ai/ui";
-import { LiveWorkoutStudio, WorkoutSummaryData } from "@/components/workout/LiveWorkoutStudio";
-import { api, ApiDailyMetric, ApiUser, getSessionUser } from "@/lib/api-client";
-
-// Checklist keys persisted as habit keys on the backend.
-const CHECKLIST_KEYS = ["water", "workout", "mindfulness", "fasting"] as const;
-
-function checklistFromMetric(metric: ApiDailyMetric): Record<string, boolean> {
-  return Object.fromEntries(CHECKLIST_KEYS.map((k) => [k, metric.habits_completed.includes(k)]));
-}
+import { LiveWorkoutStudio } from "@/components/workout/LiveWorkoutStudio";
+import { FastingTimerCard } from "@/components/today/FastingTimerCard";
+import { MealLoggerSection } from "@/components/today/MealLoggerSection";
+import { StreakBadge } from "@/components/today/StreakBadge";
+import { useTodaySession } from "@/components/today/useTodaySession";
 
 export default function TodayDashboardPage() {
-  const [plan, setPlan] = useState<PersonalizedPlanResult>({
-    archetype: "female_pilates",
-    bmi: 22.1,
-    bmiCategory: "Cân đối lý tưởng",
-    bmr: 1350,
-    tdee: 1850,
-    dailyCalorieTarget: 1450,
-    calorieDeficitDaily: 400,
-    macroSplit: { proteinG: 96, carbsG: 160, fatG: 40 },
-    estimatedWeeks: 6,
-    estimatedTargetDate: "15 Tháng 12, 2026",
-    recommendedWaterMl: 2100,
-    weeklyWorkoutsCount: 4,
-    focusHighlights: ["Đốt mỡ phẳng bụng", "Nâng và săn chắc vòng 3"],
-    safetyNotes: ["Đã bảo vệ cột sống và khớp gối"],
-    excludedExercises: [],
-    weeklyRoutine: [
-      {
-        dayNumber: 1,
-        title: "Thảm: cơ lõi & bụng dưới",
-        durationMin: 35,
-        target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
-        intensity: "moderate",
-        exerciseCount: 6,
-      },
-      {
-        dayNumber: 2,
-        title: "Glute Bridge & tạo dáng hông",
-        durationMin: 40,
-        target: "Cơ mông lớn & Cơ đùi sau",
-        intensity: "high",
-        exerciseCount: 7,
-      },
-      {
-        dayNumber: 3,
-        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
-        durationMin: 25,
-        target: "Giải phóng đốt sống lưng",
-        intensity: "low",
-        exerciseCount: 5,
-      },
-      {
-        dayNumber: 4,
-        title: "Pilates toàn thân & cân bằng tư thế",
-        durationMin: 35,
-        target: "Toàn thân & tư thế",
-        intensity: "moderate",
-        exerciseCount: 6,
-      },
-    ],
-  });
-
-  // Everyone starts the day at zero; signed-in users get their saved numbers below.
-  const [waterDrunkMl, setWaterDrunkMl] = useState<number>(0);
-  const [caloriesBurned, setCaloriesBurned] = useState<number>(0);
-  const [caloriesEaten, setCaloriesEaten] = useState<number>(0);
-  const [checklist, setChecklist] = useState<Record<string, boolean>>({
-    water: false,
-    workout: false,
-    mindfulness: false,
-    fasting: false,
-  });
-  // Clock for the 16:8 habit, refreshed each minute. Null until mounted, so the
-  // server render and the first client render agree.
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const [sessionUser, setSessionUser] = useState<ApiUser | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
-  const [hasCustomPlan, setHasCustomPlan] = useState<boolean>(true);
-  const [isStudioOpen, setIsStudioOpen] = useState<boolean>(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    try {
-      const savedPlan = localStorage.getItem("g_ai_user_plan");
-      if (savedPlan) {
-        setPlan(JSON.parse(savedPlan));
-        setHasCustomPlan(true);
-      } else {
-        setHasCustomPlan(false);
-      }
-      const savedTheme = localStorage.getItem("g_ai_theme");
-      if (savedTheme === "dark") {
-        setTheme("dark");
-      }
-    } catch {
-      // fallback
-    }
-  }, []);
-
-  const handleToggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    try {
-      localStorage.setItem("g_ai_theme", nextTheme);
-      localStorage.setItem("g_ai_theme_manual", "true");
-    } catch {
-      // fallback
-    }
-  };
-
-  // Signed-in users get real, persisted numbers; guests log on this device only.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const user = await getSessionUser();
-      if (cancelled || !user) return;
-      setSessionUser(user);
-      try {
-        applyMetric(await api.today.get());
-      } catch {
-        if (!cancelled) setSyncError("Không tải được số liệu hôm nay từ máy chủ.");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const applyMetric = (metric: ApiDailyMetric) => {
-    setWaterDrunkMl(metric.water_intake_ml);
-    setCaloriesBurned(metric.calories_burned);
-    setCaloriesEaten(metric.calories_consumed);
-    setChecklist(checklistFromMetric(metric));
-    setSyncError(null);
-  };
-
-  /** Runs a backend update for signed-in users; reports (but does not undo) failures. */
-  const syncToBackend = async (call: () => Promise<ApiDailyMetric>) => {
-    if (!sessionUser) return;
-    try {
-      applyMetric(await call());
-    } catch {
-      setSyncError("Chưa lưu được thay đổi lên máy chủ. Vui lòng thử lại.");
-    }
-  };
-
-  const handleFinishWorkout = async (summary: WorkoutSummaryData) => {
-    if (!sessionUser) {
-      setCaloriesBurned((prev) => prev + summary.caloriesBurned);
-      setChecklist((prev) => ({ ...prev, workout: true }));
-      return;
-    }
-    try {
-      await api.workouts.log({
-        duration_sec: Math.max(1, Math.round(summary.durationMinutes * 60)),
-        calories_burned: Math.max(0, Math.round(summary.caloriesBurned)),
-        reps_completed: Math.max(0, Math.round(summary.repsCompleted)),
-        // Camera off = nothing measured: send null rather than a fake 0%.
-        form_accuracy_pct:
-          summary.averageFormScore == null ? null : Math.min(100, Math.max(0, summary.averageFormScore)),
-      });
-      let metric = await api.today.get();
-      if (!metric.habits_completed.includes("workout")) {
-        metric = await api.today.toggleHabit("workout");
-      }
-      applyMetric(metric);
-    } catch {
-      setSyncError("Chưa lưu được buổi tập lên máy chủ.");
-    }
-  };
-
-  const isLight = theme === "light";
+  const {
+    plan,
+    hasCustomPlan,
+    waterDrunkMl,
+    caloriesBurned,
+    caloriesEaten,
+    fastingState,
+    fastingProtocol,
+    fastingStartedAt,
+    fastingBusy,
+    streakDays,
+    bestStreakDays,
+    history7d,
+    meals,
+    checklist,
+    now,
+    todayLabel,
+    sessionStatus,
+    sessionUser,
+    syncError,
+    setSyncError,
+    isStudioOpen,
+    setIsStudioOpen,
+    theme,
+    isLight,
+    totalMealCalories,
+    totalProteinG,
+    totalCarbsG,
+    totalFatG,
+    preset,
+    handleToggleTheme,
+    handleUpdateFasting,
+    handleMealLogged,
+    handleMealDeleted,
+    handleFinishWorkout,
+    addWater,
+    toggleChecklist,
+  } = useTodaySession();
 
   const remainingCalories = plan.dailyCalorieTarget - caloriesEaten + caloriesBurned;
-  // The target follows the plan's goal: below, at or above what the body uses.
-  const calorieGap = Math.round(plan.tdee - plan.dailyCalorieTarget);
-  const calorieGoalLine =
-    Math.abs(calorieGap) < 10
-      ? "Ăn bằng mức tiêu hao để giữ cân."
-      : calorieGap > 0
-        ? `Ăn ít hơn mức tiêu hao khoảng ${formatNumber(calorieGap)} kcal để giảm cân từ từ.`
-        : `Ăn nhiều hơn mức tiêu hao khoảng ${formatNumber(Math.abs(calorieGap))} kcal để tăng cân từ từ.`;
   const waterPercent = Math.min(100, Math.round((waterDrunkMl / plan.recommendedWaterMl) * 100));
-
-  const addWater = () => {
-    if (sessionUser) {
-      void syncToBackend(async () => {
-        const metric = await api.today.addWater(250);
-        const reachedGoal = metric.water_intake_ml >= plan.recommendedWaterMl;
-        return reachedGoal && !metric.habits_completed.includes("water")
-          ? api.today.toggleHabit("water")
-          : metric;
-      });
-      return;
-    }
-    setWaterDrunkMl((prev) => {
-      const next = prev + 250;
-      if (next >= plan.recommendedWaterMl) {
-        setChecklist((c) => ({ ...c, water: true }));
-      }
-      return next;
-    });
-  };
-
-  const toggleChecklist = (key: string) => {
-    if (sessionUser) {
-      void syncToBackend(() => api.today.toggleHabit(key));
-      return;
-    }
-    setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const todayLabel = new Date().toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
-
   const isOverBudget = remainingCalories < 0;
   const habitsDone = Object.values(checklist).filter(Boolean).length;
   const habitsTotal = Object.keys(checklist).length;
   const waterGoalReached = waterDrunkMl >= plan.recommendedWaterMl;
-  const waterGoalLitres = (plan.recommendedWaterMl / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
-  const fastingDetail = describeFasting(now);
+  const fastingDetail = preset.describeFasting(now);
+  const showGuestBanner = sessionStatus === "guest";
 
   return (
     <div data-theme={theme} className="min-h-screen bg-page text-ink transition-colors duration-300">
@@ -246,7 +72,9 @@ export default function TodayDashboardPage() {
               <BrandLogo variant="horizontal" isLight={isLight} size="sm" />
             </Link>
             <div className="min-w-0 border-l border-line pl-3">
-              <h1 className="truncate text-sm font-semibold leading-tight text-ink">Hôm nay, {todayLabel}</h1>
+              <h1 className="truncate text-sm font-semibold leading-tight text-ink">
+                {todayLabel ? `Hôm nay, ${todayLabel}` : "Hôm nay"}
+              </h1>
               <p className="truncate text-xs text-ink-muted">Lộ trình 28 ngày</p>
             </div>
           </div>
@@ -273,7 +101,7 @@ export default function TodayDashboardPage() {
       </header>
 
       {/* Plan and account notices: one quiet strip, only when there is something to say */}
-      {(!hasCustomPlan || !sessionUser || syncError) && (
+      {(!hasCustomPlan || showGuestBanner || syncError) && (
         <div className="border-b border-line bg-surface">
           <div className="mx-auto w-full max-w-3xl divide-y divide-line px-4 text-sm">
             {syncError && (
@@ -289,7 +117,7 @@ export default function TodayDashboardPage() {
                 </Link>
               </p>
             )}
-            {!sessionUser && (
+            {showGuestBanner && (
               <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2.5 text-ink-muted">
                 <span>Số liệu bên dưới chỉ lưu trên trình duyệt này.</span>
                 <Link href="/login?next=/today" className={NOTICE_LINK}>
@@ -308,10 +136,10 @@ export default function TodayDashboardPage() {
             id="workout-title"
             className="max-w-[15ch] text-balance font-display text-[2.75rem] font-extrabold leading-[1.04] tracking-[-0.015em] text-ink sm:text-[4rem]"
           >
-            Pilates siết cơ bụng &amp; thẳng vai
+            {preset.workoutTitle}
           </h2>
           <p className="mt-5 max-w-[60ch] text-base leading-relaxed text-ink-muted">
-            18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.
+            {preset.workoutSubtitle}
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -334,6 +162,16 @@ export default function TodayDashboardPage() {
               </p>
             )}
           </div>
+
+          <div className="mt-7">
+            <StreakBadge
+              streakDays={streakDays}
+              bestStreakDays={bestStreakDays}
+              history7d={history7d}
+              isSignedIn={Boolean(sessionUser)}
+              now={now}
+            />
+          </div>
         </section>
 
         {/* Energy budget, written as the sum it is */}
@@ -341,7 +179,7 @@ export default function TodayDashboardPage() {
           <h2 id="energy-title" className="text-lg font-semibold text-ink">
             Năng lượng hôm nay
           </h2>
-          <p className="mt-1 text-sm text-ink-muted">{calorieGoalLine}</p>
+          <p className="mt-1 text-sm text-ink-muted">{preset.calorieGoal.todayGoalLine}</p>
           <p className="sr-only">
             Mục tiêu {plan.dailyCalorieTarget} kcal, đã nạp {caloriesEaten} kcal, đã đốt {caloriesBurned} kcal.{" "}
             {isOverBudget
@@ -383,6 +221,29 @@ export default function TodayDashboardPage() {
           </div>
         </section>
 
+        {/* Meals and macros */}
+        <MealLoggerSection
+          isSignedIn={Boolean(sessionUser)}
+          macroTarget={plan.macroSplit}
+          meals={meals}
+          totalCalories={totalMealCalories}
+          totalProteinG={totalProteinG}
+          totalCarbsG={totalCarbsG}
+          totalFatG={totalFatG}
+          onMealLogged={handleMealLogged}
+          onMealDeleted={handleMealDeleted}
+          onError={setSyncError}
+        />
+
+        {/* Biological fasting timer */}
+        <FastingTimerCard
+          fastingState={fastingState}
+          fastingProtocol={fastingProtocol}
+          fastingStartedAt={fastingStartedAt}
+          busy={fastingBusy}
+          onUpdateFasting={handleUpdateFasting}
+        />
+
         {/* Habits: water, fasting and the checklist in one list */}
         <section aria-labelledby="habits-title" className="border-t border-line pb-12 pt-8">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -398,14 +259,14 @@ export default function TodayDashboardPage() {
             <HabitRow
               checked={checklist.workout}
               onToggle={() => toggleChecklist("workout")}
-              title="Hoàn thành 18 phút bài tập Pilates bụng"
-              detail="18 phút"
+              title={preset.workoutHabitTitle}
+              detail={preset.workoutHabitDetail}
             />
 
             <HabitRow
               checked={checklist.water}
               onToggle={() => toggleChecklist("water")}
-              title={`Uống đủ ${waterGoalLitres} L nước lọc trong ngày`}
+              title={`Uống đủ ${preset.waterGoalLitres} L nước lọc trong ngày`}
               detail={`${formatNumber(waterDrunkMl)} / ${formatNumber(plan.recommendedWaterMl)} ml`}
               progress={waterPercent}
               progressLabel="Lượng nước đã uống"
@@ -432,7 +293,7 @@ export default function TodayDashboardPage() {
             <HabitRow
               checked={checklist.fasting}
               onToggle={() => toggleChecklist("fasting")}
-              title="Không ăn vặt sau 20:00 tối"
+              title={preset.fastingHabitTitle}
               detail={fastingDetail}
             />
           </ul>
@@ -483,19 +344,6 @@ const ENERGY_OPERATOR = "text-xl leading-none text-ink-faint sm:text-3xl";
 
 function formatNumber(value: number): string {
   return value.toLocaleString("vi-VN");
-}
-
-/** 16:8 from the clock: eating 12:00-20:00, fasting 20:00-12:00. */
-function describeFasting(now: Date | null): string {
-  const eatingWindow = "khung ăn 12:00–20:00";
-  if (!now) return `Nhịn ăn 16:8 · ${eatingWindow}`;
-  const minutes = now.getHours() * 60 + now.getMinutes();
-  const fmt = (m: number) => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
-  if (minutes >= 12 * 60 && minutes < 20 * 60) {
-    return `Nhịn ăn 16:8 · trong giờ ăn, còn ${fmt(20 * 60 - minutes)} · ${eatingWindow}`;
-  }
-  const elapsed = minutes >= 20 * 60 ? minutes - 20 * 60 : minutes + 4 * 60;
-  return `Nhịn ăn 16:8 · đã nhịn ${fmt(elapsed)} / 16 giờ · ${eatingWindow}`;
 }
 
 interface HabitRowProps {

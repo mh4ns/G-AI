@@ -7,9 +7,11 @@
  * stock; the client only picks product, size and quantity.
  */
 
+import type { OrderCreateRequest, OrderDTO, ProductDTO } from "@g-ai/shared-types";
+import { ApiError, createApiRequest, type CreateApiRequestConfig } from "@g-ai/ui/api";
 import type { StoreProduct } from "@/types/store";
 
-export const API_BASE = "/api/v1";
+export { API_BASE, ApiError } from "@g-ai/ui/api";
 
 /**
  * Prices and ordering stay hidden until the launch prices are confirmed.
@@ -43,84 +45,9 @@ export interface StoreItem {
 
 export type CatalogSource = "server" | "sample";
 
-export interface CartLine {
-  /** `${productId}::${size}` so the same product in two sizes is two lines. */
-  key: string;
-  productId: string;
-  size: string;
-  quantity: number;
-}
-
-/**
- * GET /store/products row. Mirrors packages/shared-types/api/store.ts
- * (ProductDTO); ids match src/data/mockStoreData.ts ("p1".."p8").
- */
-export interface ApiProduct {
-  id: string;
-  name: string;
-  subtitle: string;
-  category: string;
-  subcategory: string | null;
-  activity: string | null;
-  description: string | null;
-  discipline: string;
-  material: string;
-  price: number;
-  original_price: number | null;
-  discount_percent?: number | null;
-  color_name: string;
-  color_hex: string;
-  rating: number;
-  review_count: number;
-  badge: string | null;
-  image_front: string;
-  image_hover: string;
-  sizes_available: string[];
-  stock_quantity: number;
-  is_active: boolean;
-}
-
-export interface OrderRequest {
-  customer_email: string;
-  customer_name: string;
-  shipping_address: string;
-  items: { product_id: string; size: string; quantity: number }[];
-}
-
-export interface OrderResponse {
-  id: string;
-  customer_email: string;
-  customer_name: string;
-  total_amount: number;
-  shipping_address: string;
-  payment_status: string;
-  order_status: string;
-  items: {
-    product_id: string;
-    name: string;
-    size: string;
-    unit_price: number;
-    quantity: number;
-    image: string;
-    color_name: string | null;
-  }[];
-  created_at: string;
-}
-
-export class StoreApiError extends Error {
-  constructor(
-    public status: number,
-    message: string
-  ) {
-    super(message);
-    this.name = "StoreApiError";
-  }
-}
-
-export const MAX_QUANTITY_PER_LINE = 20;
-
-export function cartKey(productId: string, size: string): string {
-  return `${productId}::${size}`;
+export interface StoreClient {
+  fetchCatalog(timeoutMs?: number): Promise<StoreItem[]>;
+  createOrder(payload: OrderCreateRequest): Promise<OrderDTO>;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -138,12 +65,13 @@ function labelOf(category: string, subcategory?: string | null): string {
   return subcategory || CATEGORY_LABELS[category.toLowerCase()] || category;
 }
 
-export function fromApiProduct(p: ApiProduct): StoreItem {
+export function fromApiProduct(p: ProductDTO): StoreItem {
+  const categoryLabel = labelOf(p.category, p.subcategory);
   return {
     id: p.id,
     name: p.name,
     group: groupOf(p.category),
-    categoryLabel: labelOf(p.category, p.subcategory),
+    categoryLabel,
     badge: p.badge,
     price: p.price,
     originalPrice: p.original_price != null && p.original_price > p.price ? p.original_price : null,
@@ -152,7 +80,9 @@ export function fromApiProduct(p: ApiProduct): StoreItem {
     image: p.image_front,
     colorHex: p.color_hex,
     colorName: p.color_name,
-    specs: [p.material, p.discipline].filter(Boolean),
+    specs: Array.from(
+      new Set([p.material, p.discipline].filter((s): s is string => Boolean(s) && s !== categoryLabel))
+    ),
     description: p.description || p.subtitle,
     sizes: p.sizes_available?.length ? p.sizes_available : ["One Size"],
     stock: p.stock_quantity,
@@ -174,71 +104,43 @@ export function fromMockProduct(p: StoreProduct): StoreItem {
     image: p.imageFront,
     colorHex: p.colorHex,
     colorName: p.colorName,
-    specs: [p.subcategory ?? ""].filter(Boolean),
+    specs: [],
     description: p.description,
     sizes: p.sizes.length ? p.sizes : ["One Size"],
     stock: null,
   };
 }
 
-/** Loads the live catalog. Throws when the backend is unreachable or returns nothing usable. */
-export async function fetchCatalog(timeoutMs = 5000): Promise<StoreItem[]> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}/store/products`, { signal: controller.signal, credentials: "same-origin" });
-    if (!res.ok) throw new StoreApiError(res.status, `Catalog request failed (${res.status})`);
-    const rows = (await res.json()) as ApiProduct[];
-    if (!Array.isArray(rows)) throw new StoreApiError(500, "Unexpected catalog response");
-    return rows.filter((r) => r.is_active).map(fromApiProduct);
-  } finally {
-    clearTimeout(timer);
-  }
+/** Creates a store API client using the shared `/api/v1` transport seam. */
+export function createStoreClient(config?: CreateApiRequestConfig): StoreClient {
+  const request = createApiRequest({ defaultTimeoutMs: 5000, ...config });
+
+  return {
+    async fetchCatalog(timeoutMs = 5000): Promise<StoreItem[]> {
+      const rows = await request<ProductDTO[]>("/store/products", { timeoutMs });
+      if (!Array.isArray(rows)) {
+        throw new ApiError(500, "Unexpected catalog response");
+      }
+      return rows.filter((r) => r.is_active).map(fromApiProduct);
+    },
+
+    async createOrder(payload: OrderCreateRequest): Promise<OrderDTO> {
+      return request<OrderDTO>("/store/orders", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+  };
 }
 
-/** Turns FastAPI error bodies (string or validation list) into one Vietnamese sentence. */
-function describeError(status: number, detail: unknown): string {
-  if (status === 409) return "Một số sản phẩm không còn đủ hàng. Hãy giảm số lượng hoặc chọn sản phẩm khác.";
-  if (typeof detail === "string") {
-    // 422 with a plain message = unknown product or size (see store.ts contract).
-    if (status === 422 || /not available/i.test(detail)) {
-      return "Có sản phẩm hoặc size không còn bán. Hãy kiểm tra lại giỏ hàng.";
-    }
-    if (status === 429) return "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.";
-    return status >= 500 ? "Máy chủ cửa hàng đang gặp sự cố. Vui lòng thử lại sau." : detail;
-  }
-  if (Array.isArray(detail)) {
-    const fields = detail
-      .map((d) => (Array.isArray(d?.loc) ? String(d.loc[d.loc.length - 1]) : ""))
-      .filter(Boolean);
-    if (fields.includes("customer_email")) return "Email chưa hợp lệ.";
-    if (fields.includes("customer_name")) return "Họ tên cần từ 2 đến 100 ký tự.";
-    if (fields.includes("shipping_address")) return "Địa chỉ giao hàng cần ít nhất 5 ký tự.";
-    return "Thông tin đơn hàng chưa hợp lệ.";
-  }
-  if (status >= 500) return "Máy chủ cửa hàng đang gặp sự cố. Vui lòng thử lại sau.";
-  return `Không tạo được đơn hàng (mã ${status}).`;
-}
-
-export async function createOrder(payload: OrderRequest): Promise<OrderResponse> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}/store/orders`, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch {
-    throw new StoreApiError(0, "Không kết nối được máy chủ cửa hàng. Kiểm tra mạng rồi thử lại.");
-  }
-  const body = await res.json().catch(() => null);
-  if (!res.ok) throw new StoreApiError(res.status, describeError(res.status, body?.detail));
-  return body as OrderResponse;
-}
+const defaultClient = createStoreClient();
+export const fetchCatalog = defaultClient.fetchCatalog;
+export const createOrder = defaultClient.createOrder;
 
 export function formatPrice(value: number): string {
-  return Number.isInteger(value) ? `$${value}` : `$${value.toFixed(2)}`;
+  if (!Number.isFinite(value)) return "$0";
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded) ? `$${rounded}` : `$${rounded.toFixed(2)}`;
 }
 
 /** next/image can only optimise hosts listed in next.config.mjs. */
@@ -247,25 +149,5 @@ export function canOptimizeImage(url: string): boolean {
     return new URL(url).hostname === "images.unsplash.com";
   } catch {
     return false;
-  }
-}
-
-/** Reads a persisted cart, dropping anything that is not a well-formed line. */
-export function parseStoredCart(raw: string | null): CartLine[] {
-  if (!raw) return [];
-  try {
-    const data: unknown = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    const lines: CartLine[] = [];
-    for (const d of data) {
-      if (!d || typeof d !== "object") continue;
-      const { productId, size, quantity } = d as Record<string, unknown>;
-      if (typeof productId !== "string" || typeof size !== "string" || typeof quantity !== "number") continue;
-      const q = Math.min(MAX_QUANTITY_PER_LINE, Math.max(1, Math.floor(quantity)));
-      lines.push({ key: cartKey(productId, size), productId, size, quantity: q });
-    }
-    return lines;
-  } catch {
-    return [];
   }
 }

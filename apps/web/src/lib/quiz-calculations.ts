@@ -1,9 +1,19 @@
-import { 
-  QuizResponses, 
-  PersonalizedPlanResult, 
-  PlannedWorkoutDay, 
-  MacroSplit 
+import {
+  AthleticArchetype,
+  EquipmentAccess,
+  MacroSplit,
+  PersonalizedPlanResult,
+  PlannedWorkoutDay,
+  QuizResponses,
 } from "@/types/quiz";
+
+export const KCAL_PER_KG_LOSS = 7700;
+export const KCAL_PER_KG_GAIN = 5500;
+
+export const MILESTONE_DAYS = [0, 7, 14, 28] as const;
+export type MilestoneDay = (typeof MILESTONE_DAYS)[number];
+
+export type TodayFastingProtocol = "14:10" | "16:8" | "18:6" | "20:4";
 
 export function calculateBMI(weightKg: number, heightCm: number): number {
   const heightM = heightCm / 100;
@@ -61,7 +71,295 @@ export function getBMICategory(bmi: number): { label: string; color: string; adv
   };
 }
 
-export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlanResult {
+export function calculateMacroSplit(
+  currentWeightKg: number,
+  dailyCalorieTarget: number,
+  isMale: boolean
+): MacroSplit {
+  const proteinPerKg = isMale ? 2.0 : 1.6;
+  const proteinG = Math.round(currentWeightKg * proteinPerKg);
+  const proteinKcal = proteinG * 4;
+
+  const fatKcal = Math.round(dailyCalorieTarget * 0.25);
+  const fatG = Math.round(fatKcal / 9);
+
+  const carbsKcal = Math.max(0, dailyCalorieTarget - proteinKcal - fatKcal);
+  const carbsG = Math.round(carbsKcal / 4);
+
+  return {
+    proteinG,
+    carbsG,
+    fatG,
+  };
+}
+
+export function buildWeeklyRoutine(
+  archetype: AthleticArchetype,
+  equipmentAccess: EquipmentAccess = "home"
+): PlannedWorkoutDay[] {
+  const isGym = equipmentAccess === "gym";
+
+  if (archetype === "female_pilates") {
+    return [
+      {
+        dayNumber: 1,
+        title: isGym ? "Reformer & cơ lõi trên thảm" : "Thảm: cơ lõi & bụng dưới",
+        durationMin: 35,
+        target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
+        intensity: "moderate",
+        exerciseCount: 6,
+      },
+      {
+        dayNumber: 2,
+        title: isGym ? "Dây kháng lực & Hip Thrust" : "Glute Bridge & tạo dáng hông",
+        durationMin: 40,
+        target: "Cơ mông lớn, Mông nhỡ & Cơ đùi sau",
+        intensity: "high",
+        exerciseCount: 7,
+      },
+      {
+        dayNumber: 3,
+        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
+        durationMin: 25,
+        target: "Giải phóng đốt sống lưng & giãn cơ toàn thân",
+        intensity: "low",
+        exerciseCount: 5,
+      },
+      {
+        dayNumber: 4,
+        title: isGym ? "Cơ lõi với máy cáp & săn chắc toàn thân" : "Pilates toàn thân & cân bằng tư thế",
+        durationMin: 35,
+        target: "Toàn thân & tư thế",
+        intensity: "moderate",
+        exerciseCount: 6,
+      },
+    ];
+  }
+
+  return [
+    {
+      dayNumber: 1,
+      title: isGym ? "Thân trên: ngực, vai & tay sau" : "Sức đẩy: chống đẩy nhiều góc & dây kháng lực",
+      durationMin: 45,
+      target: "Cơ ngực, Cơ delta & Cơ tay sau",
+      intensity: "high",
+      exerciseCount: 7,
+    },
+    {
+      dayNumber: 2,
+      title: isGym ? "Sức kéo: lưng xô & tay trước" : "Hít xà & kéo dây cho lưng xô",
+      durationMin: 45,
+      target: "Cơ lưng xô, Cơ trám & Cơ tay trước",
+      intensity: "high",
+      exerciseCount: 7,
+    },
+    {
+      dayNumber: 3,
+      title: "Vận động khớp & phục hồi",
+      durationMin: 30,
+      target: "Giãn khớp hông, vai & giải tỏa axit lactic",
+      intensity: "low",
+      exerciseCount: 5,
+    },
+    {
+      dayNumber: 4,
+      title: isGym ? "Thân dưới & cơ lõi: chân, đùi sau & bụng" : "Chân & sức mạnh cơ lõi",
+      durationMin: 50,
+      target: "Cơ tứ đầu, Đùi sau & Cơ bụng thẳng",
+      intensity: "high",
+      exerciseCount: 8,
+    },
+  ];
+}
+
+export function milestoneIndexForDay(day: number): 0 | 1 | 2 | 3 {
+  return day <= 3 ? 0 : day <= 10 ? 1 : day <= 20 ? 2 : 3;
+}
+
+export interface MilestoneWeightPoint {
+  day: MilestoneDay;
+  projectedChangeKg: number;
+  projectedWeightKg: number;
+  remainingKg: number;
+}
+
+export interface MilestoneWeightProjection {
+  hasWeight: boolean;
+  hasProjection: boolean;
+  baseWeightKg: number;
+  goalDeltaKg: number;
+  milestones: MilestoneWeightPoint[];
+  byDay: Record<MilestoneDay, MilestoneWeightPoint>;
+}
+
+/**
+ * Projects weights at Days 0, 7, 14, 28 from the plan's calorie gap
+ * (~7700 kcal/kg for loss, ~5500 kcal/kg for gain), clamped at target weight.
+ */
+export function projectMilestoneWeights(input: {
+  currentWeightKg?: number | null;
+  targetWeightKg?: number | null;
+  dailyCalorieGapKcal?: number | null;
+}): MilestoneWeightProjection {
+  const hasWeight = typeof input.currentWeightKg === "number" && input.currentWeightKg > 0;
+  const baseWeightKg = hasWeight ? (input.currentWeightKg as number) : 0;
+  const goalDeltaKg =
+    hasWeight && typeof input.targetWeightKg === "number" && input.targetWeightKg > 0
+      ? input.targetWeightKg - baseWeightKg
+      : 0;
+  const kcalPerKg = goalDeltaKg < 0 ? KCAL_PER_KG_LOSS : KCAL_PER_KG_GAIN;
+  const gap = typeof input.dailyCalorieGapKcal === "number" ? Math.abs(input.dailyCalorieGapKcal) : 0;
+  const hasProjection = goalDeltaKg !== 0 && gap > 0;
+
+  const milestones: MilestoneWeightPoint[] = MILESTONE_DAYS.map((day) => {
+    const projectedChangeKg = hasProjection
+      ? Math.min(Math.abs(goalDeltaKg), (gap * day) / kcalPerKg)
+      : 0;
+    const projectedWeightKg = baseWeightKg + Math.sign(goalDeltaKg) * projectedChangeKg;
+    const remainingKg = Math.abs(goalDeltaKg) - projectedChangeKg;
+    return { day, projectedChangeKg, projectedWeightKg, remainingKg };
+  });
+
+  const byDay: Record<MilestoneDay, MilestoneWeightPoint> = {
+    0: milestones[0]!,
+    7: milestones[1]!,
+    14: milestones[2]!,
+    28: milestones[3]!,
+  };
+
+  return {
+    hasWeight,
+    hasProjection,
+    baseWeightKg,
+    goalDeltaKg,
+    milestones,
+    byDay,
+  };
+}
+
+export type CalorieGapDirection = "deficit" | "surplus" | "maintenance";
+
+export interface CalorieGapSummary {
+  signedGapKcal: number;
+  absGapKcal: number;
+  direction: CalorieGapDirection;
+  todayGoalLine: string;
+  predictionLine: string;
+}
+
+export function formatCalorieGap(tdee: number, dailyCalorieTarget: number): CalorieGapSummary {
+  const signedGapKcal = Math.round(tdee - dailyCalorieTarget);
+  const absGapKcal = Math.abs(signedGapKcal);
+  const direction: CalorieGapDirection =
+    absGapKcal < 10 ? "maintenance" : signedGapKcal > 0 ? "deficit" : "surplus";
+
+  const todayGoalLine =
+    direction === "maintenance"
+      ? "Ăn bằng mức tiêu hao để giữ cân."
+      : direction === "deficit"
+        ? `Ăn ít hơn mức tiêu hao khoảng ${absGapKcal.toLocaleString("vi-VN")} kcal để giảm cân từ từ.`
+        : `Ăn nhiều hơn mức tiêu hao khoảng ${absGapKcal.toLocaleString("vi-VN")} kcal để tăng cân từ từ.`;
+
+  const predictionLine =
+    direction === "maintenance"
+      ? `${dailyCalorieTarget} kcal/ngày (giữ mức tiêu hao)`
+      : `${dailyCalorieTarget} kcal/ngày (${direction === "deficit" ? "ít" : "nhiều"} hơn mức tiêu hao khoảng ${absGapKcal} kcal)`;
+
+  return {
+    signedGapKcal,
+    absGapKcal,
+    direction,
+    todayGoalLine,
+    predictionLine,
+  };
+}
+
+/** Built-in sample plan shown on /today when neither server nor localStorage has a quiz plan. */
+export const DEFAULT_SAMPLE_PLAN: PersonalizedPlanResult = {
+  archetype: "female_pilates",
+  bmi: 22.1,
+  bmiCategory: "Cân đối lý tưởng",
+  bmr: 1350,
+  tdee: 1850,
+  dailyCalorieTarget: 1450,
+  calorieDeficitDaily: 400,
+  macroSplit: { proteinG: 96, carbsG: 160, fatG: 40 },
+  estimatedWeeks: 6,
+  estimatedTargetDate: "15 Tháng 12, 2026",
+  recommendedWaterMl: 2100,
+  weeklyWorkoutsCount: 4,
+  focusHighlights: ["Đốt mỡ phẳng bụng", "Nâng và săn chắc vòng 3"],
+  safetyNotes: ["Đã bảo vệ cột sống và khớp gối"],
+  excludedExercises: [],
+  weeklyRoutine: buildWeeklyRoutine("female_pilates", "home"),
+};
+
+export interface TodayPlanPreset {
+  workoutTitle: string;
+  workoutSubtitle: string;
+  workoutHabitTitle: string;
+  workoutHabitDetail: string;
+  waterGoalLitres: string;
+  calorieGoal: CalorieGapSummary;
+  fastingHabitTitle: string;
+  describeFasting: (now: Date | null) => string;
+}
+
+function parseFastingWindow(protocol: TodayFastingProtocol): { fastHours: number; eatStartHour: number; eatEndHour: number } {
+  const [fastRaw, eatRaw] = protocol.split(":").map(Number);
+  const fastHours = Number.isFinite(fastRaw) && fastRaw > 0 && fastRaw < 24 ? fastRaw : 16;
+  const eatHours = Number.isFinite(eatRaw) && eatRaw > 0 && eatRaw < 24 ? eatRaw : 24 - fastHours;
+  const eatStartHour = 12;
+  const eatEndHour = eatStartHour + eatHours;
+  return { fastHours, eatStartHour, eatEndHour };
+}
+
+export function todayPresetForPlan(
+  plan: PersonalizedPlanResult,
+  fastingProtocol: TodayFastingProtocol = "16:8"
+): TodayPlanPreset {
+  const isMale = plan.archetype === "male_strength";
+  const { fastHours, eatStartHour, eatEndHour } = parseFastingWindow(fastingProtocol);
+  const padHour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+  const eatingWindowLabel = `khung ăn ${padHour(eatStartHour)}–${padHour(eatEndHour)}`;
+  const fastingHabitTitle =
+    fastingProtocol === "16:8"
+      ? "Không ăn vặt sau 20:00 tối"
+      : `Không ăn vặt sau ${padHour(eatEndHour)}`;
+
+  const describeFasting = (now: Date | null): string => {
+    if (!now) return `Nhịn ăn ${fastingProtocol} · ${eatingWindowLabel}`;
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const fmt = (m: number) => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+    const startMin = eatStartHour * 60;
+    const endMin = eatEndHour * 60;
+    if (minutes >= startMin && minutes < endMin) {
+      return `Nhịn ăn ${fastingProtocol} · trong giờ ăn, còn ${fmt(endMin - minutes)} · ${eatingWindowLabel}`;
+    }
+    const elapsed = minutes >= endMin ? minutes - endMin : minutes + (24 * 60 - endMin);
+    return `Nhịn ăn ${fastingProtocol} · đã nhịn ${fmt(elapsed)} / ${fastHours} giờ · ${eatingWindowLabel}`;
+  };
+
+  return {
+    workoutTitle: isMale ? "Sức mạnh thân trên & cơ lõi" : "Pilates siết cơ bụng & thẳng vai",
+    workoutSubtitle: "18 phút · 4 bài tập. Bật webcam để AI đếm rep và nhắc khi bạn sai form.",
+    workoutHabitTitle: isMale
+      ? "Hoàn thành 18 phút bài tập sức mạnh"
+      : "Hoàn thành 18 phút bài tập Pilates bụng",
+    workoutHabitDetail: "18 phút",
+    waterGoalLitres: (plan.recommendedWaterMl / 1000).toLocaleString("vi-VN", {
+      maximumFractionDigits: 1,
+    }),
+    calorieGoal: formatCalorieGap(plan.tdee, plan.dailyCalorieTarget),
+    fastingHabitTitle,
+    describeFasting,
+  };
+}
+
+export function calculatePersonalizedPlan(
+  data: QuizResponses,
+  now: Date = new Date()
+): PersonalizedPlanResult {
   // 1. Calculate BMI
   const bmi = calculateBMI(data.currentWeightKg, data.heightCm);
   const bmiCategoryObj = getBMICategory(bmi);
@@ -102,14 +400,14 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
     // Goal: Fat loss
     calorieDeficitDaily = isMale ? 500 : 400;
     dailyCalorieTarget = Math.max(minCalorieFloor, tdee - calorieDeficitDaily);
-    const totalDeficitNeeded = weightDiff * 7700; // ~7700 kcal per kg of fat
+    const totalDeficitNeeded = weightDiff * KCAL_PER_KG_LOSS;
     const weeklyDeficit = calorieDeficitDaily * 7;
     estimatedWeeks = Math.max(3, Math.round(totalDeficitNeeded / weeklyDeficit));
   } else if (weightDiff < 0) {
     // Goal: Hypertrophy / Gain mass
     calorieDeficitDaily = -350;
     dailyCalorieTarget = tdee + 350;
-    estimatedWeeks = Math.max(4, Math.round((Math.abs(weightDiff) * 5500) / (350 * 7)));
+    estimatedWeeks = Math.max(4, Math.round((Math.abs(weightDiff) * KCAL_PER_KG_GAIN) / (350 * 7)));
   } else {
     // Maintenance & Toning
     dailyCalorieTarget = tdee;
@@ -117,7 +415,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   }
 
   // 5. Target Completion Date
-  const targetDate = new Date();
+  const targetDate = new Date(now.getTime());
   targetDate.setDate(targetDate.getDate() + estimatedWeeks * 7);
   const estimatedTargetDate = targetDate.toLocaleDateString("vi-VN", {
     day: "numeric",
@@ -126,21 +424,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   });
 
   // 6. Macro Split Breakdown
-  const proteinPerKg = isMale ? 2.0 : 1.6;
-  const proteinG = Math.round(data.currentWeightKg * proteinPerKg);
-  const proteinKcal = proteinG * 4;
-
-  const fatKcal = Math.round(dailyCalorieTarget * 0.25);
-  const fatG = Math.round(fatKcal / 9);
-
-  const carbsKcal = Math.max(0, dailyCalorieTarget - proteinKcal - fatKcal);
-  const carbsG = Math.round(carbsKcal / 4);
-
-  const macroSplit: MacroSplit = {
-    proteinG,
-    carbsG,
-    fatG,
-  };
+  const macroSplit = calculateMacroSplit(data.currentWeightKg, dailyCalorieTarget, isMale);
 
   // 7. Recommended Water Intake (ml): ~35ml per kg of weight
   const recommendedWaterMl = Math.round((data.currentWeightKg * 35) / 100) * 100;
@@ -204,81 +488,7 @@ export function calculatePersonalizedPlan(data: QuizResponses): PersonalizedPlan
   }
 
   // 10. Generate 4-day workout routine tailored to Archetype & Equipment
-  const isGym = data.equipmentAccess === "gym";
-  let weeklyRoutine: PlannedWorkoutDay[] = [];
-
-  if (data.archetype === "female_pilates") {
-    weeklyRoutine = [
-      {
-        dayNumber: 1,
-        title: isGym ? "Reformer & cơ lõi trên thảm" : "Thảm: cơ lõi & bụng dưới",
-        durationMin: 35,
-        target: "Cơ lõi, Cơ ngang bụng & Sàn chậu",
-        intensity: "moderate",
-        exerciseCount: 6,
-      },
-      {
-        dayNumber: 2,
-        title: isGym ? "Dây kháng lực & Hip Thrust" : "Glute Bridge & tạo dáng hông",
-        durationMin: 40,
-        target: "Cơ mông lớn, Mông nhỡ & Cơ đùi sau",
-        intensity: "high",
-        exerciseCount: 7,
-      },
-      {
-        dayNumber: 3,
-        title: "Phục hồi chủ động: giãn cột sống & mở khớp",
-        durationMin: 25,
-        target: "Giải phóng đốt sống lưng & giãn cơ toàn thân",
-        intensity: "low",
-        exerciseCount: 5,
-      },
-      {
-        dayNumber: 4,
-        title: isGym ? "Cơ lõi với máy cáp & săn chắc toàn thân" : "Pilates toàn thân & cân bằng tư thế",
-        durationMin: 35,
-        target: "Toàn thân & tư thế",
-        intensity: "moderate",
-        exerciseCount: 6,
-      },
-    ];
-  } else {
-    // Male Strength Archetype
-    weeklyRoutine = [
-      {
-        dayNumber: 1,
-        title: isGym ? "Thân trên: ngực, vai & tay sau" : "Sức đẩy: chống đẩy nhiều góc & dây kháng lực",
-        durationMin: 45,
-        target: "Cơ ngực, Cơ delta & Cơ tay sau",
-        intensity: "high",
-        exerciseCount: 7,
-      },
-      {
-        dayNumber: 2,
-        title: isGym ? "Sức kéo: lưng xô & tay trước" : "Hít xà & kéo dây cho lưng xô",
-        durationMin: 45,
-        target: "Cơ lưng xô, Cơ trám & Cơ tay trước",
-        intensity: "high",
-        exerciseCount: 7,
-      },
-      {
-        dayNumber: 3,
-        title: "Vận động khớp & phục hồi",
-        durationMin: 30,
-        target: "Giãn khớp hông, vai & giải tỏa axit lactic",
-        intensity: "low",
-        exerciseCount: 5,
-      },
-      {
-        dayNumber: 4,
-        title: isGym ? "Thân dưới & cơ lõi: chân, đùi sau & bụng" : "Chân & sức mạnh cơ lõi",
-        durationMin: 50,
-        target: "Cơ tứ đầu, Đùi sau & Cơ bụng thẳng",
-        intensity: "high",
-        exerciseCount: 8,
-      },
-    ];
-  }
+  const weeklyRoutine = buildWeeklyRoutine(data.archetype || "female_pilates", data.equipmentAccess);
 
   return {
     archetype: data.archetype || "female_pilates",

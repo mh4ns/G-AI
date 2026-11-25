@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Compass, Flame, UserCheck, ArrowRight, Target } from "lucide-react";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
+import {
+  MILESTONE_DAYS,
+  milestoneIndexForDay,
+  projectMilestoneWeights,
+} from "@/lib/quiz-calculations";
 
 interface TelemetryHudProps {
   progress: number; // 0 to 1
@@ -73,25 +78,16 @@ export const TelemetryHud: React.FC<TelemetryHudProps> = ({
 }) => {
 
   // Determine active milestone index (0: Day 0, 1: Day 7, 2: Day 14, 3: Day 28)
-  const milestoneIdx =
-    currentDay <= 3 ? 0 : currentDay <= 10 ? 1 : currentDay <= 20 ? 2 : 3;
-
-  // Weight follows the plan's own maths (quiz-calculations.ts): the daily
-  // calorie gap over ~7700 kcal per kg lost or ~5500 per kg gained, never past
-  // the target. Waist and posture are not measured anywhere yet, so they get no
-  // predicted numbers.
-  const MILESTONE_DAYS = [0, 7, 14, 28];
+  const milestoneIdx = milestoneIndexForDay(currentDay);
   const milestoneDay = MILESTONE_DAYS[milestoneIdx];
-  const hasWeight = !!userWeight && userWeight > 0;
-  const baseWeight = hasWeight ? (userWeight as number) : 0;
-  const goalDelta = hasWeight && targetWeight && targetWeight > 0 ? targetWeight - baseWeight : 0;
-  const kcalPerKg = goalDelta < 0 ? 7700 : 5500;
-  const hasProjection = goalDelta !== 0 && !!dailyCalorieGapKcal && dailyCalorieGapKcal > 0;
-  const projectedChange = hasProjection
-    ? Math.min(Math.abs(goalDelta), ((dailyCalorieGapKcal as number) * milestoneDay) / kcalPerKg)
-    : 0;
-  const projectedWeight = baseWeight + Math.sign(goalDelta) * projectedChange;
-  const remainingKg = Math.abs(goalDelta) - projectedChange;
+  const projection = projectMilestoneWeights({
+    currentWeightKg: userWeight,
+    targetWeightKg: targetWeight,
+    dailyCalorieGapKcal,
+  });
+  const { hasWeight, hasProjection, baseWeightKg: baseWeight, goalDeltaKg: goalDelta } = projection;
+  const { projectedChangeKg: projectedChange, projectedWeightKg: projectedWeight, remainingKg } =
+    projection.byDay[milestoneDay];
 
   const animWeight = useAnimatedNumber(projectedWeight, 1);
   const animWeightDelta = useAnimatedNumber(projectedChange, 1);

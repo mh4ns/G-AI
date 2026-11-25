@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dumbbell, SlidersHorizontal, X, Loader2, Sparkles, Utensils } from "lucide-react";
 import { SEMANTIC_COLORS } from "@/lib/design-tokens";
 
@@ -29,6 +29,17 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
     currentPlan.archetype
   );
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !saving) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, saving]);
 
   const handleOpen = () => {
     setWorkoutType(currentPlan.workoutType);
@@ -108,11 +119,23 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
 
       {/* 2. Plan Customization Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-7 shadow-2xl text-stone-100">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !saving) setIsOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="plan-summary-modal-title"
+            className="relative w-full max-w-lg rounded-3xl bg-[#141210] border border-stone-800 p-6 sm:p-7 shadow-2xl text-stone-100"
+          >
             {/* Close Button */}
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
+              aria-label="Đóng cửa sổ đổi kế hoạch"
               className="absolute top-5 right-5 p-2 rounded-full bg-stone-900 border border-stone-800 text-stone-400 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
@@ -124,7 +147,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Tùy chỉnh kế hoạch</span>
               </div>
-              <h3 className="text-xl font-bold tracking-tight text-white">
+              <h3 id="plan-summary-modal-title" className="text-xl font-bold tracking-tight text-white">
                 Đổi Kế Hoạch Sinh Dự Đoán
               </h3>
               <p className="text-xs text-stone-400 leading-relaxed">
@@ -187,6 +210,7 @@ export const PlanSummaryCard: React.FC<PlanSummaryCardProps> = ({
                     <button
                       key={val}
                       type="button"
+                      aria-pressed={weeklySets === val}
                       onClick={() => setWeeklySets(val)}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         weeklySets === val

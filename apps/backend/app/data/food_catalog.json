@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Phở bò tái",
+    "default_serving_g": 450,
+    "calories_per_100g": 115,
+    "protein_g_100g": 7.8,
+    "carbs_g_100g": 13.5,
+    "fat_g_100g": 3.0
+  },
+  {
+    "name": "Bún bò Huế",
+    "default_serving_g": 480,
+    "calories_per_100g": 122,
+    "protein_g_100g": 7.5,
+    "carbs_g_100g": 13.2,
+    "fat_g_100g": 4.2
+  },
+  {
+    "name": "Bún chả Hà Nội",
+    "default_serving_g": 400,
+    "calories_per_100g": 148,
+    "protein_g_100g": 9.2,
+    "carbs_g_100g": 15.0,
+    "fat_g_100g": 5.6
+  },
+  {
+    "name": "Cơm tấm sườn nướng",
+    "default_serving_g": 380,
+    "calories_per_100g": 182,
+    "protein_g_100g": 10.4,
+    "carbs_g_100g": 21.5,
+    "fat_g_100g": 6.0
+  },
+  {
+    "name": "Bánh mì trứng ốp la",
+    "default_serving_g": 180,
+    "calories_per_100g": 245,
+    "protein_g_100g": 10.5,
+    "carbs_g_100g": 29.0,
+    "fat_g_100g": 9.4
+  },
+  {
+    "name": "Bánh mì thịt nguội",
+    "default_serving_g": 200,
+    "calories_per_100g": 258,
+    "protein_g_100g": 11.2,
+    "carbs_g_100g": 30.5,
+    "fat_g_100g": 10.0
+  },
+  {
+    "name": "Gỏi cuốn tôm thịt",
+    "default_serving_g": 160,
+    "calories_per_100g": 118,
+    "protein_g_100g": 8.4,
+    "carbs_g_100g": 15.8,
+    "fat_g_100g": 2.2
+  },
+  {
+    "name": "Cháo gà",
+    "default_serving_g": 350,
+    "calories_per_100g": 78,
+    "protein_g_100g": 5.2,
+    "carbs_g_100g": 10.4,
+    "fat_g_100g": 1.6
+  },
+  {
+    "name": "Cơm trắng nấu chín",
+    "default_serving_g": 150,
+    "calories_per_100g": 130,
+    "protein_g_100g": 2.7,
+    "carbs_g_100g": 28.2,
+    "fat_g_100g": 0.3
+  },
+  {
+    "name": "Cơm gạo lứt",
+    "default_serving_g": 150,
+    "calories_per_100g": 112,
+    "protein_g_100g": 2.6,
+    "carbs_g_100g": 23.5,
+    "fat_g_100g": 0.9
+  },
+  {
+    "name": "Khoai lang luộc",
+    "default_serving_g": 150,
+    "calories_per_100g": 86,
+    "protein_g_100g": 1.6,
+    "carbs_g_100g": 20.1,
+    "fat_g_100g": 0.1
+  },
+  {
+    "name": "Yến mạch cán dẹt",
+    "default_serving_g": 50,
+    "calories_per_100g": 379,
+    "protein_g_100g": 13.2,
+    "carbs_g_100g": 67.7,
+    "fat_g_100g": 6.5
+  },
+  {
+    "name": "Bánh mì nguyên cám",
+    "default_serving_g": 70,
+    "calories_per_100g": 247,
+    "protein_g_100g": 12.5,
+    "carbs_g_100g": 41.3,
+    "fat_g_100g": 3.4
+  },
+  {
+    "name": "Ức gà áp chảo (không da)",
+    "default_serving_g": 150,
+    "calories_per_100g": 165,
+    "protein_g_100g": 31.0,
+    "carbs_g_100g": 0.0,
+    "fat_g_100g": 3.6
+  },
+  {
+    "name": "Cá hồi áp chảo",
+    "default_serving_g": 150,
+    "calories_per_100g": 208,
+    "protein_g_100g": 20.4,
+    "carbs_g_100g": 0.0,
+    "fat_g_100g": 13.4
+  },
+  {
+    "name": "Thịt bò thăn áp chảo",
+    "default_serving_g": 150,
+    "calories_per_100g": 185,
+    "protein_g_100g": 26.8,
+    "carbs_g_100g": 0.0,
+    "fat_g_100g": 8.2
+  },
+  {
+    "name": "Tôm hấp",
+    "default_serving_g": 120,
+    "calories_per_100g": 99,
+    "protein_g_100g": 24.0,
+    "carbs_g_100g": 0.2,
+    "fat_g_100g": 0.3
+  },
+  {
+    "name": "Trứng gà luộc",
+    "default_serving_g": 100,
+    "calories_per_100g": 155,
+    "protein_g_100g": 12.6,
+    "carbs_g_100g": 1.1,
+    "fat_g_100g": 10.6
+  },
+  {
+    "name": "Đậu hũ trắng luộc",
+    "default_serving_g": 150,
+    "calories_per_100g": 76,
+    "protein_g_100g": 8.1,
+    "carbs_g_100g": 1.9,
+    "fat_g_100g": 4.8
+  },
+  {
+    "name": "Sữa chua Hy Lạp không đường",
+    "default_serving_g": 150,
+    "calories_per_100g": 59,
+    "protein_g_100g": 10.2,
+    "carbs_g_100g": 3.6,
+    "fat_g_100g": 0.4
+  },
+  {
+    "name": "Sữa tươi không đường",
+    "default_serving_g": 220,
+    "calories_per_100g": 61,
+    "protein_g_100g": 3.2,
+    "carbs_g_100g": 4.8,
+    "fat_g_100g": 3.3
+  },
+  {
+    "name": "Sữa đậu nành không đường",
+    "default_serving_g": 250,
+    "calories_per_100g": 33,
+    "protein_g_100g": 2.9,
+    "carbs_g_100g": 1.7,
+    "fat_g_100g": 1.6
+  },
+  {
+    "name": "Whey Protein Isolate",
+    "default_serving_g": 30,
+    "calories_per_100g": 370,
+    "protein_g_100g": 85.0,
+    "carbs_g_100g": 3.0,
+    "fat_g_100g": 1.5
+  },
+  {
+    "name": "Bông cải xanh luộc",
+    "default_serving_g": 150,
+    "calories_per_100g": 35,
+    "protein_g_100g": 2.4,
+    "carbs_g_100g": 7.2,
+    "fat_g_100g": 0.4
+  },
+  {
+    "name": "Salad rau trộn dầu giấm",
+    "default_serving_g": 180,
+    "calories_per_100g": 62,
+    "protein_g_100g": 1.5,
+    "carbs_g_100g": 5.2,
+    "fat_g_100g": 4.0
+  },
+  {
+    "name": "Chuối chín",
+    "default_serving_g": 120,
+    "calories_per_100g": 89,
+    "protein_g_100g": 1.1,
+    "carbs_g_100g": 22.8,
+    "fat_g_100g": 0.3
+  },
+  {
+    "name": "Táo tươi",
+    "default_serving_g": 150,
+    "calories_per_100g": 52,
+    "protein_g_100g": 0.3,
+    "carbs_g_100g": 13.8,
+    "fat_g_100g": 0.2
+  },
+  {
+    "name": "Quả bơ",
+    "default_serving_g": 100,
+    "calories_per_100g": 160,
+    "protein_g_100g": 2.0,
+    "carbs_g_100g": 8.5,
+    "fat_g_100g": 14.7
+  },
+  {
+    "name": "Hạnh nhân rang (không muối)",
+    "default_serving_g": 28,
+    "calories_per_100g": 579,
+    "protein_g_100g": 21.2,
+    "carbs_g_100g": 21.6,
+    "fat_g_100g": 49.9
+  },
+  {
+    "name": "Cà phê sữa đá",
+    "default_serving_g": 220,
+    "calories_per_100g": 68,
+    "protein_g_100g": 1.6,
+    "carbs_g_100g": 10.5,
+    "fat_g_100g": 2.2
+  }
+]

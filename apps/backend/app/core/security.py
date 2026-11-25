@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import os
@@ -41,6 +42,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return hmac.compare_digest(computed, bytes.fromhex(key_hex))
     except (ValueError, TypeError):
         return False
+
+
+async def hash_password_async(password: str) -> str:
+    return await asyncio.to_thread(hash_password, password)
+
+
+async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
+    return await asyncio.to_thread(verify_password, plain_password, hashed_password)
 
 
 def create_access_token(subject: str | int, token_version: int, expires_minutes: Optional[int] = None) -> str:

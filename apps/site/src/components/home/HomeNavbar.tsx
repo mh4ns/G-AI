@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Lightbulb, ShoppingBag } from "lucide-react";
 import { BrandLogo, appUrl } from "@g-ai/ui";
+import { FOCUS_RING } from "@/components/home/styles";
 
 interface HomeNavbarProps {
   /** Picks the black or white logo artwork; colours follow `data-theme`. */
@@ -12,9 +13,6 @@ interface HomeNavbarProps {
   cartCount?: number;
   onOpenCart?: () => void;
 }
-
-const FOCUS_RING =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 // 44px: the minimum tap target.
 const ICON_BUTTON = `relative flex h-11 w-11 items-center justify-center rounded-full text-ink-muted transition-colors duration-200 hover:bg-sunken hover:text-ink ${FOCUS_RING}`;
@@ -39,9 +37,9 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
         </Link>
 
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-8 md:flex">
-          <Link href={appUrl("/prediction")} className={NAV_LINK}>
+          <a href={appUrl("/prediction")} className={NAV_LINK}>
             Dự đoán vóc dáng
-          </Link>
+          </a>
           <Link href="/store" className={NAV_LINK}>
             Dụng cụ tập
           </Link>
@@ -81,17 +79,17 @@ export const HomeNavbar: React.FC<HomeNavbarProps> = ({
             </button>
           )}
 
-          <Link href={appUrl("/login")} className={`mx-2 hidden sm:inline ${NAV_LINK}`}>
+          <a href={appUrl("/login")} className={`mx-2 hidden sm:inline ${NAV_LINK}`}>
             Đăng nhập
-          </Link>
+          </a>
 
           {/* Ink, not brand: the hero button is the one brand-coloured action. */}
-          <Link
+          <a
             href={appUrl("/quiz")}
             className={`ml-1 inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-semibold text-page transition-[opacity,transform] duration-200 hover:opacity-85 active:scale-[0.98] ${FOCUS_RING}`}
           >
             Bắt đầu khảo sát
-          </Link>
+          </a>
         </div>
       </div>
     </header>

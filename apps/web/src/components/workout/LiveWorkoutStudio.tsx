@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Camera,
   CameraOff,
@@ -22,6 +22,21 @@ import { useWorkoutSession } from "./useWorkoutSession";
 import { type WorkoutSummaryData } from "./workout-session-engine";
 
 export type { WorkoutSummaryData };
+
+export function createSaveOnceGuard() {
+  let saved = false;
+  return {
+    trySave<T>(summary: T | null, onSave: (summary: T) => void): boolean {
+      if (!summary || saved) return false;
+      saved = true;
+      onSave(summary);
+      return true;
+    },
+    reset() {
+      saved = false;
+    },
+  };
+}
 
 interface LiveWorkoutStudioProps {
   isOpen: boolean;
@@ -69,11 +84,17 @@ export const LiveWorkoutStudio: React.FC<LiveWorkoutStudioProps> = ({
   } = useWorkoutSession({
     isOpen,
     archetype,
-    onFinishWorkout,
   });
 
+  const saveGuardRef = useRef(createSaveOnceGuard());
+  useEffect(() => {
+    if (!isOpen || !summary) {
+      saveGuardRef.current.reset();
+    }
+  }, [isOpen, summary]);
+
   const handleFinishAndSave = () => {
-    if (summary) onFinishWorkout(summary);
+    saveGuardRef.current.trySave(summary, onFinishWorkout);
     onClose();
   };
 

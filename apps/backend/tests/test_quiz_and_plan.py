@@ -76,3 +76,47 @@ async def test_target_weight_below_healthy_bmi_is_rejected(client):
     assert (await client.post("/api/v1/quiz/submit", json=low)).status_code == 422
     at_floor = {**QUIZ, "target_weight_kg": 48.6}
     assert (await client.post("/api/v1/quiz/submit", json=at_floor)).status_code == 201
+
+
+async def test_quiz_archetype_gender_consistency_and_vectors(client):
+    # Contradictory archetype + gender combinations are rejected.
+    bad_male = {**QUIZ, "archetype": "male_strength", "gender": "female"}
+    assert (await client.post("/api/v1/quiz/submit", json=bad_male)).status_code == 422
+
+    bad_female = {**QUIZ, "archetype": "female_pilates", "gender": "male"}
+    assert (await client.post("/api/v1/quiz/submit", json=bad_female)).status_code == 422
+
+    # Omitting gender aligns automatically with archetype.
+    omitted_gender = {k: v for k, v in QUIZ.items() if k != "gender"}
+    omitted_gender["archetype"] = "male_strength"
+    res = await client.post("/api/v1/quiz/submit", json=omitted_gender)
+    assert res.status_code == 201, res.text
+    assert res.json()["gender"] == "male"
+    assert res.json()["plan"]["focus_routine"] == "Calisthenics & Strength"
+
+    # archetype=None works with both female and male.
+    for gender, expected_routine in [("female", "Pilates Core & Posture"), ("male", "Calisthenics & Strength")]:
+        no_arch = {**QUIZ, "archetype": None, "gender": gender}
+        r = await client.post("/api/v1/quiz/submit", json=no_arch)
+        assert r.status_code == 201, r.text
+        assert r.json()["plan"]["focus_routine"] == expected_routine
+
+    # All 5 shared plan vectors pass end-to-end through POST /api/v1/quiz/submit.
+    for idx, vector in enumerate(VECTORS):
+        i, e = vector["input"], vector["expected"]
+        payload = {
+            "session_id": f"sess-vec-{idx}-1234",
+            "archetype": i["archetype"],
+            "gender": i["gender"],
+            "age": i["age"],
+            "height_cm": i["heightCm"],
+            "current_weight_kg": i["currentWeightKg"],
+            "target_weight_kg": i["targetWeightKg"],
+            "activity_level": i["activityLevel"],
+            "primary_goal": "lose_weight",
+            "focus_areas": ["core"],
+            "obstacles": ["lack_of_time"],
+        }
+        vr = await client.post("/api/v1/quiz/submit", json=payload)
+        assert vr.status_code == 201, vr.text
+        assert vr.json()["plan"]["daily_calorie_target"] == e["dailyCalorieTarget"]

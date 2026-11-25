@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert";
-import { buildPromptFor, providerModelLabel, resolveImageProvider } from "../image-providers";
-import { calculateMilestoneDeltas } from "../prediction-jobs";
+import {
+  assessPhotoQualityAndGender,
+  buildPromptFor,
+  callGeminiImageToImage,
+  providerModelLabel,
+  resolveImageProvider,
+} from "../image-providers";
+import { GenerationError, calculateMilestoneDeltas } from "../prediction-jobs";
 
 const KEYS = [
   "HF_TOKEN",
@@ -220,5 +226,263 @@ test("Hugging Face image-to-image sends the photo and returns a data URL", async
   } finally {
     delete process.env.HF_ENDPOINT_URL;
     server.close();
+  }
+});
+
+test("Cloudflare prompt respects weight-gain goalDirection without fat-loss wording", () => {
+  const cf = {
+    name: "cloudflare" as const,
+    accountId: "a".repeat(32),
+    apiToken: "cf-token",
+    imageModel: "@cf/runwayml/stable-diffusion-v1-5-img2img",
+  };
+  const gainSpec = calculateMilestoneDeltas(60, 66, true)[28];
+  const prompt = buildPromptFor(cf, gainSpec).toLowerCase();
+  assert.ok(!prompt.includes("slimmer"), "gain prompt must not say slimmer");
+  assert.ok(prompt.includes("fuller"), "gain prompt should ask for fuller muscle tone");
+});
+
+async function withMockGemini(
+  handler: (path: string, body: Record<string, unknown>) => { status: number; json: unknown },
+  fn: () => Promise<void>
+) {
+  const server = http.createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => {
+      assert.strictEqual(req.headers["x-goog-api-key"], "gem-test-key");
+      const parsed = JSON.parse(Buffer.concat(chunks).toString() || "{}") as Record<string, unknown>;
+      const out = handler(req.url || "", parsed);
+      res.writeHead(out.status, { "content-type": "application/json" });
+      res.end(JSON.stringify(out.json));
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const { port } = server.address() as AddressInfo;
+  process.env.GEMINI_API_BASE_URL = `http://127.0.0.1:${port}/v1beta`;
+  try {
+    await fn();
+  } finally {
+    delete process.env.GEMINI_API_BASE_URL;
+    server.close();
+  }
+}
+
+test("assessPhotoQualityAndGender rejects safetyOk=false and fails closed on upstream errors", async () => {
+  await assert.rejects(
+    assessPhotoQualityAndGender("your_gemini_api_key_here", "gemini-3-flash-preview", PHOTO, "image/jpeg", "female_pilates"),
+    (err: unknown) => err instanceof GenerationError && err.code === "CONFIG"
+  );
+
+  await withMockGemini(
+    () => ({
+      status: 200,
+      json: {
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    onePerson: true,
+                    isNearFullBody: true,
+                    goodLighting: true,
+                    detectedGender: "female",
+                    safetyOk: false,
+                  }),
+                },
+              ],
+            },
+          },
+        ],
+      },
+    }),
+    async () => {
+      const res = await assessPhotoQualityAndGender(
+        "gem-test-key",
+        "gemini-3-flash-preview",
+        PHOTO,
+        "image/jpeg",
+        "female_pilates"
+      );
+      assert.strictEqual(res.isValid, false);
+      assert.ok(res.errorMessage && res.errorMessage.includes("an toàn"));
+    }
+  );
+
+  await withMockGemini(
+    () => ({ status: 500, json: { error: { message: "upstream boom" } } }),
+    async () => {
+      await assert.rejects(
+        assessPhotoQualityAndGender("gem-test-key", "gemini-3-flash-preview", PHOTO, "image/jpeg", "female_pilates"),
+        (err: unknown) => err instanceof GenerationError && err.code === "UPSTREAM"
+      );
+    }
+  );
+
+  await withMockGemini(
+    () => ({ status: 200, json: { candidates: [{ content: { parts: [{ text: "not-json" }] } }] } }),
+    async () => {
+      await assert.rejects(
+        assessPhotoQualityAndGender("gem-test-key", "gemini-3-flash-preview", PHOTO, "image/jpeg", "female_pilates"),
+        (err: unknown) => err instanceof GenerationError && err.code === "UPSTREAM"
+      );
+    }
+  );
+});
+
+test("callGeminiImageToImage returns inlineData data URL and maps safety 400 to GenerationError('SAFETY')", async () => {
+  await withMockGemini(
+    (reqPath) => {
+      assert.ok(reqPath.includes("/models/gemini-2.5-flash-image:generateContent"));
+      return {
+        status: 200,
+        json: {
+          candidates: [
+            {
+              content: {
+                parts: [{ inlineData: { mimeType: "image/png", data: "UE5H" } }],
+              },
+            },
+          ],
+        },
+      };
+    },
+    async () => {
+      const out = await callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 0);
+      assert.strictEqual(out, "data:image/png;base64,UE5H");
+    }
+  );
+
+  await withMockGemini(
+    () => ({ status: 400, json: { error: { message: "Request blocked by SAFETY filter" } } }),
+    async () => {
+      await assert.rejects(
+        callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 0),
+        (err: unknown) => err instanceof GenerationError && err.code === "SAFETY"
+      );
+    }
+  );
+
+  await withMockGemini(
+    () => ({ status: 400, json: { error: { message: "Blocked by Safety policy" } } }),
+    async () => {
+      await assert.rejects(
+        callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 0),
+        (err: unknown) => err instanceof GenerationError && err.code === "SAFETY"
+      );
+    }
+  );
+});
+
+test("callGeminiImageToImage fails fast on placeholder keys, classifies HTTP 200 SAFETY and 429 QUOTA without retries, and wraps JSON/timeout errors", async () => {
+  // 1. Placeholder / empty key fails fast with 0 HTTP requests
+  let requestsOnPlaceholder = 0;
+  const serverPlaceholder = http.createServer((_req, res) => {
+    requestsOnPlaceholder++;
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end("{}");
+  });
+  await new Promise<void>((r) => serverPlaceholder.listen(0, "127.0.0.1", r));
+  process.env.GEMINI_API_BASE_URL = `http://127.0.0.1:${(serverPlaceholder.address() as AddressInfo).port}/v1beta`;
+  try {
+    for (const badKey of ["", "   ", "your_gemini_api_key_here"]) {
+      await assert.rejects(
+        callGeminiImageToImage(badKey, "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 2),
+        (err: unknown) => err instanceof GenerationError && err.code === "CONFIG"
+      );
+    }
+    assert.strictEqual(requestsOnPlaceholder, 0);
+  } finally {
+    delete process.env.GEMINI_API_BASE_URL;
+    serverPlaceholder.close();
+  }
+
+  // 2. HTTP 200 promptFeedback.blockReason === "SAFETY" throws SAFETY without retry
+  let blockReasonCalls = 0;
+  await withMockGemini(
+    () => {
+      blockReasonCalls++;
+      return { status: 200, json: { promptFeedback: { blockReason: "SAFETY" }, candidates: [] } };
+    },
+    async () => {
+      await assert.rejects(
+        callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 1),
+        (err: unknown) => err instanceof GenerationError && err.code === "SAFETY" && err.isSafetyFilter === true
+      );
+      assert.strictEqual(blockReasonCalls, 1);
+    }
+  );
+
+  // 3. HTTP 200 candidates[0].finishReason === "SAFETY" | "IMAGE_SAFETY" throws SAFETY without retry
+  for (const reason of ["SAFETY", "IMAGE_SAFETY"] as const) {
+    let finishReasonCalls = 0;
+    await withMockGemini(
+      () => {
+        finishReasonCalls++;
+        return { status: 200, json: { candidates: [{ finishReason: reason, content: { parts: [] } }] } };
+      },
+      async () => {
+        await assert.rejects(
+          callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 1),
+          (err: unknown) => err instanceof GenerationError && err.code === "SAFETY" && err.isSafetyFilter === true
+        );
+        assert.strictEqual(finishReasonCalls, 1);
+      }
+    );
+  }
+
+  // 4. HTTP 429 QUOTA stops without retry
+  let quotaCalls = 0;
+  await withMockGemini(
+    () => {
+      quotaCalls++;
+      return { status: 429, json: { error: { message: "Quota exceeded" } } };
+    },
+    async () => {
+      await assert.rejects(
+        callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 2),
+        (err: unknown) => err instanceof GenerationError && err.code === "QUOTA"
+      );
+      assert.strictEqual(quotaCalls, 1);
+    }
+  );
+
+  // 5. Malformed JSON throws GenerationError("UPSTREAM") instead of SyntaxError
+  const badJsonServer = http.createServer((_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end("{bad-json");
+  });
+  await new Promise<void>((r) => badJsonServer.listen(0, "127.0.0.1", r));
+  process.env.GEMINI_API_BASE_URL = `http://127.0.0.1:${(badJsonServer.address() as AddressInfo).port}/v1beta`;
+  try {
+    await assert.rejects(
+      callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 0),
+      (err: unknown) => err instanceof GenerationError && err.code === "UPSTREAM"
+    );
+  } finally {
+    delete process.env.GEMINI_API_BASE_URL;
+    badJsonServer.close();
+  }
+
+  // 6. Timeout abort throws GenerationError("UPSTREAM") instead of raw AbortError
+  const slowServer = http.createServer((_req, res) => {
+    setTimeout(() => {
+      if (!res.writableEnded) {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end("{}");
+      }
+    }, 150);
+  });
+  await new Promise<void>((r) => slowServer.listen(0, "127.0.0.1", r));
+  process.env.GEMINI_API_BASE_URL = `http://127.0.0.1:${(slowServer.address() as AddressInfo).port}/v1beta`;
+  try {
+    await assert.rejects(
+      callGeminiImageToImage("gem-test-key", "gemini-2.5-flash-image", PHOTO, "image/jpeg", "prompt", 0, 20),
+      (err: unknown) => err instanceof GenerationError && err.code === "UPSTREAM"
+    );
+  } finally {
+    delete process.env.GEMINI_API_BASE_URL;
+    slowServer.close();
   }
 });

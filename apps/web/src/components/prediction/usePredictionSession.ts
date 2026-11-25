@@ -3,25 +3,20 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { PlanConfig } from "@/components/prediction/PlanSummaryCard";
 import {
-  clearJobRef,
-  deletePredictionOnServer,
-  hasPhotoConsent,
-  isSignedUrlExpired,
-  saveJobRef,
-  setPhotoConsent,
   submitPredictionJob,
   pollPredictionJob,
   checkPredictionServiceStatus,
   PredictionProgress,
 } from "@/lib/prediction-client";
+import { planSessionStore } from "@/lib/plan-session-store";
+import { calculatePersonalizedPlan, formatCalorieGap } from "@/lib/quiz-calculations";
+import type { QuizResponses } from "@/types/quiz";
 
 export const NO_PLAN_CALORIES = "chưa có, làm khảo sát để G-AI tính";
 
 /** The plan's real calorie line, e.g. "1415 kcal/ngày (ít hơn mức tiêu hao khoảng 400 kcal)". */
 export function calorieLine(tdee: number, target: number): string {
-  const gap = Math.round(tdee - target);
-  if (Math.abs(gap) < 10) return `${target} kcal/ngày (giữ mức tiêu hao)`;
-  return `${target} kcal/ngày (${gap > 0 ? "ít" : "nhiều"} hơn mức tiêu hao khoảng ${Math.abs(gap)} kcal)`;
+  return formatCalorieGap(tdee, target).predictionLine;
 }
 
 export type ViewMode = "profile" | "front" | "threeQuarter";
@@ -76,7 +71,7 @@ export interface UsePredictionSessionReturn {
   retryGeneration: () => void;
   handleUpdatePlan: (newPlan: PlanConfig) => Promise<void>;
   handleCalibrationSave: (updated: CalibrationData) => Promise<void>;
-  handlePhotoUpdate: (newPhoto: string | null) => void;
+  handlePhotoUpdate: (newPhoto: string | null) => Promise<void>;
 }
 
 export function usePredictionSession(): UsePredictionSessionReturn {
@@ -101,6 +96,7 @@ export function usePredictionSession(): UsePredictionSessionReturn {
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consentRef = useRef<boolean>(false);
   const needsUrlRefreshRef = useRef<boolean>(false);
+  const aiStatusPromiseRef = useRef<Promise<boolean | null> | null>(null);
 
   // Default plan configuration
   const [planConfig, setPlanConfig] = useState<PlanConfig>({
@@ -110,82 +106,73 @@ export function usePredictionSession(): UsePredictionSessionReturn {
     archetype: "female_pilates",
   });
 
-  // Read archetype, photo, plan and quiz data from localStorage if exists
+  // Read archetype, photo, plan and quiz data from PlanSessionStore
   useEffect(() => {
-    try {
-      const savedQuiz = localStorage.getItem("g_ai_user_quiz");
-      setHasQuiz(!!savedQuiz);
-      if (savedQuiz) {
-        const parsedQuiz = JSON.parse(savedQuiz);
-        if (parsedQuiz.heightCm && parsedQuiz.currentWeightKg && parsedQuiz.targetWeightKg) {
-          setUserStats({
-            height: parsedQuiz.heightCm,
-            weight: parsedQuiz.currentWeightKg,
-            targetWeight: parsedQuiz.targetWeightKg,
-          });
-        }
-      }
+    const savedQuiz = planSessionStore.loadQuiz();
+    setHasQuiz(Boolean(savedQuiz));
+    if (savedQuiz?.heightCm && savedQuiz?.currentWeightKg && savedQuiz?.targetWeightKg) {
+      setUserStats({
+        height: savedQuiz.heightCm,
+        weight: savedQuiz.currentWeightKg,
+        targetWeight: savedQuiz.targetWeightKg,
+      });
+    }
 
-      // Calories always come from the quiz plan, never from an older saved preset.
-      let planCalories: string | null = null;
-      const savedPlan = localStorage.getItem("g_ai_user_plan");
-      if (savedPlan) {
-        const parsed = JSON.parse(savedPlan);
-        if (typeof parsed.tdee === "number" && typeof parsed.dailyCalorieTarget === "number") {
-          setDailyCalorieGap(Math.abs(parsed.tdee - parsed.dailyCalorieTarget));
-          planCalories = calorieLine(parsed.tdee, parsed.dailyCalorieTarget);
-          const calories = planCalories;
-          setPlanConfig((prev) => ({ ...prev, dietStyle: calories }));
-        }
-        if (parsed.archetype) {
-          setArchetype(parsed.archetype);
-          setPlanConfig((prev) => ({
-            ...prev,
-            archetype: parsed.archetype,
-            workoutType:
-              parsed.archetype === "male_strength"
-                ? "Sức mạnh"
-                : "Pilates & cơ lõi",
-            weeklySets: "18 hiệp mỗi tuần (vừa)",
-          }));
-        }
-        if (parsed.userPhotoBase64) {
-          setUserPhoto(parsed.userPhotoBase64);
-        }
+    // Calories always come from the quiz plan, never from an older saved preset.
+    let planCalories: string | null = null;
+    const savedPlan = planSessionStore.loadPlan();
+    if (savedPlan) {
+      if (typeof savedPlan.tdee === "number" && typeof savedPlan.dailyCalorieTarget === "number") {
+        const gap = formatCalorieGap(savedPlan.tdee, savedPlan.dailyCalorieTarget);
+        setDailyCalorieGap(gap.absGapKcal);
+        planCalories = gap.predictionLine;
+        const calories = planCalories;
+        setPlanConfig((prev) => ({ ...prev, dietStyle: calories }));
       }
-
-      const savedPhoto = localStorage.getItem("g_ai_user_twin_photo");
-      if (savedPhoto) {
-        setUserPhoto(savedPhoto);
+      if (savedPlan.archetype) {
+        setArchetype(savedPlan.archetype);
+        setPlanConfig((prev) => ({
+          ...prev,
+          archetype: savedPlan.archetype,
+          workoutType: savedPlan.archetype === "male_strength" ? "Sức mạnh" : "Pilates & cơ lõi",
+          weeklySets: "18 hiệp mỗi tuần (vừa)",
+        }));
       }
-
-      consentRef.current = hasPhotoConsent();
-
-      const savedMilestones = localStorage.getItem("g_ai_twin_milestones");
-      const parsedMilestones = savedMilestones ? JSON.parse(savedMilestones) : null;
-      // Image links are signed and short-lived. Expired ones are dropped and,
-      // with consent, re-requested below (served from the server cache, no new AI call).
-      const linksExpired =
-        Array.isArray(parsedMilestones) &&
-        parsedMilestones.slice(1).some((u: unknown) => typeof u === "string" && u !== "" && isSignedUrlExpired(u));
-      if (linksExpired) {
-        localStorage.removeItem("g_ai_twin_milestones");
-        needsUrlRefreshRef.current = true;
-      } else if (Array.isArray(parsedMilestones)) {
-        setCustomMilestones(parsedMilestones);
-        setCompletedMilestones({
-          7: parsedMilestones[1] || "",
-          14: parsedMilestones[2] || "",
-          28: parsedMilestones[3] || parsedMilestones[4] || "",
-        });
+      if (savedPlan.userPhotoBase64) {
+        setUserPhoto(savedPlan.userPhotoBase64);
       }
+    }
 
-      const savedCustomPlan = localStorage.getItem("g_ai_prediction_plan");
-      if (savedCustomPlan) {
-        setPlanConfig({ ...JSON.parse(savedCustomPlan), dietStyle: planCalories ?? NO_PLAN_CALORIES });
+    const savedPhoto = planSessionStore.loadTwinPhoto();
+    if (savedPhoto) {
+      setUserPhoto(savedPhoto);
+    }
+
+    consentRef.current = planSessionStore.hasPhotoConsent();
+
+    // Image links are signed and short-lived. Expired ones are dropped and,
+    // with consent, re-requested below (served from the server cache, no new AI call).
+    const { milestones, expired } = planSessionStore.loadMilestones();
+    if (expired) {
+      needsUrlRefreshRef.current = true;
+    } else if (milestones) {
+      setCustomMilestones(milestones);
+      setCompletedMilestones({
+        7: milestones[1] || "",
+        14: milestones[2] || "",
+        28: milestones[3] || milestones[4] || "",
+      });
+    }
+
+    const savedCustomPlan = planSessionStore.loadPredictionPlan();
+    if (
+      savedCustomPlan &&
+      (!savedPlan?.archetype || savedCustomPlan.archetype === savedPlan.archetype)
+    ) {
+      if (savedCustomPlan.archetype) {
+        setArchetype(savedCustomPlan.archetype);
       }
-    } catch {
-      // LocalStorage safety fallback
+      setPlanConfig({ ...savedCustomPlan, dietStyle: planCalories ?? NO_PLAN_CALORIES });
     }
   }, []);
 
@@ -201,9 +188,17 @@ export function usePredictionSession(): UsePredictionSessionReturn {
 
   // Check AI service status
   useEffect(() => {
-    checkPredictionServiceStatus()
-      .then((d) => setAiAvailable(d ? Boolean(d.enabled) : null))
-      .catch(() => setAiAvailable(null));
+    const p = checkPredictionServiceStatus()
+      .then((d) => {
+        const enabled = d ? Boolean(d.enabled) : null;
+        setAiAvailable(enabled);
+        return enabled;
+      })
+      .catch(() => {
+        setAiAvailable(null);
+        return null;
+      });
+    aiStatusPromiseRef.current = p;
   }, []);
 
   // Real Async Image Generation Trigger & Polling
@@ -218,6 +213,17 @@ export function usePredictionSession(): UsePredictionSessionReturn {
       if (aiAvailable === false) {
         // No AI backend: keep the illustrative presets, nothing to upload.
         return;
+      }
+      if (aiAvailable === null) {
+        const resolved = aiStatusPromiseRef.current
+          ? await aiStatusPromiseRef.current
+          : await checkPredictionServiceStatus()
+              .then((d) => (d ? Boolean(d.enabled) : null))
+              .catch(() => null);
+        if (resolved === false) {
+          setAiAvailable(false);
+          return;
+        }
       }
       if (!consentRef.current) {
         setGenerationError("Vui lòng mở “Hiệu chỉnh thể trạng” và xác nhận đồng ý để AI xử lý ảnh của bạn.");
@@ -268,7 +274,7 @@ export function usePredictionSession(): UsePredictionSessionReturn {
         }
 
         if (result.jobId && result.jobToken) {
-          saveJobRef({ jobId: result.jobId, jobToken: result.jobToken });
+          planSessionStore.saveJobRef({ jobId: result.jobId, jobToken: result.jobToken });
         }
 
         // Check if result was served from instant SHA-256 disk cache
@@ -281,9 +287,7 @@ export function usePredictionSession(): UsePredictionSessionReturn {
             result.completedMilestones[28] || "",
           ];
           setCustomMilestones(arr);
-          try {
-            localStorage.setItem("g_ai_twin_milestones", JSON.stringify(arr));
-          } catch {}
+          planSessionStore.saveMilestones(arr);
           setIsGenerating(false);
           return;
         }
@@ -334,9 +338,7 @@ export function usePredictionSession(): UsePredictionSessionReturn {
                   pollData.completedMilestones[28] || "",
                 ];
                 setCustomMilestones(finalArr);
-                try {
-                  localStorage.setItem("g_ai_twin_milestones", JSON.stringify(finalArr));
-                } catch {}
+                planSessionStore.saveMilestones(finalArr);
               }
             } else if (pollData.status === "failed") {
               if (pollTimerRef.current) {
@@ -358,13 +360,13 @@ export function usePredictionSession(): UsePredictionSessionReturn {
     [aiAvailable]
   );
 
-  // Re-issue expired image links once the saved photo/stats are loaded.
+  // Re-issue expired image links once the AI service is confirmed active and saved photo/stats are loaded.
   useEffect(() => {
-    if (needsUrlRefreshRef.current && userPhoto && consentRef.current) {
+    if (aiAvailable === true && needsUrlRefreshRef.current && userPhoto && consentRef.current) {
       needsUrlRefreshRef.current = false;
       void startGeneration(userPhoto, archetype, userStats, planConfig);
     }
-  }, [userPhoto, archetype, userStats, planConfig, startGeneration]);
+  }, [aiAvailable, userPhoto, archetype, userStats, planConfig, startGeneration]);
 
   const retryGeneration = useCallback(() => {
     void startGeneration(userPhoto, archetype, userStats, planConfig);
@@ -378,7 +380,7 @@ export function usePredictionSession(): UsePredictionSessionReturn {
       setArchetype(newPlan.archetype);
 
       try {
-        localStorage.setItem("g_ai_prediction_plan", JSON.stringify(newPlan));
+        planSessionStore.savePredictionPlan(newPlan);
         if (userPhoto) {
           await startGeneration(userPhoto, newPlan.archetype, userStats, newPlan);
         }
@@ -402,18 +404,52 @@ export function usePredictionSession(): UsePredictionSessionReturn {
       };
       setUserStats(nextStats);
 
+      const isMale = updated.archetype === "male_strength";
+      const existingQuiz = planSessionStore.loadQuiz();
+      const mergedQuiz: QuizResponses = {
+        archetype: updated.archetype,
+        gender: isMale ? "male" : "female",
+        goal: existingQuiz?.goal ?? (isMale ? "hypertrophy" : "tone_muscle"),
+        focusAreas: existingQuiz?.focusAreas ?? (isMale ? ["chest", "arms"] : ["belly", "glutes"]),
+        age: existingQuiz?.age ?? 26,
+        heightCm: updated.height,
+        currentWeightKg: updated.weight,
+        targetWeightKg: updated.targetWeight,
+        activityLevel: existingQuiz?.activityLevel ?? "lightly_active",
+        dietPreference: existingQuiz?.dietPreference ?? "balanced",
+        obstacles: existingQuiz?.obstacles ?? [],
+        equipmentAccess: existingQuiz?.equipmentAccess ?? "home",
+        injuries: existingQuiz?.injuries ?? [],
+        userPhotoBase64: userPhoto ?? undefined,
+      };
+
+      const nextPlan = calculatePersonalizedPlan(mergedQuiz);
+      if (mergedQuiz.userPhotoBase64) {
+        nextPlan.userPhotoBase64 = mergedQuiz.userPhotoBase64;
+      }
+      const nextGap = formatCalorieGap(nextPlan.tdee, nextPlan.dailyCalorieTarget);
+
       const updatedPlan: PlanConfig = {
         ...planConfig,
         archetype: updated.archetype,
-        workoutType:
-          updated.archetype === "male_strength"
-            ? "Sức mạnh"
-            : "Pilates & cơ lõi",
+        workoutType: isMale ? "Sức mạnh" : "Pilates & cơ lõi",
+        dietStyle: nextGap.predictionLine,
       };
+
+      planSessionStore.saveQuiz(mergedQuiz);
+      planSessionStore.savePlan(nextPlan);
+      planSessionStore.savePredictionPlan(updatedPlan);
+
+      setDailyCalorieGap(nextGap.absGapKcal);
       setPlanConfig(updatedPlan);
+      setHasQuiz(true);
 
       consentRef.current = updated.consentAccepted;
-      setPhotoConsent(updated.consentAccepted);
+      planSessionStore.setPhotoConsent(updated.consentAccepted);
+
+      void planSessionStore.syncQuizForSignedInUser(mergedQuiz).catch(() => {
+        // Best-effort sync for signed-in users; local plan is already persisted.
+      });
 
       if (userPhoto && updated.consentAccepted) {
         await startGeneration(userPhoto, updated.archetype, nextStats, updatedPlan);
@@ -424,26 +460,16 @@ export function usePredictionSession(): UsePredictionSessionReturn {
 
   // Photo Update Handler
   const handlePhotoUpdate = useCallback(
-    (newPhoto: string | null) => {
+    async (newPhoto: string | null) => {
       setUserPhoto(newPhoto);
       if (newPhoto) {
-        try {
-          localStorage.setItem("g_ai_user_twin_photo", newPhoto);
-        } catch {
-          // ignore
-        }
+        planSessionStore.saveTwinPhoto(newPhoto);
         if (consentRef.current) {
-          void startGeneration(newPhoto, archetype, userStats, planConfig);
+          await startGeneration(newPhoto, archetype, userStats, planConfig);
         }
       } else {
-        void deletePredictionOnServer();
-        clearJobRef();
-        try {
-          localStorage.removeItem("g_ai_user_twin_photo");
-          localStorage.removeItem("g_ai_twin_milestones");
-        } catch {
-          // ignore
-        }
+        consentRef.current = false;
+        await planSessionStore.clearPhotoAndPrediction();
         setCustomMilestones(null);
         setCompletedMilestones({});
       }

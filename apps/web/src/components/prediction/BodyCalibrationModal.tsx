@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { healthyWeightRangeKg, minSafeTargetWeightKg } from "@/lib/quiz-calculations";
 import Image from "next/image";
 import { Sparkles, X, Check, ArrowRight, Upload, ShieldCheck, User, Trash2 } from "lucide-react";
-import { deletePredictionOnServer, hasPhotoConsent, setPhotoConsent } from "@/lib/prediction-client";
+import { planSessionStore } from "@/lib/plan-session-store";
 
 interface BodyCalibrationModalProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ interface BodyCalibrationModalProps {
   initialWeight?: number;
   initialTargetWeight?: number;
   currentPhoto?: string | null;
-  onPhotoChange?: (newPhotoBase64: string | null) => void;
+  onPhotoChange?: (newPhotoBase64: string | null) => Promise<void> | void;
   onSave: (updated: {
     archetype: "female_pilates" | "male_strength";
     height: number;
@@ -35,14 +35,8 @@ export const cleanNumberInput = (raw: string): string => {
   if (dotIndex !== -1) {
     cleaned = cleaned.slice(0, dotIndex + 1) + cleaned.slice(dotIndex + 1).replace(/\./g, "");
   }
-  // Strip leading zeros before any digit (e.g. "0080" -> "80", "08" -> "8"), but allow "0."
-  if (/^0+[0-9]/.test(cleaned) && !cleaned.startsWith("0.")) {
-    cleaned = cleaned.replace(/^0+/, "");
-  }
-  // If user entered only zeros (e.g. "000"), normalize to single "0"
-  if (/^0+$/.test(raw)) {
-    cleaned = "0";
-  }
+  // Strip redundant leading zeros before a digit (e.g. "0080" -> "80", "00.5" -> "0.5", "000" -> "0")
+  cleaned = cleaned.replace(/^0+(?=\d)/, "");
   return cleaned;
 };
 
@@ -70,22 +64,39 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
   const [photoPreview, setPhotoPreview] = useState<string | null>(currentPhoto || null);
   // Opt-in: never pre-checked. Restored from an earlier explicit acceptance.
   const [consentAccepted, setConsentAccepted] = useState<boolean>(false);
-  useEffect(() => {
-    if (isOpen) setConsentAccepted(hasPhotoConsent());
-  }, [isOpen]);
   const [isDeletingCache, setIsDeletingCache] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Sync when initial values or photo change
+  // Sync archetype, stats, photo, and consent when modal opens or parent props change
   useEffect(() => {
-    if (isOpen) {
-      if (initialHeight && initialHeight > 0) setHeight(cleanNumberInput(String(Math.round(initialHeight))));
-      if (initialWeight && initialWeight > 0) setWeight(cleanNumberInput(String(initialWeight)));
-      if (initialTargetWeight && initialTargetWeight > 0) setTargetWeight(cleanNumberInput(String(initialTargetWeight)));
-      if (currentPhoto) setPhotoPreview(currentPhoto);
-    }
-  }, [isOpen, initialHeight, initialWeight, initialTargetWeight, currentPhoto]);
+    if (!isOpen) return;
+    const male = archetype === "male_strength";
+    setCurrentArchetype(archetype);
+    setPhotoPreview(currentPhoto ?? null);
+    setHeight(
+      initialHeight && initialHeight > 0
+        ? cleanNumberInput(String(Math.round(initialHeight)))
+        : male
+          ? "175"
+          : "162"
+    );
+    setWeight(
+      initialWeight && initialWeight > 0
+        ? cleanNumberInput(String(initialWeight))
+        : male
+          ? "76"
+          : "56"
+    );
+    setTargetWeight(
+      initialTargetWeight && initialTargetWeight > 0
+        ? cleanNumberInput(String(initialTargetWeight))
+        : male
+          ? "73.5"
+          : "52"
+    );
+    setConsentAccepted(planSessionStore.hasPhotoConsent());
+  }, [isOpen, archetype, initialHeight, initialWeight, initialTargetWeight, currentPhoto]);
 
   // Modal open / close (transitions.dev 06): open only after the resting
   // state has been laid out; on close play .is-closing, then unmount.
@@ -183,15 +194,9 @@ export const BodyCalibrationModal: React.FC<BodyCalibrationModalProps> = ({
     }
     setIsDeletingCache(true);
     try {
-      const deleted = await deletePredictionOnServer();
-      if (!deleted) {
-        console.warn("Server-side prediction images could not be confirmed deleted.");
-      }
       setPhotoPreview(null);
-      onPhotoChange?.(null);
-      localStorage.removeItem("g_ai_user_twin_photo");
-      localStorage.removeItem("g_ai_twin_milestones");
-      setPhotoConsent(false);
+      setConsentAccepted(false);
+      await onPhotoChange?.(null);
     } catch (e) {
       console.warn("Failed to delete cache on server:", e);
     } finally {

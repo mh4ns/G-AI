@@ -1,8 +1,12 @@
 import json
+from pathlib import Path
 from typing import Annotated, List, Literal, Optional
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+ENV_FILE = BACKEND_DIR / ".env"
 
 # Value shipped in examples. It is accepted only in development so a
 # forgotten .env can never reach production with a guessable signing key.
@@ -56,6 +60,12 @@ class Settings(BaseSettings):
     LOGIN_MAX_FAILURES_PER_EMAIL_IP: int = 5
     LOGIN_MAX_FAILURES_PER_EMAIL: int = 20
     LOGIN_MAX_FAILURES_PER_IP: int = 50
+
+    # Store order throttling: order attempts allowed per window before answering 429.
+    ORDER_WINDOW_SECONDS: int = 15 * 60
+    ORDER_MAX_ATTEMPTS_PER_IP: int = 10
+    ORDER_MAX_ATTEMPTS_PER_EMAIL: int = 10
+
     # How many reverse proxies in front of the app append to X-Forwarded-For
     # (e.g. Vercel rewrite + Render = 2). 0 trusts no header and uses the socket peer address.
     TRUSTED_PROXY_HOPS: int = 0
@@ -64,7 +74,7 @@ class Settings(BaseSettings):
     DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE,
         case_sensitive=True,
         extra="ignore",
     )
@@ -99,3 +109,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings

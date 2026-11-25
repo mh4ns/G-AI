@@ -264,6 +264,166 @@
         "title": "FastingUpdateRequest",
         "type": "object"
       },
+      "FoodItemCreateRequest": {
+        "properties": {
+          "barcode": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Barcode"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "calories_per_100g": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Calories Per 100G",
+            "type": "integer"
+          },
+          "carbs_g_100g": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Carbs G 100G",
+            "type": "number"
+          },
+          "default_serving_g": {
+            "default": 100.0,
+            "exclusiveMinimum": 0.0,
+            "maximum": 10000.0,
+            "title": "Default Serving G",
+            "type": "number"
+          },
+          "fat_g_100g": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Fat G 100G",
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "protein_g_100g": {
+            "default": 0.0,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Protein G 100G",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "calories_per_100g"
+        ],
+        "title": "FoodItemCreateRequest",
+        "type": "object"
+      },
+      "FoodItemResponse": {
+        "properties": {
+          "barcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Barcode"
+          },
+          "brand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand"
+          },
+          "calories_per_100g": {
+            "title": "Calories Per 100G",
+            "type": "integer"
+          },
+          "canonical_name": {
+            "title": "Canonical Name",
+            "type": "string"
+          },
+          "carbs_g_100g": {
+            "title": "Carbs G 100G",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "default_serving_g": {
+            "title": "Default Serving G",
+            "type": "number"
+          },
+          "fat_g_100g": {
+            "title": "Fat G 100G",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "protein_g_100g": {
+            "title": "Protein G 100G",
+            "type": "number"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "canonical_name",
+          "source",
+          "default_serving_g",
+          "calories_per_100g",
+          "protein_g_100g",
+          "carbs_g_100g",
+          "fat_g_100g",
+          "is_active",
+          "created_at"
+        ],
+        "title": "FoodItemResponse",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -290,6 +450,169 @@
           "habit_key"
         ],
         "title": "HabitToggleRequest",
+        "type": "object"
+      },
+      "MealLogCreateRequest": {
+        "properties": {
+          "food_item_id": {
+            "minimum": 1.0,
+            "title": "Food Item Id",
+            "type": "integer"
+          },
+          "logged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logged At"
+          },
+          "meal_type": {
+            "default": "lunch",
+            "enum": [
+              "breakfast",
+              "lunch",
+              "dinner",
+              "snack"
+            ],
+            "title": "Meal Type",
+            "type": "string"
+          },
+          "serving_grams": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 10000.0,
+            "title": "Serving Grams",
+            "type": "number"
+          }
+        },
+        "required": [
+          "food_item_id",
+          "serving_grams"
+        ],
+        "title": "MealLogCreateRequest",
+        "type": "object"
+      },
+      "MealLogDayResponse": {
+        "properties": {
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "meals": {
+            "items": {
+              "$ref": "#/components/schemas/MealLogResponse"
+            },
+            "title": "Meals",
+            "type": "array"
+          },
+          "total_calories": {
+            "title": "Total Calories",
+            "type": "integer"
+          },
+          "total_carbs_g": {
+            "title": "Total Carbs G",
+            "type": "number"
+          },
+          "total_fat_g": {
+            "title": "Total Fat G",
+            "type": "number"
+          },
+          "total_protein_g": {
+            "title": "Total Protein G",
+            "type": "number"
+          }
+        },
+        "required": [
+          "date",
+          "total_calories",
+          "total_protein_g",
+          "total_carbs_g",
+          "total_fat_g",
+          "meals"
+        ],
+        "title": "MealLogDayResponse",
+        "type": "object"
+      },
+      "MealLogResponse": {
+        "properties": {
+          "calories": {
+            "title": "Calories",
+            "type": "integer"
+          },
+          "carbs_g": {
+            "title": "Carbs G",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "fat_g": {
+            "title": "Fat G",
+            "type": "number"
+          },
+          "food_item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Item Id"
+          },
+          "food_name_snapshot": {
+            "title": "Food Name Snapshot",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "local_date": {
+            "format": "date",
+            "title": "Local Date",
+            "type": "string"
+          },
+          "logged_at": {
+            "format": "date-time",
+            "title": "Logged At",
+            "type": "string"
+          },
+          "meal_type": {
+            "title": "Meal Type",
+            "type": "string"
+          },
+          "protein_g": {
+            "title": "Protein G",
+            "type": "number"
+          },
+          "serving_grams": {
+            "title": "Serving Grams",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "meal_type",
+          "food_name_snapshot",
+          "serving_grams",
+          "calories",
+          "protein_g",
+          "carbs_g",
+          "fat_g",
+          "local_date",
+          "logged_at",
+          "created_at"
+        ],
+        "title": "MealLogResponse",
         "type": "object"
       },
       "OrderCreateRequest": {
@@ -979,6 +1302,80 @@
         "title": "QuizSubmitRequest",
         "type": "object"
       },
+      "TodaySummaryDay": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "calories_burned": {
+            "title": "Calories Burned",
+            "type": "integer"
+          },
+          "calories_consumed": {
+            "title": "Calories Consumed",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "fasting_state": {
+            "title": "Fasting State",
+            "type": "string"
+          },
+          "habits_count": {
+            "title": "Habits Count",
+            "type": "integer"
+          },
+          "water_intake_ml": {
+            "title": "Water Intake Ml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "date",
+          "calories_consumed",
+          "calories_burned",
+          "water_intake_ml",
+          "habits_count",
+          "fasting_state",
+          "active"
+        ],
+        "title": "TodaySummaryDay",
+        "type": "object"
+      },
+      "TodaySummaryResponse": {
+        "properties": {
+          "best_streak_days": {
+            "title": "Best Streak Days",
+            "type": "integer"
+          },
+          "history_7d": {
+            "items": {
+              "$ref": "#/components/schemas/TodaySummaryDay"
+            },
+            "title": "History 7D",
+            "type": "array"
+          },
+          "streak_days": {
+            "title": "Streak Days",
+            "type": "integer"
+          },
+          "today": {
+            "$ref": "#/components/schemas/DailyMetricResponse"
+          }
+        },
+        "required": [
+          "today",
+          "streak_days",
+          "best_streak_days",
+          "history_7d"
+        ],
+        "title": "TodaySummaryResponse",
+        "type": "object"
+      },
       "Token": {
         "properties": {
           "access_token": {
@@ -1532,6 +1929,257 @@
         ]
       }
     },
+    "/api/v1/nutrition/foods": {
+      "get": {
+        "description": "Search active curated and user-owned foods with diacritic-insensitive matching.",
+        "operationId": "search_foods_api_v1_nutrition_foods_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 120,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FoodItemResponse"
+                  },
+                  "title": "Response Search Foods Api V1 Nutrition Foods Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Search Foods",
+        "tags": [
+          "Nutrition"
+        ]
+      },
+      "post": {
+        "description": "Create a custom food owned by the current user.",
+        "operationId": "create_custom_food_api_v1_nutrition_foods_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodItemCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Custom Food",
+        "tags": [
+          "Nutrition"
+        ]
+      }
+    },
+    "/api/v1/nutrition/meals": {
+      "get": {
+        "description": "List meal logs and macro totals for a given local date (defaults to today).",
+        "operationId": "get_meals_for_day_api_v1_nutrition_meals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "day",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealLogDayResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Meals For Day",
+        "tags": [
+          "Nutrition"
+        ]
+      },
+      "post": {
+        "description": "Log a meal entry and increment DailyMetric.calories_consumed for its local date.",
+        "operationId": "log_meal_api_v1_nutrition_meals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealLogCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealLogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Log Meal",
+        "tags": [
+          "Nutrition"
+        ]
+      }
+    },
+    "/api/v1/nutrition/meals/{meal_id}": {
+      "delete": {
+        "description": "Delete a user's meal log and subtract its calories from DailyMetric.",
+        "operationId": "delete_meal_api_v1_nutrition_meals__meal_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Meal",
+        "tags": [
+          "Nutrition"
+        ]
+      }
+    },
     "/api/v1/quiz/plans/me": {
       "get": {
         "operationId": "my_active_plan_api_v1_quiz_plans_me_get",
@@ -1985,6 +2633,33 @@
           }
         ],
         "summary": "Toggle Habit",
+        "tags": [
+          "Today Dashboard"
+        ]
+      }
+    },
+    "/api/v1/today/summary": {
+      "get": {
+        "description": "Return today's metrics, streak counters, and 7-day activity history.",
+        "operationId": "get_today_summary_api_v1_today_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodaySummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Today Summary",
         "tags": [
           "Today Dashboard"
         ]

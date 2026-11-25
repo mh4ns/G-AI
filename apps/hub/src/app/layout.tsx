@@ -41,7 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${inter.variable} ${display.variable}`}>
-      <body className={`${inter.className} font-sans antialiased bg-canvas text-stone-900 selection:bg-brand-action selection:text-white`}>
+      <body className={`${inter.className} font-sans antialiased bg-page text-ink selection:bg-brand selection:text-brand-contrast`}>
         {children}
       </body>
     </html>

@@ -38,7 +38,7 @@ if (!femalePlan.safetyNotes.some(n => n.includes("bảo vệ cột sống"))) {
 if (femalePlan.weeklyRoutine.length !== 4) {
   throw new Error("Must generate 4-day weekly routine");
 }
-if (!femalePlan.weeklyRoutine[0].title.includes("Thảm Mat")) {
+if (!femalePlan.weeklyRoutine[0].title.includes("Thảm:")) {
   throw new Error("Home equipment must use Mat title");
 }
 
@@ -76,7 +76,7 @@ if (!malePlan.excludedExercises.includes("Jump Squat")) {
 if (!malePlan.safetyNotes.some(n => n.includes("bảo vệ khớp gối"))) {
   throw new Error("Must include knee safety note");
 }
-if (!malePlan.weeklyRoutine[0].title.includes("Upper Hypertrophy")) {
+if (!malePlan.weeklyRoutine[0].title.includes("Thân trên:")) {
   throw new Error("Gym equipment must use Gym titles");
 }
 

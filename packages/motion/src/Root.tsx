@@ -1,16 +1,19 @@
 import React from "react";
 import { Composition } from "remotion";
-import { BrandIntro } from "./compositions/BrandIntro";
+import {
+  BRAND_INTRO_DURATION_IN_FRAMES,
+  BRAND_INTRO_FPS,
+  BrandIntro,
+} from "./compositions/BrandIntro";
 
 export const RemotionRoot: React.FC = () => {
-  // Total = 90 + 90 - 15 = 165 frames (5.5 seconds at 30 fps)
   return (
     <>
       <Composition
         id="BrandIntro"
         component={BrandIntro}
-        durationInFrames={165}
-        fps={30}
+        durationInFrames={BRAND_INTRO_DURATION_IN_FRAMES}
+        fps={BRAND_INTRO_FPS}
         width={1920}
         height={1080}
         defaultProps={{

@@ -17,17 +17,19 @@ import { DEFAULT_EXERCISES } from "./pose-math";
 
 export interface UseWorkoutSessionOptions extends WorkoutSessionConfig {
   isOpen: boolean;
-  onFinishWorkout?: (summary: WorkoutSummaryData) => void;
 }
 
 export function useWorkoutSession(options: UseWorkoutSessionOptions) {
-  const { isOpen, exercises = DEFAULT_EXERCISES, archetype, isMuted = false, onFinishWorkout } = options;
+  const { isOpen, exercises = DEFAULT_EXERCISES, archetype, isMuted = false, onSummary } = options;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const engineRef = useRef<WorkoutSessionEngine | null>(null);
+  const onSummaryRef = useRef(onSummary);
+  onSummaryRef.current = onSummary;
+
   const [snapshot, setSnapshot] = useState<WorkoutSessionSnapshot>(() => {
     const dummy = new WorkoutSessionEngine({ exercises, archetype, isMuted });
     const snap = dummy.getSnapshot();
@@ -35,23 +37,21 @@ export function useWorkoutSession(options: UseWorkoutSessionOptions) {
     return snap;
   });
 
-  // Handle workout completion and trigger decorative confetti
-  const handleSummary = useCallback(
-    (summary: WorkoutSummaryData) => {
-      try {
-        confetti({
-          particleCount: 120,
-          spread: 90,
-          origin: { y: 0.55 },
-          colors: ["#FF5A36", "#10B981", "#FFFFFF", "#F59E0B"],
-        });
-      } catch {
-        // Confetti is decorative
-      }
-      onFinishWorkout?.(summary);
-    },
-    [onFinishWorkout]
-  );
+  // Handle workout completion and trigger decorative confetti.
+  // Saving to the dashboard happens explicitly via LiveWorkoutStudio's CTA button.
+  const handleSummary = useCallback((summary: WorkoutSummaryData) => {
+    try {
+      confetti({
+        particleCount: 120,
+        spread: 90,
+        origin: { y: 0.55 },
+        colors: ["#FF5A36", "#10B981", "#FFFFFF", "#F59E0B"],
+      });
+    } catch {
+      // Confetti is decorative
+    }
+    onSummaryRef.current?.(summary);
+  }, []);
 
   // Initialize and tear down engine bound to modal open/close lifecycle
   useEffect(() => {
@@ -88,7 +88,7 @@ export function useWorkoutSession(options: UseWorkoutSessionOptions) {
       engine.dispose();
       engineRef.current = null;
     };
-  }, [isOpen, archetype, handleSummary]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, archetype]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-attach elements if refs update after mounting
   useEffect(() => {

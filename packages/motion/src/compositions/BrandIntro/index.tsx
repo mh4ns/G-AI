@@ -10,6 +10,14 @@ import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { ThreeHero } from "./ThreeHero";
 
+export const BRAND_INTRO_FPS = 30;
+export const BRAND_INTRO_SCENE_1_SECONDS = 3;
+export const BRAND_INTRO_SCENE_2_SECONDS = 3;
+export const BRAND_INTRO_TRANSITION_SECONDS = 0.5;
+export const BRAND_INTRO_DURATION_IN_FRAMES =
+  (BRAND_INTRO_SCENE_1_SECONDS + BRAND_INTRO_SCENE_2_SECONDS - BRAND_INTRO_TRANSITION_SECONDS) *
+  BRAND_INTRO_FPS;
+
 export interface BrandIntroProps {
   title?: string;
   subtitle?: string;
@@ -22,12 +30,9 @@ export const BrandIntro: React.FC<BrandIntroProps> = ({
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
 
-  // Scene 1: 3D Spatial Wireframe (3s)
-  const scene1Duration = 3 * fps;
-  // Transition: 15 frames
-  const transitionDuration = 15;
-  // Scene 2: Typography & Brand message (3s)
-  const scene2Duration = 3 * fps;
+  const scene1Duration = BRAND_INTRO_SCENE_1_SECONDS * fps;
+  const transitionDuration = Math.round(BRAND_INTRO_TRANSITION_SECONDS * fps);
+  const scene2Duration = BRAND_INTRO_SCENE_2_SECONDS * fps;
 
   const titleProgress = spring({
     frame: frame - (scene1Duration - transitionDuration),
@@ -46,7 +51,7 @@ export const BrandIntro: React.FC<BrandIntroProps> = ({
   });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#0b0f17", color: "#f8fafc" }}>
+    <AbsoluteFill style={{ backgroundColor: "#0A0908", color: "#F5F2EC" }}>
       <TransitionSeries>
         {/* Scene 1: 3D Spatial Wireframe */}
         <TransitionSeries.Sequence durationInFrames={scene1Duration}>
@@ -96,7 +101,7 @@ export const BrandIntro: React.FC<BrandIntroProps> = ({
                 fontWeight: 800,
                 letterSpacing: -2,
                 margin: 0,
-                color: "#10b981",
+                color: "#FF5A36",
                 opacity: titleOpacity,
                 transform: `scale(${titleScale})`,
               }}
@@ -107,7 +112,7 @@ export const BrandIntro: React.FC<BrandIntroProps> = ({
               style={{
                 fontSize: 32,
                 marginTop: 24,
-                color: "#94a3b8",
+                color: "#B5AEA5",
                 fontWeight: 500,
                 opacity: titleOpacity,
               }}

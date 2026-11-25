@@ -7,20 +7,29 @@ export interface SlidingTabOption<T extends string> {
   label: string;
 }
 
-interface SlidingTabsProps<T extends string> {
+export interface SlidingTabsProps<T extends string> {
   options: readonly SlidingTabOption<T>[];
   value: T;
   onChange: (value: T) => void;
   ariaLabel: string;
+  size?: "sm" | "lg";
   className?: string;
 }
 
 /**
  * Tabs sliding (transitions.dev 16): one pill travels to the selected option.
  * Colours come from the --tabs-* tokens, which follow [data-theme] on an
- * ancestor. Arrow keys move the selection, as in a native tablist.
+ * ancestor. Arrow, Home, and End keys move the selection, as in a native tablist.
  */
-export function SlidingTabs<T extends string>({ options, value, onChange, ariaLabel, className = "" }: SlidingTabsProps<T>) {
+export function SlidingTabs<T extends string>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+  size = "lg",
+  className = "",
+}: SlidingTabsProps<T>) {
+  const listRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const placed = useRef(false);
@@ -51,28 +60,54 @@ export function SlidingTabs<T extends string>({ options, value, onChange, ariaLa
     placed.current = true;
   }, [moveTo]);
 
-  // Snap (no transition) on resize and once web fonts settle; registered once
-  // so a selection change never re-runs the snap and skips the slide.
+  // Snap (no transition) on resize, container/tab layout shifts, and once web
+  // fonts settle; registered once so a selection change never skips the slide.
   const moveRef = useRef(moveTo);
   moveRef.current = moveTo;
   useLayoutEffect(() => {
     const onResize = () => moveRef.current(false);
     window.addEventListener("resize", onResize);
     document.fonts?.ready.then(onResize).catch(() => undefined);
-    return () => window.removeEventListener("resize", onResize);
+
+    let observer: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== "undefined" && listRef.current) {
+      observer = new ResizeObserver(onResize);
+      observer.observe(listRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      observer?.disconnect();
+    };
   }, []);
 
   const onKeyDown = (e: React.KeyboardEvent, index: number) => {
-    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-    if (!step) return;
+    if (options.length === 0) return;
+    let next: number | null = null;
+    if (e.key === "ArrowRight") {
+      next = (index + 1) % options.length;
+    } else if (e.key === "ArrowLeft") {
+      next = (index - 1 + options.length) % options.length;
+    } else if (e.key === "Home") {
+      next = 0;
+    } else if (e.key === "End") {
+      next = options.length - 1;
+    }
+    if (next === null) return;
     e.preventDefault();
-    const next = (index + step + options.length) % options.length;
     onChange(options[next].value);
     tabRefs.current[next]?.focus();
   };
 
+  const sizeClass = size === "sm" ? "t-tabs--sm" : "t-tabs--lg";
+
   return (
-    <div role="tablist" aria-label={ariaLabel} className={`t-tabs t-tabs--lg ${className}`}>
+    <div
+      ref={listRef}
+      role="tablist"
+      aria-label={ariaLabel}
+      className={`t-tabs ${sizeClass} max-w-full ${className}`}
+    >
       <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
       {options.map((o, i) => {
         const selected = o.value === value;

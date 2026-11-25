@@ -3,6 +3,7 @@
   "private": true,
   "description": "G-AI monorepo: main hub site, brand site, coaching app, shared UI package (backend is Python, see apps/backend).",
   "workspaces": [
+    "packages/shared-types",
     "packages/ui",
     "packages/motion",
     "apps/hub",
@@ -22,8 +23,5 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
-  },
-  "dependencies": {
-    "@supabase/server": "^1.9.2"
   }
 }
